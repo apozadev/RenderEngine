@@ -1,8 +1,11 @@
 #include <iostream>
 
-#include "Core.h"
+#include "Core/Engine.h"
+#include "Core/WindowManager.h"
 
 int main(){
-    std::cout << "Hello, world! " << GetNumber() << std::endl;
-    return 0;
+  core::Engine::GetInstance()->Init();
+  core::WindowManager::GetInstance()->CreateWindow(640, 420, "App");
+  core::Engine::GetInstance()->Run();
+  return 0;
 }

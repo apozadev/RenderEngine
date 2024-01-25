@@ -10,13 +10,13 @@ set_source_files_properties(PIXELSHADER_FILES PROPERTIES VS_SHADER_TYPE Pixel  V
 
 set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_TYPE Pixel)
 set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT mainPS)
-set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_MODEL 5_0)
+set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_MODEL "Shader Model 5.0 (/5_0)")
 set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_FLAGS $<1:/DFLAGS_ADDED>)
 set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
 
 set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_TYPE Vertex)
 set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT mainVS)
-set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_MODEL 5_0)
+set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_MODEL "Shader Model 5.0 (/5_0)")
 set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_FLAGS $<1:/DFLAGS_ADDED>)
 set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
 set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SETTINGS "$<$<CONFIG:DEBUG>:SourceProperty1=SourceProperty1Value>")
@@ -38,8 +38,14 @@ foreach(source IN LISTS source_list)
 endforeach()
 
 include_directories(${CMAKE_SOURCE_DIR}/Engine/Include)
+include_directories(${CMAKE_SOURCE_DIR}/glfw/include)
 
+link_directories($ENV{VULKAN_SDK}/Bin;$ENV{VULKAN_SDK}/Lib;)
+
+find_package(Vulkan REQUIRED)
+target_link_libraries(App Vulkan::Vulkan)
 target_link_libraries(App Engine)
+target_link_libraries(App glfw ${GLFW_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES  
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/Assets")
