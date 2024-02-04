@@ -9,13 +9,14 @@ namespace core {
   class Engine : public Singleton<Engine>
   {
   public:
-    int Init();    
-    void Run();
-    int ShutDown();
+    int Initialize();
+    int Run();
+    int ScheduleShutDown();
 
   private:
 
     bool ShouldShutDown();
+    void ShutDown();
 
     bool m_bRunning;
 

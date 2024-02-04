@@ -10,9 +10,9 @@ namespace core
   class WindowManager : public Singleton<WindowManager>
   {
   public:
-    void Init();
+    void Initialize();
     void ShutDown();   
-    Window* CreateWindow(int _iWidth, int _iHeight, const char* _sTitle);
+    Window* CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle);
     const std::vector<Window*>& GetWindows() { return m_lstWindows; }
     void Update();
     void PollEvents();    
