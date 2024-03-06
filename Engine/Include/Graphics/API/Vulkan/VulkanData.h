@@ -41,15 +41,10 @@ namespace vk
 
     VkInstance m_hInstance;
 
-    VkDevice m_hDevice;
+    uint32_t m_uRenderQueueFamilyIdx;
+    uint32_t m_uPresentQueueFamilyIdx;
 
-    VkCommandPool m_hCmdPool;
-
-    VkCommandBuffer* m_pCmdBuffers;
-    uint32_t m_uCmdBufferCount;
-
-    VkFence* m_pFences;
-    uint32_t m_uFenceCount;
+    VkPhysicalDevice m_hPhysicalDevice;   
   };
 }
 }

@@ -13,7 +13,7 @@ int main(){
 
   core::Engine::GetInstance()->Initialize();
   core::WindowManager::GetInstance()->CreateNewWindow(640, 420, "App");  
-  return core::Engine::GetInstance()->Run();
+  core::Engine::GetInstance()->Run();
 
   }
   catch (const core::Exception& e)

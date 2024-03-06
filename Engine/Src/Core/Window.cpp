@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Core/Window.h"
+#include "Graphics/API/GraphicsAPI.h"
 
 namespace core {
 
@@ -10,6 +11,7 @@ namespace core {
   public:
     GLFWwindow* m_pGlfwWindow;
     int m_iWidth, m_iHeight;    
+    api::APIWindow* m_pAPIWindow;
   };    
 
   Window::Window(int _fWidth, int _fHeight, const char* _sTitle, ConstructKey&&)
@@ -32,21 +34,30 @@ namespace core {
       // TODO: [ERROR] Could not create GLFW window
     }
 
+    //api::APIWindow* pAPIWindow = ;
+    m_pImpl->m_pAPIWindow = api::CreateAPIWindow(m_pImpl->m_pGlfwWindow);
+
   }
 
   Window::~Window()
   {
-
+    api::DestroyAPIWindow(m_pImpl->m_pAPIWindow);
+    glfwDestroyWindow(m_pImpl->m_pGlfwWindow);
   }
 
   void Window::SetCurrent() const 
-  {
+  {        
     glfwMakeContextCurrent(m_pImpl->m_pGlfwWindow);
   }
 
   void Window::SwapBuffers() const 
   {
-    glfwSwapBuffers(m_pImpl->m_pGlfwWindow);
+    //glfwSwapBuffers(m_pImpl->m_pGlfwWindow);
+  }
+
+  void Window::Draw() const
+  {
+    api::DrawWindow(m_pImpl->m_pAPIWindow);
   }
 
   bool Window::ShouldClose() const 

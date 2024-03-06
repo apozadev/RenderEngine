@@ -2,28 +2,6 @@ cmake_minimum_required(VERSION 3.8)
 
 project(App VERSION 0.0.1 LANGUAGES CXX)
 
-file(GLOB_RECURSE VERTEXSHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Vertex/*.hlsl*")
-file(GLOB_RECURSE PIXELSHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Pixel/*.hlsl*")
-
-set_source_files_properties(VERTEXSHADER_FILES PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
-set_source_files_properties(PIXELSHADER_FILES PROPERTIES VS_SHADER_TYPE Pixel  VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
-
-set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_TYPE Pixel)
-set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT mainPS)
-set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_MODEL "5.0")
-set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_FLAGS $<1:/DFLAGS_ADDED>)
-set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
-
-set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_TYPE Vertex)
-set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT mainVS)
-set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_MODEL "5.0")
-set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_FLAGS $<1:/DFLAGS_ADDED>)
-set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
-set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SETTINGS "$<$<CONFIG:DEBUG>:SourceProperty1=SourceProperty1Value>")
-
-source_group("Shaders/Vertex" FILES ${VERTEXSHADER_FILES})
-source_group("Shaders/Pixel" FILES ${PIXELSHADER_FILES})
-
 set(
 	source_list
 	"Src/main.cpp"
@@ -47,5 +25,47 @@ target_link_libraries(App Vulkan::Vulkan)
 target_link_libraries(App Engine)
 target_link_libraries(App glfw ${GLFW_LIBRARIES})
 
+# Shader stuff
+
+if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
+  set(GLSL_COMPILER "$ENV{VULKAN_SDK}/Bin/glslc.exe")
+else()
+  set(GLSL_COMPILER "$ENV{VULKAN_SDK}/Bin32/glslc.exe")
+endif()
+
+file(GLOB_RECURSE SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/*")
+
+foreach(FILE ${SHADER_FILES})  
+  get_filename_component(FILE_NAME ${FILE} NAME_WE)  
+  get_filename_component(FILE_PATH ${FILE} PATH)  
+  file(RELATIVE_PATH RELATIVE_FILE ${CMAKE_SOURCE_DIR} ${FILE})
+  get_filename_component(RELATIVE_PATH ${RELATIVE_FILE} PATH)  
+  set(BINARY_PATH "${CMAKE_BINARY_DIR}/${RELATIVE_PATH}/")
+  set(SPIRV "${BINARY_PATH}${FILE_NAME}.spv")
+  add_custom_command(
+    OUTPUT ${SPIRV}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_PATH}
+    COMMAND ${GLSL_COMPILER} ${FILE} -o ${SPIRV}
+    DEPENDS ${FILE})
+  list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+  message(STATUS "compiling shader: ${FILE}")
+  message(STATUS "output file: ${SPIRV}")
+endforeach(FILE)
+
+add_custom_target(
+    Shaders 
+    DEPENDS ${SPIRV_BINARY_FILES}
+    )
+
+add_dependencies(${PROJECT_NAME} Shaders)
+
+#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders/"
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        "${PROJECT_BINARY_DIR}/shaders"
+#        "$<TARGET_FILE_DIR:YourMainTarget>/shaders"
+#        )
+
 set_target_properties(${PROJECT_NAME} PROPERTIES  
-    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/Assets")
+    CXX_STANDARD 17
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")

@@ -17,7 +17,10 @@ namespace core
 
     void SetCurrent() const;
     void SwapBuffers() const;
-    bool ShouldClose() const;
+
+    void Draw() const; 
+
+    bool ShouldClose() const;    
 
   private:        
     

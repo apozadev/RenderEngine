@@ -5,7 +5,7 @@
 #endif
 
 namespace api
-{
+{    
 
   void InitializeAPI()
   {
@@ -15,5 +15,21 @@ namespace api
   void ShutDownAPI()
   {
     RENDER_API::ShutDownAPI();
+  } 
+
+  APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
+  {    
+    return RENDER_API::CreateAPIWindow(_pGlfwWindow);
   }
+
+  void DrawWindow(APIWindow* _pWindow)
+  {
+    RENDER_API::DrawWindow(_pWindow);
+  }
+
+  void DestroyAPIWindow(APIWindow* _pWindow)
+  {
+    RENDER_API::DestroyAPIWindow(_pWindow);
+  }
+
 }

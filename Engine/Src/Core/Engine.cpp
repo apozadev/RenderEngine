@@ -44,7 +44,7 @@ namespace core
           {
             pWindow->SetCurrent();
 
-            // Render here!
+            pWindow->Draw();
 
             pWindow->SwapBuffers();
             core::WindowManager::GetInstance()->PollEvents();
