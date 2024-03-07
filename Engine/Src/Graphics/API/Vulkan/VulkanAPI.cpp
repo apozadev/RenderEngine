@@ -11,6 +11,7 @@
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
+#include "Graphics/API/Vulkan/VulkanException.h"
 #include "File/File.h"
 
 namespace api
@@ -40,11 +41,12 @@ namespace vk
   void CreateInstance()
   {
 
-#ifdef _DEBUG
     const char* pDebugLayers[] = { "VK_LAYER_KHRONOS_validation" };
+
+
+#ifdef _DEBUG
     uint32_t uLayerCount = 1u;
 #else
-    const char* pDebugLayers[] = {};
     uint32_t uLayerCount = 0u;
 #endif
 
@@ -837,7 +839,7 @@ namespace vk
     oPresentInfo.pImageIndices = &uImageIdx;
     oPresentInfo.pResults = NULL;
 
-    vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo);
+    VK_CHECK(vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo))
 
   }
 
