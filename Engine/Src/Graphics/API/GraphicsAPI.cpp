@@ -27,6 +27,11 @@ namespace api
     RENDER_API::DrawWindow(_pWindow);
   }
 
+  void OnWindowResize(APIWindow* _pWindow)
+  {
+    RENDER_API::OnWindowResize(_pWindow);
+  }
+
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
     RENDER_API::DestroyAPIWindow(_pWindow);

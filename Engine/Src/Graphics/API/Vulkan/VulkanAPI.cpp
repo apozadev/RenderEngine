@@ -8,31 +8,19 @@
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
 
+#include "Core/Exception.h"
+#include "Core/WindowManager.h"
+#include "Core/Window.h"
+
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
-#include "Graphics/API/Vulkan/VulkanException.h"
 #include "File/File.h"
 
 namespace api
 {
 namespace vk
 {
-
-  VKAPI_ATTR VkBool32 VKAPI_CALL DebugReportCallback(
-    VkDebugReportFlagsEXT       /*flags*/,
-    VkDebugReportObjectTypeEXT  /*objectType*/,
-    uint64_t                    /*object*/,
-    size_t                      /*location*/,
-    int32_t                     /*messageCode*/,
-    const char*                 /*pLayerPrefix*/,
-    const char* pMessage,
-    void*                       /*pUserData*/)
-  {
-    OutputDebugStringA(pMessage);
-    OutputDebugStringA("\n");
-    return VK_FALSE;
-  }
 
   VulkanData s_oGlobalData;
 
@@ -146,8 +134,6 @@ namespace vk
       THROW_GENERIC_EXCEPTION("[API] No device with graphics capabilities was found")
     }
   }
-
-
 
   void CreatePipeline(APIWindow* _pWindow)
   {
@@ -638,7 +624,7 @@ namespace vk
 
       VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &_pWindow->m_pSwapChainImageViews[i]))
     }
-  }
+  }  
 
   void CreateFramebuffers(APIWindow* _pWindow)
   {
@@ -768,6 +754,29 @@ namespace vk
     VK_CHECK(vkCreateFence(_pWindow->m_hDevice, &oFenceInfo, NULL, &_pWindow->m_hInFlightFence))
   }
 
+  void DestroySwapchain(APIWindow* _pWindow)
+  {
+    for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
+    {
+      vkDestroyFramebuffer(_pWindow->m_hDevice, _pWindow->m_pFramebuffers[i], NULL);
+      vkDestroyImageView(_pWindow->m_hDevice, _pWindow->m_pSwapChainImageViews[i], NULL);
+    }
+
+    vkDestroySwapchainKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, NULL);
+  }
+
+  void OnWindowResize(APIWindow* _pWindow)
+  {
+    _pWindow->m_bResized = true;
+  }
+
+  void RecreateSwapchain(APIWindow* _pWindow)
+  {
+    DestroySwapchain(_pWindow);
+    CreateSwapchain(_pWindow);
+    CreateFramebuffers(_pWindow);
+  }
+
   void InitializeAPI()
   {
     CreateInstance();
@@ -791,7 +800,7 @@ namespace vk
     CreatePipeline(pWindow);
     CreateFramebuffers(pWindow);
     CreateCommandBuffers(pWindow);    
-    CreateSyncObjects(pWindow);
+    CreateSyncObjects(pWindow);  
 
     return pWindow;
 
@@ -800,13 +809,24 @@ namespace vk
   void DrawWindow(APIWindow* _pWindow)
   {    
 
-    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
-
-    VK_CHECK(vkResetFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence))
+    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))    
 
     uint32_t uImageIdx;
 
-    VK_CHECK(vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &uImageIdx))
+    VkResult hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &uImageIdx);
+
+    if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
+    {
+      _pWindow->m_bResized = false;
+      RecreateSwapchain(_pWindow);
+      return;
+    }
+    else if (hResult != VK_SUCCESS)
+    {
+      VK_CHECK(hResult)
+    }
+
+    VK_CHECK(vkResetFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence))
 
     VK_CHECK(vkResetCommandBuffer(_pWindow->m_hRenderCmdBuffer, 0))
 
@@ -846,6 +866,8 @@ namespace vk
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
 
+    DestroySwapchain(_pWindow);
+
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hImageAvailableSemaphore, NULL);
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hRenderFinishedSemaphore, NULL);
 
@@ -856,15 +878,7 @@ namespace vk
     
     vkDestroyPipelineLayout(_pWindow->m_hDevice, _pWindow->m_hPipelineLayout, NULL);
 
-    vkDestroyRenderPass(_pWindow->m_hDevice, _pWindow->m_hRenderPass, NULL);  
-
-    for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
-    {
-      vkDestroyFramebuffer(_pWindow->m_hDevice, _pWindow->m_pFramebuffers[i], NULL);
-      vkDestroyImageView(_pWindow->m_hDevice, _pWindow->m_pSwapChainImageViews[i], NULL);
-    }
-
-    vkDestroySwapchainKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, NULL);
+    vkDestroyRenderPass(_pWindow->m_hDevice, _pWindow->m_hRenderPass, NULL);     
 
     vkDestroyDevice(_pWindow->m_hDevice, NULL);    
 

@@ -32,10 +32,17 @@ namespace core {
     if (!m_pImpl->m_pGlfwWindow)
     {
       // TODO: [ERROR] Could not create GLFW window
-    }
+    }        
 
     //api::APIWindow* pAPIWindow = ;
     m_pImpl->m_pAPIWindow = api::CreateAPIWindow(m_pImpl->m_pGlfwWindow);
+
+    glfwSetWindowUserPointer(m_pImpl->m_pGlfwWindow, static_cast<void*>(m_pImpl->m_pAPIWindow));
+    glfwSetFramebufferSizeCallback(m_pImpl->m_pGlfwWindow, [](GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
+      {
+        api::APIWindow* pAPIWindow = static_cast<api::APIWindow*>(glfwGetWindowUserPointer(_pGflwWindow));
+        api::OnWindowResize(pAPIWindow);
+      });
 
   }
 

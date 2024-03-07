@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vulkan/vulkan.h>
 
 namespace api
@@ -31,6 +33,8 @@ namespace vk {
     VkFence m_hInFlightFence;
 
     uint32_t m_uSwapchainImageCount;
+
+    bool m_bResized = false;
   };
 
 }

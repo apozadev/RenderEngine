@@ -1,3 +1,5 @@
+#pragma once
+
 #if _DEBUG
 
 #include "Graphics/API/Vulkan/VulkanException.h"

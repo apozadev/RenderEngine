@@ -24,7 +24,7 @@ namespace core
 
   private:        
     
-    Window(int _iWidth, int _iHeight, const char* _sTitle, ConstructKey&&);
+    Window(int _iWidth, int _iHeight, const char* _sTitle, ConstructKey&&);    
 
     class Impl;
     std::unique_ptr<Impl> m_pImpl;

@@ -20,7 +20,10 @@ namespace core
   Window* WindowManager::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle)
   {
     m_lstWindows.push_back(new Window(_iWidth, _iHeight, _sTitle, Window::ConstructKey()));
-    return m_lstWindows[m_lstWindows.size() - 1];    
+
+    Window* pWindow = m_lstWindows[m_lstWindows.size() - 1];   
+
+    return pWindow;
   }
   
   void WindowManager::Update()
