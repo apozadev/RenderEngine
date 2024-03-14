@@ -6,6 +6,9 @@ namespace api
 {
 namespace vk
 {
+
+  struct APIWindow;
+
   struct VulkanData
   {
 
@@ -47,6 +50,8 @@ namespace vk
     uint32_t m_uPresentQueueFamilyIdx;
 
     VkPhysicalDevice m_hPhysicalDevice;   
+
+    APIWindow* m_pUsingWindow = nullptr;
   };
 }
 }

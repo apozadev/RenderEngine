@@ -3,13 +3,13 @@ cmake_minimum_required(VERSION 3.8)
 project(Engine VERSION 0.0.1 LANGUAGES CXX)
 
 add_library(${PROJECT_NAME}
-	"Src/Core/Window.cpp"
-	"Include/Core/Window.h"	
+	"Src/Graphics/Window.cpp"
+	"Include/Graphics/Window.h"	
 	"Include/Core/Engine.h"
 	"Src/Core/Engine.cpp" 
-	"Include/Core/WindowManager.h" 
+	 
 	"Include/Core/Singleton.h" 
-	"Src/Core/WindowManager.cpp"
+	
 	"Include/Core/Timer.h" "Src/Core/Timer.cpp" 
 	"Include/Graphics/Renderer.h" 
 	"Include/Graphics/API/Vulkan/VulkanAPI.h"
@@ -22,7 +22,7 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/API/Vulkan/VulkanData.h" 
 	"Src/Graphics/API/GraphicsAPI.cpp" 
 	"Src/Graphics/Renderer.cpp" 
-	"Include/Graphics/API/Vulkan/APIWindow.h"  "Include/File/FileUtils.h" "Src/File/FileUtils.cpp"  "Include/File/File.h" "Src/File/File.cpp" "Include/Core/GlobalMacros.h")
+	"Include/Graphics/API/Vulkan/APIWindow.h"  "Include/File/FileUtils.h" "Src/File/FileUtils.cpp"  "Include/File/File.h" "Src/File/File.cpp" "Include/Core/GlobalMacros.h" "Include/Math/Vector3.h" "Include/Math/Vector2.h" "Include/Graphics/Mesh.h"  "Src/Graphics/Mesh.cpp" "Include/Graphics/API/Vulkan/APIMesh.h" "Include/Graphics/Vertex.h" "Include/Core/InputManager.h" "Src/Core/InputManager.cpp")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

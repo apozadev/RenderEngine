@@ -1,10 +1,13 @@
 #pragma once
 
+#include <vector>
+
 #include "Singleton.h"
 
-namespace core {
+class Window;
+class Mesh;
 
-  class Window;
+namespace core {  
 
   class Engine : public Singleton<Engine>
   {
@@ -12,6 +15,8 @@ namespace core {
     int Initialize();
     int Run();
     int ScheduleShutDown();
+
+    void AddMesh(Mesh* _pMesh);
 
   private:
 
@@ -23,5 +28,7 @@ namespace core {
     float m_fTargetFPS;
     float m_fGameTime;
     float m_fDt;
+
+    std::vector<Mesh*> m_lstMeshes;
   };
 }

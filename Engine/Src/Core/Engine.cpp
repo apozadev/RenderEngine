@@ -3,10 +3,11 @@
 #include <Windows.h>
 
 #include "Core/Engine.h"
-#include "Core/Window.h"
-#include "Core/WindowManager.h"
 #include "Core/Timer.h"
 #include "Core/Exception.h"
+#include "Core/InputManager.h"
+
+#include "Graphics/Window.h"
 #include "Graphics/Renderer.h"
 
 namespace core
@@ -14,11 +15,11 @@ namespace core
 
   int Engine::Initialize()
   {    
-    m_fTargetFPS = 60.f;
+    m_fTargetFPS = 60.f;    
 
     // Init subsystems
-    WindowManager::GetInstance()->Initialize();
     Renderer::GetInstance()->Initialize();
+    InputManager::GetInstance()->Initialize();
 
     return 0;
   }
@@ -33,22 +34,22 @@ namespace core
 
       while (m_bRunning)
       {
-        WindowManager::GetInstance()->Update();
         if (ShouldShutDown())
         {
           ScheduleShutDown();
         }
         else
         {
-          for (const core::Window* pWindow : WindowManager::GetInstance()->GetWindows())
+          InputManager::GetInstance()->PollEvents();
+
+          Renderer::GetInstance()->UpdateWindows();
+
+          for (Mesh* pMesh : m_lstMeshes)
           {
-            pWindow->SetCurrent();
-
-            pWindow->Draw();
-
-            pWindow->SwapBuffers();
-            core::WindowManager::GetInstance()->PollEvents();
+            Renderer::GetInstance()->SubmitMesh(pMesh);
           }
+
+          Renderer::GetInstance()->Draw();
         }
 
         long long ullElapsed = oTimer.Peek();
@@ -75,14 +76,19 @@ namespace core
 
   bool Engine::ShouldShutDown()
   {
-    return WindowManager::GetInstance()->GetWindows().size() == 0;
+    return Renderer::GetInstance()->GetWindows().size() == 0;
   }
 
   void Engine::ShutDown()
   {
-    // Shut down subsystems
-    WindowManager::GetInstance()->ShutDown();
+    // Shut down subsystems    
+    InputManager::GetInstance()->ShutDown();
     Renderer::GetInstance()->ShutDown();
+  }
+
+  void Engine::AddMesh(Mesh* _pMesh)
+  {
+    m_lstMeshes.push_back(_pMesh);
   }
 
 }

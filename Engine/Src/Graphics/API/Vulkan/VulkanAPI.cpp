@@ -9,12 +9,12 @@
 #include "GLFW/glfw3native.h"
 
 #include "Core/Exception.h"
-#include "Core/WindowManager.h"
-#include "Core/Window.h"
 
+#include "Graphics/Window.h"
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
+#include "Graphics/API/Vulkan/APIMesh.h"
 #include "File/File.h"
 
 namespace api
@@ -176,14 +176,17 @@ namespace vk
     aStages[1].module = hPSShaderModule;
     aStages[1].pName = "main";    
 
-    // Vertex input (empty)
+    // Vertex input
+
+    auto oBindingDesc = APIMesh::GetBindingDesc();
+    auto oAttDesc = APIMesh::GetAttributeDesc();
 
     VkPipelineVertexInputStateCreateInfo oVertexInputInfo{};
     oVertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    oVertexInputInfo.vertexBindingDescriptionCount = 0;
-    oVertexInputInfo.pVertexBindingDescriptions = NULL; // Optional
-    oVertexInputInfo.vertexAttributeDescriptionCount = 0;
-    oVertexInputInfo.pVertexAttributeDescriptions = NULL; // Optional
+    oVertexInputInfo.vertexBindingDescriptionCount = 1;
+    oVertexInputInfo.pVertexBindingDescriptions = &oBindingDesc;
+    oVertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(oAttDesc.size());
+    oVertexInputInfo.pVertexAttributeDescriptions = oAttDesc.data(); // Optional
 
     // Input assembly (triangle list)
 
@@ -706,38 +709,7 @@ namespace vk
     //    VK_CHECK(vkCreateFence(pWindow->m_hDevice, &fenceCreateInfo, NULL, &pWindow->m_pFences[i]))
     //  }
     //}
-  }
-
-  void RecordCommands(APIWindow* _pWindow, int _iFrameBufferIdx)
-  {
-    VkCommandBufferBeginInfo oCommandBufferBeginInfo{};
-    oCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    oCommandBufferBeginInfo.flags = 0u;
-    oCommandBufferBeginInfo.pInheritanceInfo = NULL;
-
-    VK_CHECK(vkBeginCommandBuffer(_pWindow->m_hRenderCmdBuffer, &oCommandBufferBeginInfo))
-
-    VkRenderPassBeginInfo oRenderPassBeginInfo{};
-    oRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    oRenderPassBeginInfo.renderPass = _pWindow->m_hRenderPass;
-    oRenderPassBeginInfo.framebuffer = _pWindow->m_pFramebuffers[_iFrameBufferIdx];
-    oRenderPassBeginInfo.renderArea.extent = _pWindow->m_oExtent;
-    oRenderPassBeginInfo.renderArea.offset = { 0,0 };
-    VkClearValue oClearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-    oRenderPassBeginInfo.pClearValues = &oClearColor;
-    oRenderPassBeginInfo.clearValueCount = 1u;
-
-    vkCmdBeginRenderPass(_pWindow->m_hRenderCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(_pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pWindow->m_hGraphicsPipeline);
-
-    vkCmdDraw(_pWindow->m_hRenderCmdBuffer, 3, 1, 0, 0);
-
-    vkCmdEndRenderPass(_pWindow->m_hRenderCmdBuffer);
-
-    VK_CHECK(vkEndCommandBuffer(_pWindow->m_hRenderCmdBuffer))
-
-  }
+  }  
 
   void CreateSyncObjects(APIWindow* _pWindow)
   {
@@ -763,6 +735,10 @@ namespace vk
     }
 
     vkDestroySwapchainKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, NULL);
+
+    delete[] _pWindow->m_pFramebuffers;
+    delete[] _pWindow->m_pSwapchainImages;
+    delete[] _pWindow->m_pSwapChainImageViews;
   }
 
   void OnWindowResize(APIWindow* _pWindow)
@@ -775,6 +751,55 @@ namespace vk
     DestroySwapchain(_pWindow);
     CreateSwapchain(_pWindow);
     CreateFramebuffers(_pWindow);
+  }
+
+  uint32_t FindMemoryType(uint32_t _uTypeFilter, VkMemoryPropertyFlags _uProperties)
+  {
+    VkPhysicalDeviceMemoryProperties oMemProperties;
+    vkGetPhysicalDeviceMemoryProperties(s_oGlobalData.m_hPhysicalDevice, &oMemProperties);
+
+    for (uint32_t i = 0; i < oMemProperties.memoryTypeCount; i++)
+    {
+      if ((_uTypeFilter & (1 << i))
+        && (oMemProperties.memoryTypes[i].propertyFlags & _uProperties) == _uProperties)
+      {
+        return i;
+      }
+    }
+
+    THROW_GENERIC_EXCEPTION("Failed to find suitable memory type")
+  }
+
+  void CreateVertexBuffer(APIMesh* _pMesh, void* _pData, size_t _uSize)
+  {
+
+    APIWindow* pWindow = _pMesh->m_pOwnerWindow;
+
+    VkBufferCreateInfo oBufferInfo{};
+    oBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    oBufferInfo.size = _uSize;
+    oBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    oBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    oBufferInfo.flags = 0u;
+
+    VK_CHECK(vkCreateBuffer(pWindow->m_hDevice, &oBufferInfo, NULL, &_pMesh->m_hVertexBuffer))
+
+    VkMemoryRequirements oMemRequirements;
+    vkGetBufferMemoryRequirements(pWindow->m_hDevice, _pMesh->m_hVertexBuffer, &oMemRequirements);
+
+    VkMemoryAllocateInfo oAllocInfo{};
+    oAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    oAllocInfo.allocationSize = oMemRequirements.size;
+    oAllocInfo.memoryTypeIndex = FindMemoryType(oMemRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    VK_CHECK(vkAllocateMemory(pWindow->m_hDevice, &oAllocInfo, NULL, &_pMesh->m_hVertexBufferMemory));
+
+    VK_CHECK(vkBindBufferMemory(pWindow->m_hDevice, _pMesh->m_hVertexBuffer, _pMesh->m_hVertexBufferMemory, 0))
+
+    void* pDeviceData;
+    VK_CHECK(vkMapMemory(pWindow->m_hDevice, _pMesh->m_hVertexBufferMemory, 0, oBufferInfo.size, 0, &pDeviceData))
+    memcpy(pDeviceData, _pData, oBufferInfo.size);
+    vkUnmapMemory(pWindow->m_hDevice, _pMesh->m_hVertexBufferMemory);
   }
 
   void InitializeAPI()
@@ -802,65 +827,18 @@ namespace vk
     CreateCommandBuffers(pWindow);    
     CreateSyncObjects(pWindow);  
 
+    if (s_oGlobalData.m_pUsingWindow == nullptr)
+    {
+      s_oGlobalData.m_pUsingWindow = pWindow;
+    }
+
     return pWindow;
 
-  }
+  }  
 
-  void DrawWindow(APIWindow* _pWindow)
-  {    
-
-    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))    
-
-    uint32_t uImageIdx;
-
-    VkResult hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &uImageIdx);
-
-    if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
-    {
-      _pWindow->m_bResized = false;
-      RecreateSwapchain(_pWindow);
-      return;
-    }
-    else if (hResult != VK_SUCCESS)
-    {
-      VK_CHECK(hResult)
-    }
-
-    VK_CHECK(vkResetFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence))
-
-    VK_CHECK(vkResetCommandBuffer(_pWindow->m_hRenderCmdBuffer, 0))
-
-    RecordCommands(_pWindow, uImageIdx);
-
-    VkSemaphore aWaitSemaphores[] = { _pWindow->m_hImageAvailableSemaphore };
-    VkPipelineStageFlags aWaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    VkSemaphore aSignalSemaphores[] = { _pWindow->m_hRenderFinishedSemaphore };
-
-    VkSubmitInfo oSubmitInfo{};
-    oSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;    
-    oSubmitInfo.waitSemaphoreCount = 1;
-    oSubmitInfo.pWaitSemaphores = aWaitSemaphores;
-    oSubmitInfo.pWaitDstStageMask = aWaitStages;
-    oSubmitInfo.commandBufferCount = 1u;
-    oSubmitInfo.pCommandBuffers = &_pWindow->m_hRenderCmdBuffer;    
-    oSubmitInfo.signalSemaphoreCount = 1u;
-    oSubmitInfo.pSignalSemaphores = aSignalSemaphores;
-
-    VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, _pWindow->m_hInFlightFence))
-
-    VkSwapchainKHR swapChains[] = { _pWindow->m_hSwapchain };
-
-    VkPresentInfoKHR oPresentInfo {};
-    oPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    oPresentInfo.waitSemaphoreCount = 1;
-    oPresentInfo.pWaitSemaphores = aSignalSemaphores;    
-    oPresentInfo.swapchainCount = 1;
-    oPresentInfo.pSwapchains = swapChains;
-    oPresentInfo.pImageIndices = &uImageIdx;
-    oPresentInfo.pResults = NULL;
-
-    VK_CHECK(vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo))
-
+  void SetUsingAPIWindow(APIWindow* _pWindow)
+  {
+    s_oGlobalData.m_pUsingWindow = _pWindow;
   }
 
   void DestroyAPIWindow(APIWindow* _pWindow)
@@ -880,12 +858,120 @@ namespace vk
 
     vkDestroyRenderPass(_pWindow->m_hDevice, _pWindow->m_hRenderPass, NULL);     
 
-    vkDestroyDevice(_pWindow->m_hDevice, NULL);    
+    vkDestroyDevice(_pWindow->m_hDevice, NULL);        
 
-    delete [] _pWindow->m_pFramebuffers;
-    delete [] _pWindow->m_pSwapchainImages;
-    delete [] _pWindow->m_pSwapChainImageViews;    
+  }
 
+  APIMesh* CreateAPIMesh(void* _pData, size_t _uSize)
+  {
+
+    APIMesh* pMesh = new APIMesh();
+
+    pMesh->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
+
+    CreateVertexBuffer(pMesh, _pData, _uSize);
+
+    return pMesh;
+  }
+
+  void DestroyAPIMesh(APIMesh* _pMesh)
+  {
+    vkDestroyBuffer(_pMesh->m_pOwnerWindow->m_hDevice, _pMesh->m_hVertexBuffer, NULL);
+    vkFreeMemory(_pMesh->m_pOwnerWindow->m_hDevice, _pMesh->m_hVertexBufferMemory, NULL);
+  }
+
+  int BeginDraw(APIWindow* _pWindow)
+  {
+
+    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+
+      VkResult hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &_pWindow->m_uNextSwapchainImageIdx);
+
+    if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
+    {
+      _pWindow->m_bResized = false;
+      RecreateSwapchain(_pWindow);
+      return 1;
+    }
+    else if (hResult != VK_SUCCESS)
+    {
+      VK_CHECK(hResult)
+    }
+
+    VK_CHECK(vkResetFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence))
+
+    VK_CHECK(vkResetCommandBuffer(_pWindow->m_hRenderCmdBuffer, 0))
+
+    VkCommandBufferBeginInfo oCommandBufferBeginInfo {};
+    oCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    oCommandBufferBeginInfo.flags = 0u;
+    oCommandBufferBeginInfo.pInheritanceInfo = NULL;
+
+    VK_CHECK(vkBeginCommandBuffer(_pWindow->m_hRenderCmdBuffer, &oCommandBufferBeginInfo))
+
+    VkRenderPassBeginInfo oRenderPassBeginInfo {};
+    oRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    oRenderPassBeginInfo.renderPass = _pWindow->m_hRenderPass;
+    oRenderPassBeginInfo.framebuffer = _pWindow->m_pFramebuffers[_pWindow->m_uNextSwapchainImageIdx];
+    oRenderPassBeginInfo.renderArea.extent = _pWindow->m_oExtent;
+    oRenderPassBeginInfo.renderArea.offset = { 0,0 };
+    VkClearValue oClearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+    oRenderPassBeginInfo.pClearValues = &oClearColor;
+    oRenderPassBeginInfo.clearValueCount = 1u;
+
+    vkCmdBeginRenderPass(_pWindow->m_hRenderCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(_pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pWindow->m_hGraphicsPipeline);
+
+    return 0;
+  }
+
+  void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount)
+  {
+
+    VkBuffer vertexBuffers[] = { _pMesh->m_hVertexBuffer };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(_pMesh->m_pOwnerWindow->m_hRenderCmdBuffer, 0, 1, vertexBuffers, offsets);
+
+    vkCmdDraw(_pMesh->m_pOwnerWindow->m_hRenderCmdBuffer, _uVertexCount, 1, 0, 0);
+
+  }
+
+  void EndDraw(APIWindow* _pWindow)
+  {    
+
+    vkCmdEndRenderPass(_pWindow->m_hRenderCmdBuffer);
+
+    VK_CHECK(vkEndCommandBuffer(_pWindow->m_hRenderCmdBuffer))
+
+    VkSemaphore aWaitSemaphores[] = { _pWindow->m_hImageAvailableSemaphore };
+    VkPipelineStageFlags aWaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    VkSemaphore aSignalSemaphores[] = { _pWindow->m_hRenderFinishedSemaphore };
+
+    VkSubmitInfo oSubmitInfo{};
+    oSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    oSubmitInfo.waitSemaphoreCount = 1;
+    oSubmitInfo.pWaitSemaphores = aWaitSemaphores;
+    oSubmitInfo.pWaitDstStageMask = aWaitStages;
+    oSubmitInfo.commandBufferCount = 1u;
+    oSubmitInfo.pCommandBuffers = &_pWindow->m_hRenderCmdBuffer;
+    oSubmitInfo.signalSemaphoreCount = 1u;
+    oSubmitInfo.pSignalSemaphores = aSignalSemaphores;
+
+    VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, _pWindow->m_hInFlightFence))
+
+      VkSwapchainKHR swapChains[] = { _pWindow->m_hSwapchain };
+
+    VkPresentInfoKHR oPresentInfo{};
+    oPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    oPresentInfo.waitSemaphoreCount = 1;
+    oPresentInfo.pWaitSemaphores = aSignalSemaphores;
+    oPresentInfo.swapchainCount = 1;
+    oPresentInfo.pSwapchains = swapChains;
+    oPresentInfo.pImageIndices = &_pWindow->m_uNextSwapchainImageIdx;
+    oPresentInfo.pResults = NULL;
+
+    VK_CHECK(vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo))
   }
 
 }

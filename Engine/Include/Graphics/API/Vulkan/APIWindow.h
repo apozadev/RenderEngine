@@ -34,6 +34,8 @@ namespace vk {
 
     uint32_t m_uSwapchainImageCount;
 
+    uint32_t m_uNextSwapchainImageIdx;
+
     bool m_bResized = false;
   };
 

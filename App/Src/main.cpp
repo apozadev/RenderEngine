@@ -3,8 +3,9 @@
 #include <Windows.h>
 
 #include "Core/Engine.h"
-#include "Core/WindowManager.h"
 #include "Core/Exception.h"
+#include "Graphics/Renderer.h"
+#include "Graphics/MEsh.h"
 
 int main(){
 
@@ -12,7 +13,18 @@ int main(){
   {
 
   core::Engine::GetInstance()->Initialize();
-  core::WindowManager::GetInstance()->CreateNewWindow(640, 420, "App");  
+  Window* pWindow = Renderer::GetInstance()->CreateNewWindow(640, 420, "App");  
+
+  std::vector<Vertex> lstVertices {
+    {{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+  };
+
+  Mesh* pMesh = Renderer::GetInstance()->CreateMesh(lstVertices, pWindow);
+  
+  core::Engine::GetInstance()->AddMesh(pMesh);
+
   core::Engine::GetInstance()->Run();
 
   }
