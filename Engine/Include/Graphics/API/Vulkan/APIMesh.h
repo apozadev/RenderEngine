@@ -16,9 +16,11 @@ namespace vk
   {
   public:
 
-    APIWindow* m_pOwnerWindow;
-    VkBuffer m_hVertexBuffer;
-    VkDeviceMemory m_hVertexBufferMemory;
+    APIWindow* m_pOwnerWindow;    
+    VkBuffer m_hVertexBuffer;    
+    VkDeviceMemory m_hVertexBufferMemory;    
+    VkBuffer m_hIndexBuffer;
+    VkDeviceMemory m_hIndexBufferMemory;
 
     static VkVertexInputBindingDescription GetBindingDesc()
     {

@@ -3,6 +3,8 @@
 #include "Graphics/Mesh.h"
 #include "Graphics/Window.h"
 
+#include "Math/Transform.h"
+
 #include "GLFW/glfw3.h"
 
 #include <algorithm>
@@ -42,9 +44,9 @@ void Renderer::SetUsingWindow(Window* _pWindow)
   _pWindow->SetUsing();
 }
 
-Mesh* Renderer::CreateMesh(std::vector<Vertex>& _lstVertices, Window* _pWindow)
+Mesh* Renderer::CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow)
 {
-  return new Mesh(_lstVertices, _pWindow, Mesh::ConstructKey());  
+  return new Mesh(_lstVertices, _lstIndices, _pWindow, Mesh::ConstructKey());
 }
 
 void Renderer::SubmitMesh(Mesh* _pMesh)
@@ -70,6 +72,8 @@ void Renderer::UpdateWindows()
   m_lstWindows.resize(uCurrSize);
 }
 
+Transform s_oTransform;
+
 void Renderer::Draw()
 {  
 
@@ -78,6 +82,8 @@ void Renderer::Draw()
   Window* pCurrWindow = nullptr;
 
   bool bSkipCurrWindow = false;
+
+  s_oTransform.Translate({0.01f, 0.f, 0.f});
 
   for (Job& rJob : m_lstJobs)
   {
@@ -93,7 +99,7 @@ void Renderer::Draw()
 
     if (!bSkipCurrWindow)
     {
-      rJob.m_pMesh->Draw();
+      rJob.m_pMesh->Draw(s_oTransform);
     }
   }
 

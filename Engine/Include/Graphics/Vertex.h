@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Math/Vector3.h"
-#include "Math/Vector2.h"
+#include "Graphics/PODTypes.h"
 
 struct Vertex
 {
-  Vector2 m_vPos;
-  Vector3 m_vColor;
+  pod::Vector2 m_vPos;
+  pod::Vector3 m_vColor;
 };

@@ -11,10 +11,12 @@ namespace api
   { 
     struct APIWindow; 
     struct APIMesh;
+    struct APIConstantBuffer;
   } 
 
   typedef struct RENDER_API::APIWindow APIWindow;
   typedef struct RENDER_API::APIMesh APIMesh;
+  typedef struct RENDER_API::APIConstantBuffer APIConstantBuffer;
 
   // Global
 
@@ -31,7 +33,15 @@ namespace api
 
   // Mesh
 
-  APIMesh* CreateAPIMesh(void* _pData, size_t _uSize);
+  APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize);
+  void DestroyAPIMesh(APIMesh* _pMesh);
+
+  // ConstantBuffer
+
+  APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize);
+  void UpdateAPIConstantBuffer(APIConstantBuffer* _pCbuffer, const void* _pData, size_t _uSize);
+  void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer);
+  void DestroyAPIConstantBuffer(APIConstantBuffer*_pCbuffer);
 
   // Drawing
 

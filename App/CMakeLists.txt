@@ -24,6 +24,7 @@ find_package(Vulkan REQUIRED)
 target_link_libraries(App Vulkan::Vulkan)
 target_link_libraries(App Engine)
 target_link_libraries(App glfw ${GLFW_LIBRARIES})
+target_link_libraries(App glm::glm)
 
 # Shader stuff
 

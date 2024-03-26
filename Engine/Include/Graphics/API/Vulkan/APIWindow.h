@@ -19,6 +19,7 @@ namespace vk {
     VkSurfaceKHR m_hSurface;
     VkSwapchainKHR m_hSwapchain;
     VkPipelineLayout m_hPipelineLayout;
+    VkDescriptorSetLayout m_hDescSetLayout;
     VkRenderPass m_hRenderPass;
     VkPipeline m_hGraphicsPipeline;
     VkImage* m_pSwapchainImages;
@@ -26,7 +27,7 @@ namespace vk {
     VkFramebuffer* m_pFramebuffers;
     VkExtent2D m_oExtent;    
     VkFormat m_eSwapchainFormat;
-    VkColorSpaceKHR m_eSwapchainColorSpace;
+    VkColorSpaceKHR m_eSwapchainColorSpace;    
 
     VkSemaphore m_hImageAvailableSemaphore;
     VkSemaphore m_hRenderFinishedSemaphore;
@@ -34,7 +35,7 @@ namespace vk {
 
     uint32_t m_uSwapchainImageCount;
 
-    uint32_t m_uNextSwapchainImageIdx;
+    uint32_t m_uCurrSwapchainImageIdx;
 
     bool m_bResized = false;
   };

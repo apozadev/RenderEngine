@@ -43,9 +43,36 @@ namespace api
 
   // Mesh
 
-  APIMesh* CreateAPIMesh(void* _pData, size_t _uSize)
+  APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize)
   {
-    return RENDER_API::CreateAPIMesh(_pData, _uSize);
+    return RENDER_API::CreateAPIMesh(_pVertexData, _uVertexDataSize, _pIndexData, _uIndexDataSize);
+  }
+
+  void DestroyAPIMesh(APIMesh* _pMesh)
+  {
+    RENDER_API::DestroyAPIMesh(_pMesh);
+  }
+
+  // ConstantBuffer
+
+  APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
+  {
+    return RENDER_API::CreateAPIConstantBuffer(_uSize);
+  }
+
+  void UpdateAPIConstantBuffer(APIConstantBuffer* _pCbuffer, const void* _pData, size_t _uSize)
+  {
+    RENDER_API::UpdateAPIConstanBuffer(_pCbuffer, _pData, _uSize);
+  }
+
+  void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
+  {
+    RENDER_API::BindAPIConstantBuffer(_pCbuffer);
+  }
+
+  void DestroyAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
+  {
+    RENDER_API::DestroyAPIConstanBuffer(_pCbuffer);
   }
 
   // Drawing

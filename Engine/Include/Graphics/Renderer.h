@@ -28,7 +28,7 @@ public:
   const std::vector<Window*>& GetWindows() { return m_lstWindows; }
   void SetUsingWindow(Window* _pWindow);
 
-  Mesh* CreateMesh(std::vector<Vertex>& _lstVertices, Window* _pWindow);
+  Mesh* CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow);
 
   void SubmitMesh(Mesh* _pMesh);
 

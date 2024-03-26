@@ -4,7 +4,7 @@
 
 #include "Graphics/API/Vulkan/VulkanException.h"
 
-#define VK_CHECK(expr) { VkResult hResult = expr; if(hResult != VK_SUCCESS){ throw api::vk::VulkanException(__LINE__,__FILE__, hResult);}}
+#define VK_CHECK(expr) { VkResult __hResult = expr; if(__hResult != VK_SUCCESS){ throw api::vk::VulkanException(__LINE__,__FILE__, __hResult);}}
 
 #else
 

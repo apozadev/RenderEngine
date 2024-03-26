@@ -16,12 +16,18 @@ int main(){
   Window* pWindow = Renderer::GetInstance()->CreateNewWindow(640, 420, "App");  
 
   std::vector<Vertex> lstVertices {
-    {{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
     {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
   };
 
-  Mesh* pMesh = Renderer::GetInstance()->CreateMesh(lstVertices, pWindow);
+  std::vector<uint16_t> lstIndices{
+    0,1,2,
+    2,3,0
+  };
+
+  Mesh* pMesh = Renderer::GetInstance()->CreateMesh(lstVertices, lstIndices, pWindow);
   
   core::Engine::GetInstance()->AddMesh(pMesh);
 

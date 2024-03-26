@@ -15,6 +15,7 @@
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
 #include "Graphics/API/Vulkan/APIMesh.h"
+#include "Graphics/API/Vulkan/APIConstantBuffer.h"
 #include "File/File.h"
 
 namespace api
@@ -303,10 +304,24 @@ namespace vk
 
     // Pipeline layout (uniforms)     
 
+    VkDescriptorSetLayoutBinding oUboLayoutBinding{};
+    oUboLayoutBinding.binding = 0;
+    oUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    oUboLayoutBinding.descriptorCount = 1;
+    oUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    oUboLayoutBinding.pImmutableSamplers = NULL;
+
+    VkDescriptorSetLayoutCreateInfo oDescSetLayoutInfo {};
+    oDescSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    oDescSetLayoutInfo.bindingCount = 1u;
+    oDescSetLayoutInfo.pBindings = &oUboLayoutBinding;
+
+    VK_CHECK(vkCreateDescriptorSetLayout(_pWindow->m_hDevice, &oDescSetLayoutInfo, NULL, &_pWindow->m_hDescSetLayout))
+
     VkPipelineLayoutCreateInfo oPipelineLayoutCreateInfo {};
     oPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    oPipelineLayoutCreateInfo.setLayoutCount = 0u;
-    oPipelineLayoutCreateInfo.pSetLayouts = NULL;
+    oPipelineLayoutCreateInfo.setLayoutCount = 1u;
+    oPipelineLayoutCreateInfo.pSetLayouts = &_pWindow->m_hDescSetLayout;
     oPipelineLayoutCreateInfo.pushConstantRangeCount = 0u;
     oPipelineLayoutCreateInfo.pPushConstantRanges = NULL;
 
@@ -770,36 +785,82 @@ namespace vk
     THROW_GENERIC_EXCEPTION("Failed to find suitable memory type")
   }
 
-  void CreateVertexBuffer(APIMesh* _pMesh, void* _pData, size_t _uSize)
+  void CreateBuffer(APIWindow* _pWindow, size_t _uSize, VkBufferUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkBuffer& hBuffer_, VkDeviceMemory& hDeviceMemory_)
   {
 
-    APIWindow* pWindow = _pMesh->m_pOwnerWindow;
+    VkDevice hDevice = _pWindow->m_hDevice;
 
     VkBufferCreateInfo oBufferInfo{};
     oBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     oBufferInfo.size = _uSize;
-    oBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    oBufferInfo.usage = _uUsage;
     oBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     oBufferInfo.flags = 0u;
 
-    VK_CHECK(vkCreateBuffer(pWindow->m_hDevice, &oBufferInfo, NULL, &_pMesh->m_hVertexBuffer))
+    VK_CHECK(vkCreateBuffer(hDevice, &oBufferInfo, NULL, &hBuffer_))
 
     VkMemoryRequirements oMemRequirements;
-    vkGetBufferMemoryRequirements(pWindow->m_hDevice, _pMesh->m_hVertexBuffer, &oMemRequirements);
+    vkGetBufferMemoryRequirements(hDevice, hBuffer_, &oMemRequirements);
 
     VkMemoryAllocateInfo oAllocInfo{};
     oAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     oAllocInfo.allocationSize = oMemRequirements.size;
-    oAllocInfo.memoryTypeIndex = FindMemoryType(oMemRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    oAllocInfo.memoryTypeIndex = FindMemoryType(oMemRequirements.memoryTypeBits, _uProperties);
 
-    VK_CHECK(vkAllocateMemory(pWindow->m_hDevice, &oAllocInfo, NULL, &_pMesh->m_hVertexBufferMemory));
+    VK_CHECK(vkAllocateMemory(hDevice, &oAllocInfo, NULL, &hDeviceMemory_));
 
-    VK_CHECK(vkBindBufferMemory(pWindow->m_hDevice, _pMesh->m_hVertexBuffer, _pMesh->m_hVertexBufferMemory, 0))
+    VK_CHECK(vkBindBufferMemory(hDevice, hBuffer_, hDeviceMemory_, 0))    
+  }
 
+  void DestroyBuffer(APIWindow* _pWindow, VkBuffer _hBuffer, VkDeviceMemory _hDeviceMemory_)
+  {
+    vkDestroyBuffer(_pWindow->m_hDevice, _hBuffer, NULL);
+    vkFreeMemory(_pWindow->m_hDevice, _hDeviceMemory_, NULL);
+  }
+
+  void SetBufferData(APIWindow* _pWindow, void* _pData, size_t _uSize, VkDeviceMemory& hDeviceMemory_)
+  {
+    VkDevice hDevice = _pWindow->m_hDevice;
     void* pDeviceData;
-    VK_CHECK(vkMapMemory(pWindow->m_hDevice, _pMesh->m_hVertexBufferMemory, 0, oBufferInfo.size, 0, &pDeviceData))
-    memcpy(pDeviceData, _pData, oBufferInfo.size);
-    vkUnmapMemory(pWindow->m_hDevice, _pMesh->m_hVertexBufferMemory);
+    VK_CHECK(vkMapMemory(hDevice, hDeviceMemory_, 0, _uSize, 0, &pDeviceData))
+    memcpy(pDeviceData, _pData, _uSize);
+    vkUnmapMemory(hDevice, hDeviceMemory_);
+  }
+
+  void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize)
+  {
+    VkCommandBufferAllocateInfo oAllocInfo{};
+    oAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    oAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    oAllocInfo.commandPool = _pWindow->m_hRenderCmdPool;
+    oAllocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer hCommandBuffer;
+    VK_CHECK(vkAllocateCommandBuffers(_pWindow->m_hDevice, &oAllocInfo, &hCommandBuffer))
+
+    VkCommandBufferBeginInfo oBeginInfo{};
+    oBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    oBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    VK_CHECK(vkBeginCommandBuffer(hCommandBuffer, &oBeginInfo))
+
+    VkBufferCopy oCopyRegion{};
+    oCopyRegion.srcOffset = 0; // Optional
+    oCopyRegion.dstOffset = 0; // Optional
+    oCopyRegion.size = _uSize;
+    vkCmdCopyBuffer(hCommandBuffer, _hSrcBuffer, _hDstBuffer, 1, &oCopyRegion);
+
+    VK_CHECK(vkEndCommandBuffer(hCommandBuffer))
+
+    VkSubmitInfo oSubmitInfo{};
+    oSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    oSubmitInfo.commandBufferCount = 1;
+    oSubmitInfo.pCommandBuffers = &hCommandBuffer;
+
+    VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, VK_NULL_HANDLE))
+    VK_CHECK(vkQueueWaitIdle(_pWindow->m_hRenderQueue))
+
+    vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, 1u, &hCommandBuffer);
   }
 
   void InitializeAPI()
@@ -827,7 +888,7 @@ namespace vk
     CreateCommandBuffers(pWindow);    
     CreateSyncObjects(pWindow);  
 
-    if (s_oGlobalData.m_pUsingWindow == nullptr)
+    if (s_oGlobalData.m_pUsingWindow == NULL)
     {
       s_oGlobalData.m_pUsingWindow = pWindow;
     }
@@ -853,6 +914,8 @@ namespace vk
 
     vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, NULL);
     vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hPresentCmdPool, NULL);
+
+    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hDescSetLayout, NULL);
     
     vkDestroyPipelineLayout(_pWindow->m_hDevice, _pWindow->m_hPipelineLayout, NULL);
 
@@ -862,22 +925,189 @@ namespace vk
 
   }
 
-  APIMesh* CreateAPIMesh(void* _pData, size_t _uSize)
+  APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize)
   {
-
     APIMesh* pMesh = new APIMesh();
 
     pMesh->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
 
-    CreateVertexBuffer(pMesh, _pData, _uSize);
+
+    // Create vertex buffer
+    {
+      VkBuffer hStagingBuffer;
+      VkDeviceMemory hStagingBufferMemory;
+
+      VkMemoryPropertyFlags uProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+      VkBufferUsageFlags uUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+      CreateBuffer(pMesh->m_pOwnerWindow, _uVertexDataSize, uUsage, uProperties, hStagingBuffer, hStagingBufferMemory);
+      SetBufferData(pMesh->m_pOwnerWindow, _pVertexData, _uVertexDataSize, hStagingBufferMemory);
+
+      uProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+      uUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+      CreateBuffer(pMesh->m_pOwnerWindow, _uVertexDataSize, uUsage, uProperties, pMesh->m_hVertexBuffer, pMesh->m_hVertexBufferMemory);
+
+      CopyBuffer(pMesh->m_pOwnerWindow, hStagingBuffer, pMesh->m_hVertexBuffer, _uVertexDataSize);
+
+      vkDestroyBuffer(pMesh->m_pOwnerWindow->m_hDevice, hStagingBuffer, NULL);
+      vkFreeMemory(pMesh->m_pOwnerWindow->m_hDevice, hStagingBufferMemory, NULL);
+    }
+
+    // Create index buffer
+    {
+      VkBuffer hStagingBuffer;
+      VkDeviceMemory hStagingBufferMemory;
+
+      VkMemoryPropertyFlags uProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+      VkBufferUsageFlags uUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+      CreateBuffer(pMesh->m_pOwnerWindow, _uIndexDataSize, uUsage, uProperties, hStagingBuffer, hStagingBufferMemory);
+      SetBufferData(pMesh->m_pOwnerWindow, _pIndexData, _uIndexDataSize, hStagingBufferMemory);
+
+      uProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+      uUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+      CreateBuffer(pMesh->m_pOwnerWindow, _uIndexDataSize, uUsage, uProperties, pMesh->m_hIndexBuffer, pMesh->m_hIndexBufferMemory);
+
+      CopyBuffer(pMesh->m_pOwnerWindow, hStagingBuffer, pMesh->m_hIndexBuffer, _uIndexDataSize);
+
+      vkDestroyBuffer(pMesh->m_pOwnerWindow->m_hDevice, hStagingBuffer, NULL);
+      vkFreeMemory(pMesh->m_pOwnerWindow->m_hDevice, hStagingBufferMemory, NULL);
+    }
 
     return pMesh;
   }
 
   void DestroyAPIMesh(APIMesh* _pMesh)
   {
-    vkDestroyBuffer(_pMesh->m_pOwnerWindow->m_hDevice, _pMesh->m_hVertexBuffer, NULL);
-    vkFreeMemory(_pMesh->m_pOwnerWindow->m_hDevice, _pMesh->m_hVertexBufferMemory, NULL);
+    DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hVertexBuffer, _pMesh->m_hVertexBufferMemory);
+  }
+
+  APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
+  {
+    APIConstantBuffer* pCBuffer = new APIConstantBuffer();
+
+    pCBuffer->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
+
+    VkDevice& hDevice = pCBuffer->m_pOwnerWindow->m_hDevice;
+    
+    const uint32_t uNumImages = pCBuffer->m_pOwnerWindow->m_uSwapchainImageCount;
+
+    // Create buffers
+
+    pCBuffer->m_pUniformBuffers = new VkBuffer[uNumImages];
+    pCBuffer->m_pUniformBuffersMemory = new VkDeviceMemory[uNumImages];
+    pCBuffer->m_pUniformBuffersMapped = new void*[uNumImages];
+
+    for (uint32_t i = 0; i < uNumImages; i++)
+    {
+      CreateBuffer(pCBuffer->m_pOwnerWindow, _uSize,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        pCBuffer->m_pUniformBuffers[i],
+        pCBuffer->m_pUniformBuffersMemory[i]);
+
+      VK_CHECK(vkMapMemory(hDevice, pCBuffer->m_pUniformBuffersMemory[i], 0u, _uSize, 0u, &pCBuffer->m_pUniformBuffersMapped[i]))
+    }
+
+    // Create descriptor pool
+
+    VkDescriptorPoolSize oDescPoolSize{};
+    oDescPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    oDescPoolSize.descriptorCount = uNumImages;
+
+    VkDescriptorPoolCreateInfo oDescPoolInfo {};
+    oDescPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    oDescPoolInfo.flags = 0;
+    oDescPoolInfo.poolSizeCount = 1;
+    oDescPoolInfo.pPoolSizes = &oDescPoolSize;
+    oDescPoolInfo.maxSets = uNumImages;
+
+    VK_CHECK(vkCreateDescriptorPool(hDevice, &oDescPoolInfo, NULL, &pCBuffer->m_hDescPool))
+
+    // Allocate descriptor sets
+
+    VkDescriptorSetLayout* pLayouts = new VkDescriptorSetLayout[uNumImages];
+    for (int i = 0; i < uNumImages; i++)
+    {
+      pLayouts[i] = pCBuffer->m_pOwnerWindow->m_hDescSetLayout;
+    }
+
+    pCBuffer->m_pDescSets = new VkDescriptorSet[uNumImages];
+
+    VkDescriptorSetAllocateInfo oDescSetAllocInfo {};
+    oDescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    oDescSetAllocInfo.descriptorPool = pCBuffer->m_hDescPool;
+    oDescSetAllocInfo.descriptorSetCount = uNumImages;
+    oDescSetAllocInfo.pSetLayouts = pLayouts;
+
+    VK_CHECK(vkAllocateDescriptorSets(hDevice, &oDescSetAllocInfo, pCBuffer->m_pDescSets ))
+
+    // Configure descriptor sets
+
+    for (int i = 0; i < uNumImages; i++)
+    {
+      VkDescriptorBufferInfo oBufferInfo{};
+      oBufferInfo.buffer = pCBuffer->m_pUniformBuffers[i];
+      oBufferInfo.offset = 0;
+      oBufferInfo.range = _uSize;
+
+      VkWriteDescriptorSet oWriteDescSet{};
+      oWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      oWriteDescSet.dstSet = pCBuffer->m_pDescSets[i];
+      oWriteDescSet.dstBinding = 0;
+      oWriteDescSet.dstArrayElement = 0;
+      oWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      oWriteDescSet.descriptorCount = 1;
+      oWriteDescSet.pBufferInfo = &oBufferInfo;
+      oWriteDescSet.pImageInfo = NULL;
+      oWriteDescSet.pTexelBufferView = NULL;
+
+      vkUpdateDescriptorSets(hDevice, 1, &oWriteDescSet, 0, nullptr);
+    }
+
+    delete[] pLayouts;
+
+    return pCBuffer;
+  }
+
+  void UpdateAPIConstanBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize)
+  {
+    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;
+
+    uint32_t uCurrImageIdx = pWindow->m_uCurrSwapchainImageIdx;
+
+    memcpy(_pCBuffer->m_pUniformBuffersMapped[uCurrImageIdx], _pData, _uSize);
+  }
+
+  void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
+  {
+    APIWindow* pWindow = _pCbuffer->m_pOwnerWindow;    
+    uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
+    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pWindow->m_hPipelineLayout, 0, 1, &_pCbuffer->m_pDescSets[uImageIdx], 0, NULL);
+  }
+
+  void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer)
+  {
+
+    const uint32_t uNumImages = _pCBuffer->m_pOwnerWindow->m_uSwapchainImageCount;
+
+    VkDevice& hDevice = _pCBuffer->m_pOwnerWindow->m_hDevice;
+
+    for (uint32_t i = 0; i < uNumImages; i++)
+    {
+      vkUnmapMemory(hDevice, _pCBuffer->m_pUniformBuffersMemory[i]);
+      DestroyBuffer(_pCBuffer->m_pOwnerWindow, _pCBuffer->m_pUniformBuffers[i], _pCBuffer->m_pUniformBuffersMemory[i]);
+    }
+
+    delete[] _pCBuffer->m_pDescSets;
+
+    vkDestroyDescriptorPool(hDevice, _pCBuffer->m_hDescPool, nullptr);    
+
+    delete[] _pCBuffer->m_pUniformBuffers;
+    delete[] _pCBuffer->m_pUniformBuffersMemory;
+    delete[] _pCBuffer->m_pUniformBuffersMapped;
   }
 
   int BeginDraw(APIWindow* _pWindow)
@@ -885,7 +1115,7 @@ namespace vk
 
     VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
 
-      VkResult hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &_pWindow->m_uNextSwapchainImageIdx);
+    VkResult hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &_pWindow->m_uCurrSwapchainImageIdx);
 
     if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
     {
@@ -912,7 +1142,7 @@ namespace vk
     VkRenderPassBeginInfo oRenderPassBeginInfo {};
     oRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     oRenderPassBeginInfo.renderPass = _pWindow->m_hRenderPass;
-    oRenderPassBeginInfo.framebuffer = _pWindow->m_pFramebuffers[_pWindow->m_uNextSwapchainImageIdx];
+    oRenderPassBeginInfo.framebuffer = _pWindow->m_pFramebuffers[_pWindow->m_uCurrSwapchainImageIdx];
     oRenderPassBeginInfo.renderArea.extent = _pWindow->m_oExtent;
     oRenderPassBeginInfo.renderArea.offset = { 0,0 };
     VkClearValue oClearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
@@ -926,14 +1156,18 @@ namespace vk
     return 0;
   }
 
-  void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount)
+  void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount)
   {
 
-    VkBuffer vertexBuffers[] = { _pMesh->m_hVertexBuffer };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(_pMesh->m_pOwnerWindow->m_hRenderCmdBuffer, 0, 1, vertexBuffers, offsets);
+    VkCommandBuffer& hCmdBuffer = _pMesh->m_pOwnerWindow->m_hRenderCmdBuffer;
 
-    vkCmdDraw(_pMesh->m_pOwnerWindow->m_hRenderCmdBuffer, _uVertexCount, 1, 0, 0);
+    VkBuffer vertexBuffers[] = { _pMesh->m_hVertexBuffer };
+    VkDeviceSize offsets[] = { 0u };
+    vkCmdBindVertexBuffers(hCmdBuffer, 0u, 1u, vertexBuffers, offsets);
+
+    vkCmdBindIndexBuffer(hCmdBuffer, _pMesh->m_hIndexBuffer, 0u, VK_INDEX_TYPE_UINT16);
+
+    vkCmdDrawIndexed(hCmdBuffer, _uIndexCount, 1u, 0u, 0u, 0u);
 
   }
 
@@ -960,7 +1194,7 @@ namespace vk
 
     VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, _pWindow->m_hInFlightFence))
 
-      VkSwapchainKHR swapChains[] = { _pWindow->m_hSwapchain };
+    VkSwapchainKHR swapChains[] = { _pWindow->m_hSwapchain };
 
     VkPresentInfoKHR oPresentInfo{};
     oPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -968,7 +1202,7 @@ namespace vk
     oPresentInfo.pWaitSemaphores = aSignalSemaphores;
     oPresentInfo.swapchainCount = 1;
     oPresentInfo.pSwapchains = swapChains;
-    oPresentInfo.pImageIndices = &_pWindow->m_uNextSwapchainImageIdx;
+    oPresentInfo.pImageIndices = &_pWindow->m_uCurrSwapchainImageIdx;
     oPresentInfo.pResults = NULL;
 
     VK_CHECK(vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo))
