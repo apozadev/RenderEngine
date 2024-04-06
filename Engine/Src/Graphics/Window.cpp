@@ -6,6 +6,8 @@
 #include "Graphics/Window.h"
 #include "Graphics/API/GraphicsAPI.h"
 
+uint8_t s_uCurrId = 0u;
+
 class Window::Impl
 {
 public:
@@ -13,46 +15,51 @@ public:
   int m_iWidth, m_iHeight;    
   api::APIWindow* m_pAPIWindow;
   uint8_t m_uId;
-};    
 
-uint8_t s_uCurrId = 0u;
-
-Window::Window(int _fWidth, int _fHeight, const char* _sTitle, ConstructKey&&)
-{
-  m_pImpl = std::make_unique<Impl>();
-
-  m_pImpl->m_pGlfwWindow = nullptr;
-  m_pImpl->m_iWidth = _fWidth;
-  m_pImpl->m_iHeight = _fHeight;
-  m_pImpl->m_uId = s_uCurrId++;  
-
-  if (!glfwInit())
+  Impl(int _fWidth, int _fHeight, const char* _sTitle)
   {
-    THROW_GENERIC_EXCEPTION("Could not initialize GLFW")
-    return;
+    m_pGlfwWindow = nullptr;
+    m_iWidth = _fWidth;
+    m_iHeight = _fHeight;
+    m_uId = s_uCurrId++;
+
+    if (!glfwInit())
+    {
+      THROW_GENERIC_EXCEPTION("Could not initialize GLFW")
+        return;
+    }
+
+    m_pGlfwWindow = glfwCreateWindow(_fWidth, _fHeight, _sTitle, NULL, NULL);
+
+    if (!m_pGlfwWindow)
+    {
+      THROW_GENERIC_EXCEPTION("Could not create GLFW window")
+    }
+
+    m_pAPIWindow = api::CreateAPIWindow(m_pGlfwWindow);
+
+    glfwSetWindowUserPointer(m_pGlfwWindow, static_cast<void*>(m_pAPIWindow));
+    glfwSetFramebufferSizeCallback(m_pGlfwWindow, [](GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
+      {
+        api::APIWindow* pAPIWindow = static_cast<api::APIWindow*>(glfwGetWindowUserPointer(_pGflwWindow));
+        api::OnWindowResize(pAPIWindow);
+      });
   }
 
-  m_pImpl->m_pGlfwWindow = glfwCreateWindow(_fWidth, _fHeight, _sTitle, NULL, NULL);
-  if (!m_pImpl->m_pGlfwWindow)
+  ~Impl()
   {
-    THROW_GENERIC_EXCEPTION("Could not create GLFW window")
-  }        
+    api::DestroyAPIWindow(m_pAPIWindow);
+    glfwDestroyWindow(m_pGlfwWindow);
+  }
+};    
 
-  m_pImpl->m_pAPIWindow = api::CreateAPIWindow(m_pImpl->m_pGlfwWindow);
-
-  glfwSetWindowUserPointer(m_pImpl->m_pGlfwWindow, static_cast<void*>(m_pImpl->m_pAPIWindow));
-  glfwSetFramebufferSizeCallback(m_pImpl->m_pGlfwWindow, [](GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
-    {
-      api::APIWindow* pAPIWindow = static_cast<api::APIWindow*>(glfwGetWindowUserPointer(_pGflwWindow));
-      api::OnWindowResize(pAPIWindow);
-    });
-
+Window::Window(int _fWidth, int _fHeight, const char* _sTitle, ConstructKey&&)
+{ 
+  m_pImpl = std::make_unique<Impl>(_fWidth, _fHeight, _sTitle);    
 }
 
 Window::~Window()
-{
-  api::DestroyAPIWindow(m_pImpl->m_pAPIWindow);
-  glfwDestroyWindow(m_pImpl->m_pGlfwWindow);
+{  
 }
 
 uint8_t Window::GetId() const

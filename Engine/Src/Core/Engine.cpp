@@ -1,3 +1,5 @@
+#pragma once
+
 #include <thread>
 
 #include <Windows.h>
@@ -24,6 +26,12 @@ namespace core
     return 0;
   }
 
+  Scene* Engine::CreateScene(Window* _pWindow)
+  {
+    m_lstScenes.push_back({Scene(), _pWindow});
+    return &m_lstScenes[m_lstScenes.size()-1].m_oScene;
+  }
+
   int Engine::Run()
   {
 
@@ -40,16 +48,16 @@ namespace core
         }
         else
         {
-          InputManager::GetInstance()->PollEvents();
+          InputManager::GetInstance()->PollEvents();          
 
-          Renderer::GetInstance()->UpdateWindows();
-
-          for (Mesh* pMesh : m_lstMeshes)
+          for (SceneWindowPair& rSceneWindow : m_lstScenes)
           {
-            Renderer::GetInstance()->SubmitMesh(pMesh);
+            rSceneWindow.m_oScene.Update(m_fDt);
           }
 
           Renderer::GetInstance()->Draw();
+
+          Renderer::GetInstance()->UpdateWindows();
         }
 
         long long ullElapsed = oTimer.Peek();

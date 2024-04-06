@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 class ConstantBufferBase
 {
 public:
@@ -7,16 +9,18 @@ public:
   ConstantBufferBase(size_t _uSize);
   ~ConstantBufferBase();
 
-  void Bind(const void* _pData, size_t _uSize) const;
+  void Update(const void* _pData, size_t _uSize) const;
+
+  void Bind() const;
 
 private:
 
   class Impl;
-  Impl* m_pImpl;
+  std::unique_ptr<Impl> m_pImpl;
 };
 
 template <typename T>
-class ConstantBuffer : ConstantBufferBase
+class ConstantBuffer :public ConstantBufferBase
 {  
 public:
 
@@ -31,9 +35,14 @@ public:
     return &m_oData;
   }
 
-  void Bind() const
+  void SetData(T* _pData)
   {
-    ConstantBufferBase::Bind(&m_oData, sizeof(T));
+    m_oData = *_pData
+  }
+
+  void Update() const
+  {
+    ConstantBufferBase::Update(&m_oData, sizeof(T));
   }
 
 private:

@@ -4,19 +4,31 @@
 
 #include "Singleton.h"
 
-class Window;
-class Mesh;
+#include "Core/Scene.h"
 
-namespace core {  
+class Mesh;
+class Window;
+
+namespace core {    
 
   class Engine : public Singleton<Engine>
   {
+    struct SceneWindowPair
+    {
+      Scene m_oScene;
+      Window* m_pWindow;
+    };
+
   public:
     int Initialize();
     int Run();
     int ScheduleShutDown();
 
     void AddMesh(Mesh* _pMesh);
+
+    Scene* CreateScene(Window* _pWindow);
+
+    bool IsRunning() { return m_bRunning; }
 
   private:
 
@@ -30,5 +42,7 @@ namespace core {
     float m_fDt;
 
     std::vector<Mesh*> m_lstMeshes;
+
+    std::vector<SceneWindowPair> m_lstScenes;
   };
 }

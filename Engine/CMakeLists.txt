@@ -38,7 +38,7 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/ConstantBuffer.h" 
 	"Src/Graphics/ConstantBuffer.cpp" 
 	"Include/Components/ModelComponent.h"
-	"Include/Math/Transform.h" )
+	"Include/Math/Transform.h"  "Include/Core/Entity.h" "Include/Core/Component.h" "Include/Core/Scene.h" "Src/Core/Scene.cpp" "Include/Math/Utils.h" "Src/Components/ModelComponent.cpp" "Src/Core/Entity.cpp" "Src/Math/Transform.cpp")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

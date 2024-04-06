@@ -5,7 +5,8 @@
 #include "Core/Engine.h"
 #include "Core/Exception.h"
 #include "Graphics/Renderer.h"
-#include "Graphics/MEsh.h"
+#include "Graphics/Mesh.h"
+#include "Components/ModelComponent.h"
 
 int main(){
 
@@ -14,6 +15,10 @@ int main(){
 
   core::Engine::GetInstance()->Initialize();
   Window* pWindow = Renderer::GetInstance()->CreateNewWindow(640, 420, "App");  
+
+  Scene* pScene = core::Engine::GetInstance()->CreateScene(pWindow);
+
+  Entity* pEntity = pScene->AddEntity();
 
   std::vector<Vertex> lstVertices {
     {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -26,10 +31,9 @@ int main(){
     0,1,2,
     2,3,0
   };
-
-  Mesh* pMesh = Renderer::GetInstance()->CreateMesh(lstVertices, lstIndices, pWindow);
   
-  core::Engine::GetInstance()->AddMesh(pMesh);
+  ModelComponent* pModelComp = pEntity->AddComponent<ModelComponent>();
+  pModelComp->AddMesh(Mesh(lstVertices, lstIndices, pWindow)); 
 
   core::Engine::GetInstance()->Run();
 

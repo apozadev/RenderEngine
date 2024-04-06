@@ -44,14 +44,14 @@ void Renderer::SetUsingWindow(Window* _pWindow)
   _pWindow->SetUsing();
 }
 
-Mesh* Renderer::CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow)
-{
-  return new Mesh(_lstVertices, _lstIndices, _pWindow, Mesh::ConstructKey());
-}
+//Mesh* Renderer::CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow)
+//{
+//  return new Mesh(_lstVertices, _lstIndices, _pWindow, Mesh::ConstructKey());
+//}
 
-void Renderer::SubmitMesh(Mesh* _pMesh)
+void Renderer::SubmitMesh(Mesh* _pMesh, const Transform* _pTransform)
 {
-  m_lstJobs.push_back({ _pMesh, _pMesh->GetWindow(), _pMesh->GetKey()});
+  m_lstJobs.push_back({ _pMesh, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
 }
 
 void Renderer::UpdateWindows()
@@ -72,18 +72,14 @@ void Renderer::UpdateWindows()
   m_lstWindows.resize(uCurrSize);
 }
 
-Transform s_oTransform;
-
 void Renderer::Draw()
 {  
 
   std::sort(m_lstJobs.begin(), m_lstJobs.end(), compareJob);
 
-  Window* pCurrWindow = nullptr;
+  const Window* pCurrWindow = nullptr;
 
   bool bSkipCurrWindow = false;
-
-  s_oTransform.Translate({0.01f, 0.f, 0.f});
 
   for (Job& rJob : m_lstJobs)
   {
@@ -99,7 +95,8 @@ void Renderer::Draw()
 
     if (!bSkipCurrWindow)
     {
-      rJob.m_pMesh->Draw(s_oTransform);
+      rJob.m_pMesh->UpdateTransform(*rJob.m_pTransform);
+      rJob.m_pMesh->Draw();
     }
   }
 

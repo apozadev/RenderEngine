@@ -3,8 +3,7 @@
 #include "Core/Singleton.h"
 
 namespace core
-{
-  class Window;
+{  
 
   class InputManager : public Singleton<InputManager>
   {

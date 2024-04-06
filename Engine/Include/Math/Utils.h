@@ -1,0 +1,6 @@
+
+#define _MAX_UINT32 0xFFFFFFFFu
+
+#define _PI 3.14159265359f
+
+#define _PI2 1.57079632679f
