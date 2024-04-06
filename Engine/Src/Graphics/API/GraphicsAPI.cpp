@@ -75,6 +75,28 @@ namespace api
     RENDER_API::DestroyAPIConstanBuffer(_pCbuffer);
   }
 
+  // Render state
+
+  APIRenderState* CreateAPIRenderState()
+  {
+    return RENDER_API::CreateAPIRenderState();
+  }
+
+  void BindAPIRenderState(APIRenderState* _pAPIRenderState)
+  {
+    RENDER_API::BindAPIRenderState(_pAPIRenderState);
+  }
+
+  void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)
+  {
+    RENDER_API::DestroyAPIRenderState(_pAPIRenderState);
+  }
+
+  void SetUsingRenderState(APIRenderState* _pRenderState)
+  {
+    RENDER_API::SetUsingRenderState(_pRenderState);
+  }
+
   // Drawing
 
   int BeginDraw(APIWindow* _pWindow)

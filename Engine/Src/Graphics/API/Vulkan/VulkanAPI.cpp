@@ -16,6 +16,7 @@
 #include "Graphics/API/Vulkan/APIWindow.h"
 #include "Graphics/API/Vulkan/APIMesh.h"
 #include "Graphics/API/Vulkan/APIConstantBuffer.h"
+#include "Graphics/API/Vulkan/APIRenderState.h"
 #include "File/File.h"
 
 namespace api
@@ -26,6 +27,10 @@ namespace vk
   VulkanData s_oGlobalData;
 
   constexpr uint32_t QUEUE_COUNT = 1u;
+
+  ///----------------------------------------------------------------------------------
+  //                                Helper functions
+  ///----------------------------------------------------------------------------------
 
   void CreateInstance()
   {
@@ -136,8 +141,10 @@ namespace vk
     }
   }
 
-  void CreatePipeline(APIWindow* _pWindow)
+  void CreatePipeline(APIRenderState* _pRenderState)
   {
+
+    APIWindow* pWindow = _pRenderState->m_pOwnerWindow;
 
     // Create shader modules
     
@@ -152,7 +159,7 @@ namespace vk
     oVSCreateInfo.pCode = reinterpret_cast<const uint32_t*>(oVSFile.GetData());
 
     VkShaderModule hVSShaderModule;
-    VK_CHECK(vkCreateShaderModule(_pWindow->m_hDevice, &oVSCreateInfo, NULL, &hVSShaderModule))
+    VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oVSCreateInfo, NULL, &hVSShaderModule))
 
     aStages[0] = {};
     aStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -169,7 +176,7 @@ namespace vk
     oPSCreateInfo.pCode = reinterpret_cast<const uint32_t*>(oPSFile.GetData());
 
     VkShaderModule hPSShaderModule;
-    VK_CHECK(vkCreateShaderModule(_pWindow->m_hDevice, &oPSCreateInfo, NULL, &hPSShaderModule))
+    VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oPSCreateInfo, NULL, &hPSShaderModule))
 
     aStages[1] = {};
     aStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -208,14 +215,14 @@ namespace vk
     VkViewport oViewport{};
     oViewport.x = 0.0f;
     oViewport.y = 0.0f;
-    oViewport.width = (float)_pWindow->m_oExtent.width;
-    oViewport.height = (float)_pWindow->m_oExtent.height;
+    oViewport.width = (float)pWindow->m_oExtent.width;
+    oViewport.height = (float)pWindow->m_oExtent.height;
     oViewport.minDepth = 0.0f;
     oViewport.maxDepth = 1.0f;    
 
     VkRect2D oScissor{};
     oScissor.offset = { 0, 0 };
-    oScissor.extent = _pWindow->m_oExtent;    
+    oScissor.extent = pWindow->m_oExtent;    
 
     VkPipelineViewportStateCreateInfo oViewportState{};
     oViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -316,56 +323,18 @@ namespace vk
     oDescSetLayoutInfo.bindingCount = 1u;
     oDescSetLayoutInfo.pBindings = &oUboLayoutBinding;
 
-    VK_CHECK(vkCreateDescriptorSetLayout(_pWindow->m_hDevice, &oDescSetLayoutInfo, NULL, &_pWindow->m_hDescSetLayout))
+    VK_CHECK(vkCreateDescriptorSetLayout(pWindow->m_hDevice, &oDescSetLayoutInfo, NULL, &_pRenderState->m_hDescSetLayout))
 
     VkPipelineLayoutCreateInfo oPipelineLayoutCreateInfo {};
     oPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     oPipelineLayoutCreateInfo.setLayoutCount = 1u;
-    oPipelineLayoutCreateInfo.pSetLayouts = &_pWindow->m_hDescSetLayout;
+    oPipelineLayoutCreateInfo.pSetLayouts = &_pRenderState->m_hDescSetLayout;
     oPipelineLayoutCreateInfo.pushConstantRangeCount = 0u;
     oPipelineLayoutCreateInfo.pPushConstantRanges = NULL;
 
-    VK_CHECK(vkCreatePipelineLayout(_pWindow->m_hDevice, &oPipelineLayoutCreateInfo, NULL, &_pWindow->m_hPipelineLayout))
+    VK_CHECK(vkCreatePipelineLayout(pWindow->m_hDevice, &oPipelineLayoutCreateInfo, NULL, &_pRenderState->m_hPipelineLayout))
 
-    // Render pass (to backbuffer)
-
-    VkAttachmentDescription oColorAttachmentDesc {};
-    oColorAttachmentDesc.format = _pWindow->m_eSwapchainFormat;
-    oColorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-    oColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    oColorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    oColorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    oColorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    oColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    oColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference oColorAttachmentRef {};
-    oColorAttachmentRef.attachment = 0u;
-    oColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription oSubpassDesc {};
-    oSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    oSubpassDesc.colorAttachmentCount = 1u;
-    oSubpassDesc.pColorAttachments = &oColorAttachmentRef;
-
-    VkSubpassDependency oSubpassDependency {};
-    oSubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    oSubpassDependency.dstSubpass = 0u;
-    oSubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    oSubpassDependency.srcAccessMask = 0;
-    oSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    oSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo oRenderPassCreateInfo {};
-    oRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    oRenderPassCreateInfo.attachmentCount = 1u;
-    oRenderPassCreateInfo.pAttachments = &oColorAttachmentDesc;
-    oRenderPassCreateInfo.subpassCount = 1u;
-    oRenderPassCreateInfo.pSubpasses = &oSubpassDesc;    
-    oRenderPassCreateInfo.dependencyCount = 1u;
-    oRenderPassCreateInfo.pDependencies = &oSubpassDependency;
-
-    VK_CHECK(vkCreateRenderPass(_pWindow->m_hDevice, &oRenderPassCreateInfo, NULL, &_pWindow->m_hRenderPass))
+    // Create Pipeline object
 
     VkGraphicsPipelineCreateInfo oPipelineInfo {};
     oPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -380,16 +349,16 @@ namespace vk
     oPipelineInfo.pDepthStencilState = &oDepthStencil; // Optional
     oPipelineInfo.pColorBlendState = &oColorBlending;
     oPipelineInfo.pDynamicState = NULL;
-    oPipelineInfo.layout = _pWindow->m_hPipelineLayout;
-    oPipelineInfo.renderPass = _pWindow->m_hRenderPass;
+    oPipelineInfo.layout = _pRenderState->m_hPipelineLayout;
+    oPipelineInfo.renderPass = pWindow->m_hRenderPass;
     oPipelineInfo.subpass = 0u;
     oPipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     oPipelineInfo.basePipelineIndex = -1; // Optional
 
-    VK_CHECK(vkCreateGraphicsPipelines(_pWindow->m_hDevice, VK_NULL_HANDLE, 1u, &oPipelineInfo, NULL, &_pWindow->m_hGraphicsPipeline))
+    VK_CHECK(vkCreateGraphicsPipelines(pWindow->m_hDevice, VK_NULL_HANDLE, 1u, &oPipelineInfo, NULL, &_pRenderState->m_hGraphicsPipeline))
 
-    vkDestroyShaderModule(_pWindow->m_hDevice, hVSShaderModule, NULL);
-    vkDestroyShaderModule(_pWindow->m_hDevice, hPSShaderModule, NULL);
+    vkDestroyShaderModule(pWindow->m_hDevice, hVSShaderModule, NULL);
+    vkDestroyShaderModule(pWindow->m_hDevice, hPSShaderModule, NULL);
   }
 
   void CreateLogicalDevice(APIWindow* _pWindow)
@@ -644,8 +613,51 @@ namespace vk
     }
   }  
 
-  void CreateFramebuffers(APIWindow* _pWindow)
+  void CreateRenderPass(APIWindow* _pWindow)
   {
+    // Render pass (to backbuffer)
+
+    VkAttachmentDescription oColorAttachmentDesc{};
+    oColorAttachmentDesc.format = _pWindow->m_eSwapchainFormat;
+    oColorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    oColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    oColorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    oColorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    oColorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    oColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    oColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference oColorAttachmentRef{};
+    oColorAttachmentRef.attachment = 0u;
+    oColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription oSubpassDesc{};
+    oSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    oSubpassDesc.colorAttachmentCount = 1u;
+    oSubpassDesc.pColorAttachments = &oColorAttachmentRef;
+
+    VkSubpassDependency oSubpassDependency{};
+    oSubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    oSubpassDependency.dstSubpass = 0u;
+    oSubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    oSubpassDependency.srcAccessMask = 0;
+    oSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    oSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    VkRenderPassCreateInfo oRenderPassCreateInfo{};
+    oRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    oRenderPassCreateInfo.attachmentCount = 1u;
+    oRenderPassCreateInfo.pAttachments = &oColorAttachmentDesc;
+    oRenderPassCreateInfo.subpassCount = 1u;
+    oRenderPassCreateInfo.pSubpasses = &oSubpassDesc;
+    oRenderPassCreateInfo.dependencyCount = 1u;
+    oRenderPassCreateInfo.pDependencies = &oSubpassDependency;
+
+    VK_CHECK(vkCreateRenderPass(_pWindow->m_hDevice, &oRenderPassCreateInfo, NULL, &_pWindow->m_hRenderPass))
+  }
+
+  void CreateFramebuffers(APIWindow* _pWindow)
+  {    
     _pWindow->m_pFramebuffers = new VkFramebuffer[_pWindow->m_uSwapchainImageCount];
 
     for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
@@ -863,6 +875,12 @@ namespace vk
     vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, 1u, &hCommandBuffer);
   }
 
+  ///----------------------------------------------------------------------------------
+  //                                    API functions
+  ///----------------------------------------------------------------------------------
+
+  // General
+
   void InitializeAPI()
   {
     CreateInstance();
@@ -875,6 +893,8 @@ namespace vk
     vkDestroyInstance(s_oGlobalData.m_hInstance, NULL);
   }
 
+  // Window
+
   APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
   {
     APIWindow* pWindow = new APIWindow();
@@ -883,7 +903,7 @@ namespace vk
     RetrieveQueues(pWindow);
     CreateSurface(pWindow, _pGlfwWindow);
     CreateSwapchain(pWindow);
-    CreatePipeline(pWindow);
+    CreateRenderPass(pWindow);
     CreateFramebuffers(pWindow);
     CreateCommandBuffers(pWindow);    
     CreateSyncObjects(pWindow);  
@@ -913,17 +933,17 @@ namespace vk
     vkDestroyFence(_pWindow->m_hDevice, _pWindow->m_hInFlightFence, NULL);
 
     vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, NULL);
-    vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hPresentCmdPool, NULL);
-
-    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hDescSetLayout, NULL);
-    
-    vkDestroyPipelineLayout(_pWindow->m_hDevice, _pWindow->m_hPipelineLayout, NULL);
+    vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hPresentCmdPool, NULL);    
 
     vkDestroyRenderPass(_pWindow->m_hDevice, _pWindow->m_hRenderPass, NULL);     
 
-    vkDestroyDevice(_pWindow->m_hDevice, NULL);        
+    vkDestroyDevice(_pWindow->m_hDevice, NULL);   
+
+    delete _pWindow;
 
   }
+
+  // Mesh
 
   APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize)
   {
@@ -982,17 +1002,21 @@ namespace vk
   void DestroyAPIMesh(APIMesh* _pMesh)
   {
     DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hVertexBuffer, _pMesh->m_hVertexBufferMemory);
+
+    delete _pMesh;
   }
+
+  // Constant buffer
 
   APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
   {
     APIConstantBuffer* pCBuffer = new APIConstantBuffer();
 
-    pCBuffer->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
+    pCBuffer->m_pOwnerRenderState = s_oGlobalData.m_pUsingRenderState;
 
-    VkDevice& hDevice = pCBuffer->m_pOwnerWindow->m_hDevice;
+    APIWindow* pWindow = pCBuffer->m_pOwnerRenderState->m_pOwnerWindow;    
     
-    const uint32_t uNumImages = pCBuffer->m_pOwnerWindow->m_uSwapchainImageCount;
+    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
     // Create buffers
 
@@ -1002,13 +1026,13 @@ namespace vk
 
     for (uint32_t i = 0; i < uNumImages; i++)
     {
-      CreateBuffer(pCBuffer->m_pOwnerWindow, _uSize,
+      CreateBuffer(pWindow, _uSize,
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         pCBuffer->m_pUniformBuffers[i],
         pCBuffer->m_pUniformBuffersMemory[i]);
 
-      VK_CHECK(vkMapMemory(hDevice, pCBuffer->m_pUniformBuffersMemory[i], 0u, _uSize, 0u, &pCBuffer->m_pUniformBuffersMapped[i]))
+      VK_CHECK(vkMapMemory(pWindow->m_hDevice, pCBuffer->m_pUniformBuffersMemory[i], 0u, _uSize, 0u, &pCBuffer->m_pUniformBuffersMapped[i]))
     }
 
     // Create descriptor pool
@@ -1024,14 +1048,14 @@ namespace vk
     oDescPoolInfo.pPoolSizes = &oDescPoolSize;
     oDescPoolInfo.maxSets = uNumImages;
 
-    VK_CHECK(vkCreateDescriptorPool(hDevice, &oDescPoolInfo, NULL, &pCBuffer->m_hDescPool))
+    VK_CHECK(vkCreateDescriptorPool(pWindow->m_hDevice, &oDescPoolInfo, NULL, &pCBuffer->m_hDescPool))
 
     // Allocate descriptor sets
 
     VkDescriptorSetLayout* pLayouts = new VkDescriptorSetLayout[uNumImages];
     for (int i = 0; i < uNumImages; i++)
     {
-      pLayouts[i] = pCBuffer->m_pOwnerWindow->m_hDescSetLayout;
+      pLayouts[i] = pCBuffer->m_pOwnerRenderState->m_hDescSetLayout;
     }
 
     pCBuffer->m_pDescSets = new VkDescriptorSet[uNumImages];
@@ -1042,7 +1066,7 @@ namespace vk
     oDescSetAllocInfo.descriptorSetCount = uNumImages;
     oDescSetAllocInfo.pSetLayouts = pLayouts;
 
-    VK_CHECK(vkAllocateDescriptorSets(hDevice, &oDescSetAllocInfo, pCBuffer->m_pDescSets ))
+    VK_CHECK(vkAllocateDescriptorSets(pWindow->m_hDevice, &oDescSetAllocInfo, pCBuffer->m_pDescSets ))
 
     // Configure descriptor sets
 
@@ -1064,7 +1088,7 @@ namespace vk
       oWriteDescSet.pImageInfo = NULL;
       oWriteDescSet.pTexelBufferView = NULL;
 
-      vkUpdateDescriptorSets(hDevice, 1, &oWriteDescSet, 0, nullptr);
+      vkUpdateDescriptorSets(pWindow->m_hDevice, 1, &oWriteDescSet, 0, nullptr);
     }
 
     delete[] pLayouts;
@@ -1074,7 +1098,7 @@ namespace vk
 
   void UpdateAPIConstanBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize)
   {
-    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;
+    APIWindow* pWindow = _pCBuffer->m_pOwnerRenderState->m_pOwnerWindow;
 
     uint32_t uCurrImageIdx = pWindow->m_uCurrSwapchainImageIdx;
 
@@ -1083,22 +1107,25 @@ namespace vk
 
   void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
   {
-    APIWindow* pWindow = _pCbuffer->m_pOwnerWindow;    
+    APIRenderState* pRenderState = _pCbuffer->m_pOwnerRenderState;
+    APIWindow* pWindow = pRenderState->m_pOwnerWindow;
     uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
-    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pWindow->m_hPipelineLayout, 0, 1, &_pCbuffer->m_pDescSets[uImageIdx], 0, NULL);
+    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pRenderState->m_hPipelineLayout, 0, 1, &_pCbuffer->m_pDescSets[uImageIdx], 0, NULL);
   }
 
   void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer)
   {
 
-    const uint32_t uNumImages = _pCBuffer->m_pOwnerWindow->m_uSwapchainImageCount;
+    APIWindow* pWindow = _pCBuffer->m_pOwnerRenderState->m_pOwnerWindow;
 
-    VkDevice& hDevice = _pCBuffer->m_pOwnerWindow->m_hDevice;
+    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VkDevice& hDevice = pWindow->m_hDevice;
 
     for (uint32_t i = 0; i < uNumImages; i++)
     {
       vkUnmapMemory(hDevice, _pCBuffer->m_pUniformBuffersMemory[i]);
-      DestroyBuffer(_pCBuffer->m_pOwnerWindow, _pCBuffer->m_pUniformBuffers[i], _pCBuffer->m_pUniformBuffersMemory[i]);
+      DestroyBuffer(pWindow, _pCBuffer->m_pUniformBuffers[i], _pCBuffer->m_pUniformBuffersMemory[i]);
     }
 
     delete[] _pCBuffer->m_pDescSets;
@@ -1108,7 +1135,44 @@ namespace vk
     delete[] _pCBuffer->m_pUniformBuffers;
     delete[] _pCBuffer->m_pUniformBuffersMemory;
     delete[] _pCBuffer->m_pUniformBuffersMapped;
+
+    delete _pCBuffer;
   }
+
+  // Render state
+
+  APIRenderState* CreateAPIRenderState()
+  {
+    APIRenderState* pRenderState = new APIRenderState();
+    pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
+    CreatePipeline(pRenderState);
+
+    return pRenderState;
+  }
+
+  void BindAPIRenderState(APIRenderState* _pAPIRenderState)
+  {
+    APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
+    vkCmdBindPipeline(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hGraphicsPipeline);
+  }
+
+  void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)
+  {
+    APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
+
+    vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hDescSetLayout, NULL);
+
+    vkDestroyPipelineLayout(pWindow->m_hDevice, _pAPIRenderState->m_hPipelineLayout, NULL);
+
+    delete _pAPIRenderState;
+  }
+
+  void SetUsingRenderState(APIRenderState* _pRenderState)
+  {
+    s_oGlobalData.m_pUsingRenderState = _pRenderState;
+  }
+
+  // Drawing
 
   int BeginDraw(APIWindow* _pWindow)
   {
@@ -1149,9 +1213,7 @@ namespace vk
     oRenderPassBeginInfo.pClearValues = &oClearColor;
     oRenderPassBeginInfo.clearValueCount = 1u;
 
-    vkCmdBeginRenderPass(_pWindow->m_hRenderCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(_pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pWindow->m_hGraphicsPipeline);
+    vkCmdBeginRenderPass(_pWindow->m_hRenderCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);    
 
     return 0;
   }

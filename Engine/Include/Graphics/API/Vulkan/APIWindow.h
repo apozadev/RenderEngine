@@ -17,17 +17,14 @@ namespace vk {
     VkQueue m_hRenderQueue;
     VkQueue m_hPresentQueue;
     VkSurfaceKHR m_hSurface;
-    VkSwapchainKHR m_hSwapchain;
-    VkPipelineLayout m_hPipelineLayout;
-    VkDescriptorSetLayout m_hDescSetLayout;
-    VkRenderPass m_hRenderPass;
-    VkPipeline m_hGraphicsPipeline;
+    VkSwapchainKHR m_hSwapchain;    
     VkImage* m_pSwapchainImages;
     VkImageView* m_pSwapChainImageViews;
     VkFramebuffer* m_pFramebuffers;
     VkExtent2D m_oExtent;    
     VkFormat m_eSwapchainFormat;
     VkColorSpaceKHR m_eSwapchainColorSpace;    
+    VkRenderPass m_hRenderPass;
 
     VkSemaphore m_hImageAvailableSemaphore;
     VkSemaphore m_hRenderFinishedSemaphore;

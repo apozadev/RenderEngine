@@ -1,6 +1,8 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/Mesh.h"
+#include "Graphics/Material.h"
+#include "Graphics/MaterialInstance.h"
 #include "Graphics/Window.h"
 
 #include "Math/Transform.h"
@@ -39,19 +41,9 @@ Window* Renderer::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle
   return pWindow;
 }
 
-void Renderer::SetUsingWindow(Window* _pWindow)
+void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
 {
-  _pWindow->SetUsing();
-}
-
-//Mesh* Renderer::CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow)
-//{
-//  return new Mesh(_lstVertices, _lstIndices, _pWindow, Mesh::ConstructKey());
-//}
-
-void Renderer::SubmitMesh(Mesh* _pMesh, const Transform* _pTransform)
-{
-  m_lstJobs.push_back({ _pMesh, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
+  m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
 }
 
 void Renderer::UpdateWindows()
@@ -79,6 +71,8 @@ void Renderer::Draw()
 
   const Window* pCurrWindow = nullptr;
 
+  const Material* pCurrMaterial = nullptr;
+
   bool bSkipCurrWindow = false;
 
   for (Job& rJob : m_lstJobs)
@@ -95,6 +89,16 @@ void Renderer::Draw()
 
     if (!bSkipCurrWindow)
     {
+      const MaterialInstance* pMatInstance = rJob.m_pMaterial;
+
+      if (pMatInstance->GetMaterial() != pCurrMaterial)
+      {
+        pMatInstance->GetMaterial()->Bind();
+        pCurrMaterial = pMatInstance->GetMaterial();
+      }
+
+      pMatInstance->Bind();
+
       rJob.m_pMesh->UpdateTransform(*rJob.m_pTransform);
       rJob.m_pMesh->Draw();
     }

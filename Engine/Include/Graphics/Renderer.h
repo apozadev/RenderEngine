@@ -8,6 +8,7 @@
 
 class Window;
 class Mesh;
+class MaterialInstance;
 class Transform;
 
 class Renderer : public core::Singleton<Renderer>
@@ -16,6 +17,7 @@ class Renderer : public core::Singleton<Renderer>
   struct Job
   {
     Mesh* m_pMesh;
+    const MaterialInstance* m_pMaterial;
     const Window* m_pWindow;
     const Transform* m_pTransform;
     uint64_t m_uKey;
@@ -27,12 +29,11 @@ public:
   void ShutDown();
 
   Window* CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle);  
-  const std::vector<Window*>& GetWindows() { return m_lstWindows; }
-  void SetUsingWindow(Window* _pWindow);
+  const std::vector<Window*>& GetWindows() { return m_lstWindows; }  
 
   //Mesh* CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow);
 
-  void SubmitMesh(Mesh* _pMesh, const Transform* _pTransform);
+  void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform);
 
   void UpdateWindows();
   void Draw();

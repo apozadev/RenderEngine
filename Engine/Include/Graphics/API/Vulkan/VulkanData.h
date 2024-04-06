@@ -8,6 +8,7 @@ namespace vk
 {
 
   struct APIWindow;
+  struct APIRenderState;
 
   struct VulkanData
   {
@@ -52,6 +53,7 @@ namespace vk
     VkPhysicalDevice m_hPhysicalDevice;   
 
     APIWindow* m_pUsingWindow = nullptr;
+    APIRenderState* m_pUsingRenderState = nullptr;
   };
 }
 }

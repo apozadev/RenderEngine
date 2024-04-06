@@ -7,7 +7,7 @@ namespace api
 namespace vk
 {
 
-  struct APIWindow;
+  struct APIRenderState;
 
   struct APIConstantBuffer
   {
@@ -19,7 +19,7 @@ namespace vk
     VkDescriptorPool m_hDescPool;
     VkDescriptorSet* m_pDescSets;
 
-    APIWindow* m_pOwnerWindow;
+    APIRenderState* m_pOwnerRenderState;
   };
 
 }

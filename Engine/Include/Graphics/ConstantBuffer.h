@@ -1,8 +1,10 @@
 #pragma once
 
+#include "Graphics/Resource.h"
+
 #include <memory>
 
-class ConstantBufferBase
+class ConstantBufferBase : public Resource
 {
 public:
 
@@ -11,7 +13,7 @@ public:
 
   void Update(const void* _pData, size_t _uSize) const;
 
-  void Bind() const;
+  void Bind() const override;
 
 private:
 
