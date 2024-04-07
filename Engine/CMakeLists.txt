@@ -38,7 +38,21 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/ConstantBuffer.h" 
 	"Src/Graphics/ConstantBuffer.cpp" 
 	"Include/Components/ModelComponent.h"
-	"Include/Math/Transform.h"  "Include/Core/Entity.h" "Include/Core/Component.h" "Include/Core/Scene.h" "Src/Core/Scene.cpp" "Include/Math/Utils.h" "Src/Components/ModelComponent.cpp" "Src/Core/Entity.cpp" "Src/Math/Transform.cpp" "Include/Graphics/Material.h" "Include/Graphics/Resource.h" "Src/Graphics/Material.cpp" "Include/Graphics/MaterialInstance.h" "Src/Graphics/MaterialInstance.cpp" "Include/Graphics/API/Vulkan/APIRenderState.h")
+	"Include/Math/Transform.h"  
+	"Include/Core/Entity.h" 
+	"Include/Core/Component.h"
+	"Include/Core/Scene.h" 
+	"Src/Core/Scene.cpp"
+	"Include/Math/Utils.h"
+	"Src/Components/ModelComponent.cpp"
+	"Src/Core/Entity.cpp"
+	"Src/Math/Transform.cpp" 
+	"Include/Graphics/Material.h"
+	"Include/Graphics/Resource.h"
+	"Src/Graphics/Material.cpp"
+	"Include/Graphics/MaterialInstance.h"
+	"Src/Graphics/MaterialInstance.cpp"
+	"Include/Graphics/API/Vulkan/APIRenderState.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -46,6 +60,7 @@ target_include_directories(${PROJECT_NAME}
 	"$ENV{VULKAN_SDK}/Include"
 	"${CMAKE_SOURCE_DIR}/glfw/include"
 	"${CMAKE_SOURCE_DIR}/glm"
+	"${CMAKE_SOURCE_DIR}/stb"
  )
 
  set_target_properties(${PROJECT_NAME} PROPERTIES  
