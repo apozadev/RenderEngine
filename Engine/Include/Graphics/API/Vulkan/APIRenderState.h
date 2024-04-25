@@ -15,6 +15,9 @@ public:
   VkPipelineLayout m_hPipelineLayout;
   VkDescriptorSetLayout m_hDescSetLayout;  
   VkPipeline m_hGraphicsPipeline;
+  VkDescriptorPool m_hDescPool;
+  VkDescriptorSet* m_pDescSets;
+
   APIWindow* m_pOwnerWindow;
 };
 

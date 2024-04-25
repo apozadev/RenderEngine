@@ -1,8 +1,6 @@
 #include "Core/Exception.h"
 #include <sstream>
 
-namespace core {
-
 Exception::Exception(int _iLine, const char* _sFile, const char* _sDesc) noexcept
 	:
 	m_iLine(_iLine), m_sFile(_sFile), m_sDescription(_sDesc)
@@ -37,6 +35,4 @@ std::string Exception::GetOriginString() const noexcept
 	oss << "[File] " << m_sFile << std::endl
 		<< "[Line]" << m_iLine;
 	return oss.str();
-}
-
 }

@@ -75,6 +75,23 @@ namespace api
     RENDER_API::DestroyAPIConstanBuffer(_pCbuffer);
   }
 
+  // Texture
+
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat)
+  {
+    return RENDER_API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat);
+  }
+
+  void BindAPITexture(APITexture* _pTexture)
+  {
+    RENDER_API::BindAPITexture(_pTexture);
+  }
+  
+  void DestroyAPITexture(APITexture* _pTexture)
+  {
+    RENDER_API::DestroyAPITexture(_pTexture);
+  }
+
   // Render state
 
   APIRenderState* CreateAPIRenderState()
@@ -92,9 +109,24 @@ namespace api
     RENDER_API::DestroyAPIRenderState(_pAPIRenderState);
   }
 
-  void SetUsingRenderState(APIRenderState* _pRenderState)
+  void BeginRenderStateSetup(APIRenderState* _pRenderState)
   {
-    RENDER_API::SetUsingRenderState(_pRenderState);
+    RENDER_API::BeginRenderStateSetup(_pRenderState);
+  }
+
+  void RenderStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size)
+  {
+    RENDER_API::RenderStateSetupConstantBuffer(_pCBuffer, size);
+  }
+
+  void RenderStateSetupTexture(APITexture* _pTexture)
+  {
+    RENDER_API::RenderStateSetupTexture(_pTexture);
+  }
+
+  void EndRenderStateSetup()
+  {
+    RENDER_API::EndRenderStateSetup();
   }
 
   // Drawing

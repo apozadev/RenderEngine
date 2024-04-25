@@ -23,7 +23,7 @@ Entity* Scene::AddEntity(Entity* _pParent)
     pEntity->m_uParentId = uParentId;
     pEntity->m_lstChildren.push_back(static_cast<uint32_t>(m_lstEntities.size() - 1));
 
-    if (core::Engine::GetInstance()->IsRunning())
+    if (Engine::GetInstance()->IsRunning())
     {
       Build();
     }

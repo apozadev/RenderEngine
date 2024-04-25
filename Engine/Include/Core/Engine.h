@@ -5,44 +5,38 @@
 #include "Singleton.h"
 
 #include "Core/Scene.h"
+#include "Graphics/Window.h"
 
 class Mesh;
-class Window;
 
-namespace core {    
+class Engine : public Singleton<Engine>
+{
 
-  class Engine : public Singleton<Engine>
-  {
-    struct SceneWindowPair
-    {
-      Scene m_oScene;
-      Window* m_pWindow;
-    };
+public:
+  int Initialize();
+  int Run();
+  int ScheduleShutDown(); 
 
-  public:
-    int Initialize();
-    int Run();
-    int ScheduleShutDown();
+  Window* CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle);
+  const std::vector<Window>& GetWindows() { return m_lstWindows; }
 
-    void AddMesh(Mesh* _pMesh);
+  Scene* CreateScene(Window* _pWindow);
 
-    Scene* CreateScene(Window* _pWindow);
+  void UpdateWindows();
 
-    bool IsRunning() { return m_bRunning; }
+  bool IsRunning() { return m_bRunning; }
 
-  private:
+private:
 
-    bool ShouldShutDown();
-    void ShutDown();
+  bool ShouldShutDown();
+  void ShutDown();
 
-    bool m_bRunning;
+  bool m_bRunning;
 
-    float m_fTargetFPS;
-    float m_fGameTime;
-    float m_fDt;
+  float m_fTargetFPS;
+  float m_fGameTime;
+  float m_fDt;    
 
-    std::vector<Mesh*> m_lstMeshes;
-
-    std::vector<SceneWindowPair> m_lstScenes;
-  };
-}
+  std::vector<Scene> m_lstScenes;
+  std::vector<Window> m_lstWindows;
+};

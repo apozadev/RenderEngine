@@ -13,11 +13,13 @@ class Entity
 
 public:
 
+  ~Entity();
+
   template<typename T>
   T* AddComponent()
   {
-    m_vctComponents.push_back(new T());
-    T* pComp = static_cast<T*>(m_vctComponents[m_vctComponents.size() - 1]);
+    m_lstComponents.push_back(new T());
+    T* pComp = static_cast<T*>(m_lstComponents[m_lstComponents.size() - 1]);
     pComp->m_pEntity = this;
     return pComp;
   }
@@ -44,7 +46,7 @@ public:
 
 private:    
 
-  std::vector<Component*> m_vctComponents;  
+  std::vector<Component*> m_lstComponents;
   std::vector<uint32_t> m_lstChildren;
 
   Transform m_oGlobalTransform;

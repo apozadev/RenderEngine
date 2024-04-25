@@ -11,7 +11,7 @@ class Mesh;
 class MaterialInstance;
 class Transform;
 
-class Renderer : public core::Singleton<Renderer>
+class Renderer : public Singleton<Renderer>
 {
 
   struct Job
@@ -26,22 +26,17 @@ class Renderer : public core::Singleton<Renderer>
 public:  
 
   void Initialize();
-  void ShutDown();
-
-  Window* CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle);  
-  const std::vector<Window*>& GetWindows() { return m_lstWindows; }  
+  void ShutDown();  
 
   //Mesh* CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow);
 
   void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform);
-
-  void UpdateWindows();
+  
   void Draw();
 
 private:
 
   static bool Renderer::compareJob(const Job& j1, const Job& j2);
 
-  std::vector<Job> m_lstJobs;
-  std::vector<Window*> m_lstWindows;
+  std::vector<Job> m_lstJobs;  
 };

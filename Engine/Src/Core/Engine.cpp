@@ -2,101 +2,117 @@
 
 #include <thread>
 
+#include <algorithm>
+
 #include <Windows.h>
 
 #include "Core/Engine.h"
 #include "Core/Timer.h"
 #include "Core/Exception.h"
 #include "Core/InputManager.h"
-
-#include "Graphics/Window.h"
 #include "Graphics/Renderer.h"
 
-namespace core
-{  
+int Engine::Initialize()
+{    
+  m_fTargetFPS = 60.f;
 
-  int Engine::Initialize()
-  {    
-    m_fTargetFPS = 60.f;    
+  // Init subsystems
+  Renderer::GetInstance()->Initialize();
+  InputManager::GetInstance()->Initialize();
 
-    // Init subsystems
-    Renderer::GetInstance()->Initialize();
-    InputManager::GetInstance()->Initialize();
+  return 0;
+}
 
-    return 0;
-  }
+Window* Engine::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle)
+{    
+  m_lstWindows.emplace_back(_iWidth, _iHeight, _sTitle);
+  return &m_lstWindows[m_lstWindows.size() - 1];
+}
 
-  Scene* Engine::CreateScene(Window* _pWindow)
+Scene* Engine::CreateScene(Window* _pWindow)
+{
+  m_lstScenes.emplace_back(Scene());
+  return &m_lstScenes[m_lstScenes.size()-1];
+}
+
+void Engine::UpdateWindows()
+{
+  size_t uCurrSize = m_lstWindows.size();
+  for (int i = 0; i < uCurrSize; i++)
   {
-    m_lstScenes.push_back({Scene(), _pWindow});
-    return &m_lstScenes[m_lstScenes.size()-1].m_oScene;
-  }
+    if (m_lstWindows[i].ShouldClose())
+    {
+      if (i < uCurrSize - 1)
+      {        
+        Window oAux(std::move(m_lstWindows[i]));
+        m_lstWindows[i] = std::move(m_lstWindows[m_lstWindows.size() - 1]);
+        m_lstWindows[m_lstWindows.size() - 1] = std::move(oAux);
 
-  int Engine::Run()
-  {
+      }
+      m_lstWindows.pop_back();
+    }
+  }    
+}
 
-      m_bRunning = true;
+int Engine::Run()
+{
 
-      long long ullMinFrameTime = (long long)(1000.f / m_fTargetFPS);
-      Timer oTimer;
+    m_bRunning = true;
 
-      while (m_bRunning)
+    long long ullMinFrameTime = (long long)(1000.f / m_fTargetFPS);
+    Timer oTimer;
+
+    while (m_bRunning)
+    {
+      if (ShouldShutDown())
       {
-        if (ShouldShutDown())
+        ScheduleShutDown();
+      }
+      else
+      {
+        InputManager::GetInstance()->PollEvents();          
+
+        for (Scene& rScene : m_lstScenes)
         {
-          ScheduleShutDown();
-        }
-        else
-        {
-          InputManager::GetInstance()->PollEvents();          
-
-          for (SceneWindowPair& rSceneWindow : m_lstScenes)
-          {
-            rSceneWindow.m_oScene.Update(m_fDt);
-          }
-
-          Renderer::GetInstance()->Draw();
-
-          Renderer::GetInstance()->UpdateWindows();
+          rScene.Update(m_fDt);
         }
 
-        long long ullElapsed = oTimer.Peek();
-        long long ullToSleep = ullMinFrameTime - ullElapsed;
-        ullToSleep = ullToSleep < 0 ? 0 : ullToSleep;
-        std::this_thread::sleep_for(std::chrono::milliseconds(ullToSleep));
-        oTimer.Mark();
+        Renderer::GetInstance()->Draw();
 
-        m_fDt = (float)(ullElapsed + ullToSleep) * 0.001f;
-        m_fGameTime += m_fDt;
-      }    
+        UpdateWindows();
+      }
 
-      ShutDown();
+      long long ullElapsed = oTimer.Peek();
+      long long ullToSleep = ullMinFrameTime - ullElapsed;
+      ullToSleep = ullToSleep < 0 ? 0 : ullToSleep;
+      std::this_thread::sleep_for(std::chrono::milliseconds(ullToSleep));
+      oTimer.Mark();
 
-      return 0;    
+      m_fDt = (float)(ullElapsed + ullToSleep) * 0.001f;
+      m_fGameTime += m_fDt;
+    }    
 
-  }
+    ShutDown();
 
-  int Engine::ScheduleShutDown()
-  {    
-    m_bRunning = false;
-    return 0;
-  }
-
-  bool Engine::ShouldShutDown()
-  {
-    return Renderer::GetInstance()->GetWindows().size() == 0;
-  }
-
-  void Engine::ShutDown()
-  {
-    // Shut down subsystems    
-    InputManager::GetInstance()->ShutDown();
-    Renderer::GetInstance()->ShutDown();
-  }
-
-  void Engine::AddMesh(Mesh* _pMesh)
-  {
-    m_lstMeshes.push_back(_pMesh);
-  }
+    return 0;    
 
 }
+
+int Engine::ScheduleShutDown()
+{    
+  m_bRunning = false;
+  return 0;
+}
+
+bool Engine::ShouldShutDown()
+{
+  return m_lstScenes.size() == 0;
+}
+
+void Engine::ShutDown()
+{
+  // Shut down subsystems    
+  InputManager::GetInstance()->ShutDown();
+  Renderer::GetInstance()->ShutDown();
+}
+

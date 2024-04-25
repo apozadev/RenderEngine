@@ -52,7 +52,13 @@ add_library(${PROJECT_NAME}
 	"Src/Graphics/Material.cpp"
 	"Include/Graphics/MaterialInstance.h"
 	"Src/Graphics/MaterialInstance.cpp"
-	"Include/Graphics/API/Vulkan/APIRenderState.h")
+	"Include/Graphics/API/Vulkan/APIRenderState.h" 
+	"Include/Core/ImageManager.h" 
+	"Src/Core/ImageManager.cpp" 
+	"Include/Graphics/Texture2D.h" 
+	"Src/Graphics/Texture2D.cpp"
+	"Include/Graphics/API/Vulkan/APITexture.h"
+	"Include/Graphics/ImageFormat.h" "Include/Graphics/API/Vulkan/DescriptorUtils.h" "Src/Graphics/API/Vulkan/DescriptorUtils.cpp")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -68,4 +74,4 @@ target_include_directories(${PROJECT_NAME}
 
  target_compile_definitions(${PROJECT_NAME} PRIVATE 
  RENDER_API=vk
- CURR_WORKING_DIR=${CMAKE_BINARY_DIR})
+ CURR_WORKING_DIR=${CMAKE_SOURCE_DIR})

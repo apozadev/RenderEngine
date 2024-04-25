@@ -34,34 +34,9 @@ void Renderer::ShutDown()
   api::ShutDownAPI();
 }
 
-Window* Renderer::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle)
-{
-  Window* pWindow = new Window(_iWidth, _iHeight, _sTitle, Window::ConstructKey());
-  m_lstWindows.push_back(pWindow);
-  return pWindow;
-}
-
 void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
 {
   m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
-}
-
-void Renderer::UpdateWindows()
-{
-  size_t uCurrSize = m_lstWindows.size();
-  for (int i = 0; i < uCurrSize; i++)
-  {
-    if (m_lstWindows[i]->ShouldClose())
-    {
-      if (i < uCurrSize - 1)
-      {
-        delete(m_lstWindows[i]);
-        m_lstWindows[i] = m_lstWindows[m_lstWindows.size() - 1];
-      }
-      --uCurrSize;
-    }
-  }
-  m_lstWindows.resize(uCurrSize);
 }
 
 void Renderer::Draw()

@@ -26,6 +26,16 @@ public:
     m_lstMaterials.push_back(std::move(_rMaterial));
   }
 
+  MaterialInstance& GetMaterial(unsigned int _uIdx)
+  {
+    return m_lstMaterials[_uIdx];
+  }
+
+  unsigned int GetMaterialCount() const
+  {
+    return static_cast<unsigned int>(m_lstMaterials.size());
+  }
+
 protected:
 
   virtual void Start() override;

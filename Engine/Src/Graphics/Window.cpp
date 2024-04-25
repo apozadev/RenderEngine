@@ -10,7 +10,9 @@ uint8_t s_uCurrId = 0u;
 
 class Window::Impl
 {
+
 public:
+
   GLFWwindow* m_pGlfwWindow;
   int m_iWidth, m_iHeight;    
   api::APIWindow* m_pAPIWindow;
@@ -53,9 +55,14 @@ public:
   }
 };    
 
-Window::Window(int _fWidth, int _fHeight, const char* _sTitle, ConstructKey&&)
+Window::Window(int _fWidth, int _fHeight, const char* _sTitle)
 { 
-  m_pImpl = std::make_unique<Impl>(_fWidth, _fHeight, _sTitle);    
+  m_pImpl = std::make_unique<Impl>(_fWidth, _fHeight, _sTitle);
+}
+
+Window::Window(Window&& _rWindow)
+{
+  m_pImpl = std::move(_rWindow.m_pImpl);
 }
 
 Window::~Window()
@@ -98,3 +105,8 @@ bool Window::ShouldClose() const
   return glfwWindowShouldClose(m_pImpl->m_pGlfwWindow);
 }
   
+Window& Window::operator=(Window&& _rWindow) noexcept
+{
+  m_pImpl = std::move(_rWindow.m_pImpl);
+  return *this;
+}

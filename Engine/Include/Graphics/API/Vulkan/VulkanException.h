@@ -12,7 +12,7 @@ namespace api
 {
 namespace vk
 {
-	class VulkanException : public core::Exception
+	class VulkanException : public Exception
 	{
 	public:
 		VulkanException(int _sLine, const char* _sFile, VkResult _hResult) noexcept;

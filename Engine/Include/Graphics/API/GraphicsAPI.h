@@ -2,6 +2,8 @@
 
 #include <inttypes.h>
 
+#include "Graphics/ImageFormat.h"
+
 struct GLFWwindow;
 
 namespace api 
@@ -13,12 +15,14 @@ namespace api
     struct APIMesh;
     struct APIConstantBuffer;
     struct APIRenderState;
+    struct APITexture;
   } 
 
   typedef struct RENDER_API::APIWindow APIWindow;
   typedef struct RENDER_API::APIMesh APIMesh;
   typedef struct RENDER_API::APIConstantBuffer APIConstantBuffer;
   typedef struct RENDER_API::APIRenderState APIRenderState;
+  typedef struct RENDER_API::APITexture APITexture;
 
   // Global
 
@@ -47,10 +51,19 @@ namespace api
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState();
+  APIRenderState* CreateAPIRenderState();    
+  void BeginRenderStateSetup(APIRenderState* _pRenderState);
+  void RenderStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size);
+  void RenderStateSetupTexture(APITexture* _pTexture);
+  void EndRenderStateSetup();
   void BindAPIRenderState(APIRenderState* _pAPIRenderState);
   void DestroyAPIRenderState(APIRenderState* _pAPIRenderState);
-  void SetUsingRenderState(APIRenderState* _pRenderState);
+
+  // Texture
+
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat);
+  void BindAPITexture(APITexture* _pTexture);
+  void DestroyAPITexture(APITexture* _pTexture);
 
   // Drawing
 

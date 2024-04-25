@@ -2,6 +2,8 @@
 
 #include <inttypes.h>
 
+#include "Graphics/ImageFormat.h"
+
 struct GLFWwindow;
 
 namespace api
@@ -13,6 +15,7 @@ namespace vk
 	struct APIMesh;
 	struct APIConstantBuffer;
 	struct APIRenderState;
+	struct APITexture;
 
 	// General
 
@@ -46,15 +49,29 @@ namespace vk
 
 	void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer);
 
+	// Texture
+
+	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat);
+
+	void BindAPITexture(APITexture* _pTexture);
+
+	void DestroyAPITexture(APITexture* _pTexture);
+
 	// Render state
 
-	APIRenderState* CreateAPIRenderState();
+	APIRenderState* CreateAPIRenderState();		
+
+	void BeginRenderStateSetup(APIRenderState* _pRenderState);
+
+	void RenderStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size);
+
+	void RenderStateSetupTexture(APITexture* _pTexture);
+
+	void EndRenderStateSetup();
 
 	void BindAPIRenderState(APIRenderState* _pAPIRenderState);
 
 	void DestroyAPIRenderState(APIRenderState* _pAPIRenderState);
-
-	void SetUsingRenderState(APIRenderState* _pRenderState);
 
 	// Drawing
 

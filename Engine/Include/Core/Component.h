@@ -6,6 +6,10 @@ class Component
 {
   friend class Entity;
 
+public:
+
+  virtual ~Component() {}
+
 protected:
 
   virtual void Start() {};

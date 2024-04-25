@@ -14,12 +14,9 @@ namespace vk
   public:
     VkBuffer* m_pUniformBuffers;
     VkDeviceMemory* m_pUniformBuffersMemory;
-    void** m_pUniformBuffersMapped;
+    void** m_pUniformBuffersMapped;    
 
-    VkDescriptorPool m_hDescPool;
-    VkDescriptorSet* m_pDescSets;
-
-    APIRenderState* m_pOwnerRenderState;
+    APIWindow* m_pOwnerWindow;
   };
 
 }

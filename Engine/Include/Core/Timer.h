@@ -2,9 +2,6 @@
 
 #include <chrono>
 
-namespace core
-{
-
 class Timer
 {
 private:
@@ -14,5 +11,3 @@ public:
 	long long Mark();
 	long long Peek();
 };
-
-}

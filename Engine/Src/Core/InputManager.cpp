@@ -2,10 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
-namespace core
+void InputManager::PollEvents()
 {
-  void InputManager::PollEvents()
-  {
-    glfwPollEvents();
-  }
+  glfwPollEvents();
 }

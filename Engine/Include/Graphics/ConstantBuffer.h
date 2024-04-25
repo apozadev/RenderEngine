@@ -13,6 +13,8 @@ public:
 
   void Update(const void* _pData, size_t _uSize) const;
 
+  void Setup(size_t _uSize) const;
+
   void Bind() const override;
 
 private:
@@ -29,7 +31,7 @@ public:
   ConstantBuffer() : ConstantBufferBase(sizeof(T))
   {}
 
-  ~ConstantBuffer()
+  virtual ~ConstantBuffer()
   {}
 
   T* GetData()
@@ -40,6 +42,11 @@ public:
   void SetData(T* _pData)
   {
     m_oData = *_pData
+  }  
+
+  void Setup() const override 
+  { 
+    ConstantBufferBase::Setup(sizeof(T));
   }
 
   void Update() const

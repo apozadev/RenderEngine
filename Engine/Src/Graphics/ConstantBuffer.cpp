@@ -4,7 +4,7 @@
 class ConstantBufferBase::Impl
 {
 public:
-  api::APIConstantBuffer* m_pAPICbuffer;  
+  api::APIConstantBuffer* m_pAPICbuffer;    
 
   Impl(size_t _uSize)
   {
@@ -32,6 +32,10 @@ void ConstantBufferBase::Update(const void* _pData, size_t _uSize) const
   api::UpdateAPIConstantBuffer(m_pImpl->m_pAPICbuffer, _pData, _uSize);  
 }
 
+void ConstantBufferBase::Setup(size_t _uSize) const
+{
+  api::RenderStateSetupConstantBuffer(m_pImpl->m_pAPICbuffer, _uSize);
+}
 
 void ConstantBufferBase::Bind() const
 {  

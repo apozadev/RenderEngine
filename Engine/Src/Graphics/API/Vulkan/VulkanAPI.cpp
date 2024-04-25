@@ -17,6 +17,7 @@
 #include "Graphics/API/Vulkan/APIMesh.h"
 #include "Graphics/API/Vulkan/APIConstantBuffer.h"
 #include "Graphics/API/Vulkan/APIRenderState.h"
+#include "Graphics/API/Vulkan/APITexture.h"
 #include "File/File.h"
 
 namespace api
@@ -309,21 +310,31 @@ namespace vk
     oColorBlending.blendConstants[2] = 0.0f; // Optional
     oColorBlending.blendConstants[3] = 0.0f; // Optional
 
-    // Pipeline layout (uniforms)     
+    // Descriptor Sets
 
-    VkDescriptorSetLayoutBinding oUboLayoutBinding{};
-    oUboLayoutBinding.binding = 0;
-    oUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    oUboLayoutBinding.descriptorCount = 1;
-    oUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    oUboLayoutBinding.pImmutableSamplers = NULL;
+    _pRenderState->m_hDescSetLayout = s_oGlobalData.m_oDescSetLayoutBuilder.Build(pWindow->m_hDevice);
+    _pRenderState->m_hDescPool = s_oGlobalData.m_oDescSetPoolBuilder.Build(pWindow->m_hDevice);
 
-    VkDescriptorSetLayoutCreateInfo oDescSetLayoutInfo {};
-    oDescSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    oDescSetLayoutInfo.bindingCount = 1u;
-    oDescSetLayoutInfo.pBindings = &oUboLayoutBinding;
+    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
-    VK_CHECK(vkCreateDescriptorSetLayout(pWindow->m_hDevice, &oDescSetLayoutInfo, NULL, &_pRenderState->m_hDescSetLayout))
+    _pRenderState->m_pDescSets = new VkDescriptorSet[uNumImages];
+
+    std::vector<VkDescriptorSetLayout> lstLayouts;
+    for (int i = 0; i < uNumImages; i++)
+    {
+      lstLayouts.push_back(_pRenderState->m_hDescSetLayout);
+    }
+
+    VkDescriptorSetAllocateInfo oDescSetAllocInfo{};
+    oDescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    oDescSetAllocInfo.descriptorPool = _pRenderState->m_hDescPool;
+    oDescSetAllocInfo.descriptorSetCount = lstLayouts.size();
+    oDescSetAllocInfo.pSetLayouts = lstLayouts.data();
+
+    VK_CHECK(vkAllocateDescriptorSets(pWindow->m_hDevice, &oDescSetAllocInfo, _pRenderState->m_pDescSets))
+    
+    s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, _pRenderState->m_pDescSets, uNumImages);
+    
 
     VkPipelineLayoutCreateInfo oPipelineLayoutCreateInfo {};
     oPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -412,6 +423,9 @@ namespace vk
       aDeviceQueueCreateInfos[1].pQueuePriorities = queuePriorities;
     }
 
+    VkPhysicalDeviceFeatures oDeviceFeatures{};
+    vkGetPhysicalDeviceFeatures(s_oGlobalData.m_hPhysicalDevice, &oDeviceFeatures);
+
     VkDeviceCreateInfo oDeviceCreateInfo = {};
     oDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     oDeviceCreateInfo.queueCreateInfoCount = uQueueInfoCount;
@@ -419,7 +433,8 @@ namespace vk
     oDeviceCreateInfo.ppEnabledLayerNames = NULL;
     oDeviceCreateInfo.enabledLayerCount = 0u;
     oDeviceCreateInfo.enabledExtensionCount = uDeviceExtensionCount;
-    oDeviceCreateInfo.ppEnabledExtensionNames = aDeviceExtensions;    
+    oDeviceCreateInfo.ppEnabledExtensionNames = aDeviceExtensions;   
+    oDeviceCreateInfo.pEnabledFeatures = &oDeviceFeatures;
 
     VK_CHECK(vkCreateDevice(s_oGlobalData.m_hPhysicalDevice, &oDeviceCreateInfo, NULL, &_pWindow->m_hDevice))
 
@@ -677,7 +692,7 @@ namespace vk
 
     }
   }
-
+    
   void CreateCommandBuffers(APIWindow* _pWindow)
   {     
     {
@@ -824,13 +839,93 @@ namespace vk
     VK_CHECK(vkBindBufferMemory(hDevice, hBuffer_, hDeviceMemory_, 0))    
   }
 
+  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_)
+  {
+    VkImageCreateInfo oImageCreateInfo{};
+
+    oImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    oImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    oImageCreateInfo.extent.width = _uWidth;
+    oImageCreateInfo.extent.height = _uHeight;
+    oImageCreateInfo.extent.depth = 1u;
+    oImageCreateInfo.mipLevels = 1;
+    oImageCreateInfo.arrayLayers = 1;
+    oImageCreateInfo.format = _eFormat;
+    oImageCreateInfo.tiling = _eTiling;
+    oImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    oImageCreateInfo.usage = _uUsage;
+    oImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    oImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    oImageCreateInfo.flags = 0u;
+
+    VK_CHECK(vkCreateImage(_pWindow->m_hDevice, &oImageCreateInfo, NULL, &hImage_))
+
+    VkMemoryRequirements oMemRequirements;
+    vkGetImageMemoryRequirements(_pWindow->m_hDevice, hImage_, &oMemRequirements);
+
+    VkMemoryAllocateInfo oAllocInfo{};
+    oAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    oAllocInfo.allocationSize = oMemRequirements.size;
+    oAllocInfo.memoryTypeIndex = FindMemoryType(oMemRequirements.memoryTypeBits, _uProperties);
+
+    VK_CHECK(vkAllocateMemory(_pWindow->m_hDevice, &oAllocInfo, NULL, &hMemory_))
+
+    VK_CHECK(vkBindImageMemory(_pWindow->m_hDevice, hImage_, hMemory_, 0))
+  }
+
+  void CreateTextureImageView(APIWindow* _pWindow, APITexture* _pTexture, VkFormat _eFormat)
+  {
+    VkImageViewCreateInfo oCreateInfo = {};
+    oCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    oCreateInfo.pNext = NULL;
+    oCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    oCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    oCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    oCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    oCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oCreateInfo.subresourceRange.levelCount = 1u;
+    oCreateInfo.subresourceRange.baseMipLevel = 0u;
+    oCreateInfo.subresourceRange.layerCount = 1u;
+    oCreateInfo.subresourceRange.baseArrayLayer = 0u;
+    oCreateInfo.image = _pTexture->m_hImage;
+    oCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    oCreateInfo.format = _eFormat;
+
+    VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &_pTexture->m_hImageView))
+  }
+
+  void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture)
+  {
+
+    VkPhysicalDeviceProperties oProperties{};
+    vkGetPhysicalDeviceProperties(s_oGlobalData.m_hPhysicalDevice, &oProperties);
+
+    VkSamplerCreateInfo oSamplerInfo{};
+    oSamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    oSamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    oSamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    oSamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    oSamplerInfo.anisotropyEnable = VK_TRUE;
+    oSamplerInfo.maxAnisotropy = oProperties.limits.maxSamplerAnisotropy;
+    oSamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    oSamplerInfo.unnormalizedCoordinates = VK_FALSE;
+    oSamplerInfo.compareEnable = VK_FALSE;
+    oSamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    oSamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    oSamplerInfo.mipLodBias = 0.0f;
+    oSamplerInfo.minLod = 0.0f;
+    oSamplerInfo.maxLod = 0.0f;
+
+    VK_CHECK(vkCreateSampler(_pWindow->m_hDevice, &oSamplerInfo, NULL, &_pTexture->m_hSampler))
+  }
+
   void DestroyBuffer(APIWindow* _pWindow, VkBuffer _hBuffer, VkDeviceMemory _hDeviceMemory_)
   {
     vkDestroyBuffer(_pWindow->m_hDevice, _hBuffer, NULL);
     vkFreeMemory(_pWindow->m_hDevice, _hDeviceMemory_, NULL);
   }
 
-  void SetBufferData(APIWindow* _pWindow, void* _pData, size_t _uSize, VkDeviceMemory& hDeviceMemory_)
+  void SetBufferData(APIWindow* _pWindow, const void* _pData, size_t _uSize, VkDeviceMemory& hDeviceMemory_)
   {
     VkDevice hDevice = _pWindow->m_hDevice;
     void* pDeviceData;
@@ -839,8 +934,9 @@ namespace vk
     vkUnmapMemory(hDevice, hDeviceMemory_);
   }
 
-  void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize)
+  VkCommandBuffer BeginTempCmdBuffer(APIWindow* _pWindow)
   {
+
     VkCommandBufferAllocateInfo oAllocInfo{};
     oAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     oAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -850,30 +946,127 @@ namespace vk
     VkCommandBuffer hCommandBuffer;
     VK_CHECK(vkAllocateCommandBuffers(_pWindow->m_hDevice, &oAllocInfo, &hCommandBuffer))
 
-    VkCommandBufferBeginInfo oBeginInfo{};
+    VkCommandBufferBeginInfo oBeginInfo
+    {
+    };
     oBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     oBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
     VK_CHECK(vkBeginCommandBuffer(hCommandBuffer, &oBeginInfo))
 
-    VkBufferCopy oCopyRegion{};
-    oCopyRegion.srcOffset = 0; // Optional
-    oCopyRegion.dstOffset = 0; // Optional
-    oCopyRegion.size = _uSize;
-    vkCmdCopyBuffer(hCommandBuffer, _hSrcBuffer, _hDstBuffer, 1, &oCopyRegion);
+    return hCommandBuffer;
+  }
 
-    VK_CHECK(vkEndCommandBuffer(hCommandBuffer))
+  void EndTempCmdBuffer(APIWindow* _pWindow, VkCommandBuffer _hCmdBuffer)
+  {
+    VK_CHECK(vkEndCommandBuffer(_hCmdBuffer))
 
-    VkSubmitInfo oSubmitInfo{};
+      VkSubmitInfo oSubmitInfo
+    {
+    };
     oSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     oSubmitInfo.commandBufferCount = 1;
-    oSubmitInfo.pCommandBuffers = &hCommandBuffer;
+    oSubmitInfo.pCommandBuffers = &_hCmdBuffer;
 
     VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, VK_NULL_HANDLE))
     VK_CHECK(vkQueueWaitIdle(_pWindow->m_hRenderQueue))
 
-    vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, 1u, &hCommandBuffer);
+    vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, 1u, &_hCmdBuffer);
   }
+
+  void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize)
+  {
+    VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+
+    VkBufferCopy oCopyRegion{};
+    oCopyRegion.srcOffset = 0; // Optional
+    oCopyRegion.dstOffset = 0; // Optional
+    oCopyRegion.size = _uSize;
+    vkCmdCopyBuffer(hCmdBuffer, _hSrcBuffer, _hDstBuffer, 1, &oCopyRegion);
+
+    EndTempCmdBuffer(_pWindow, hCmdBuffer);
+  }
+
+  void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight)
+  {
+    VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+
+    VkBufferImageCopy oCopyRegion{};
+    oCopyRegion.bufferOffset = 0;
+    oCopyRegion.bufferRowLength = 0;
+    oCopyRegion.bufferImageHeight = 0;
+    oCopyRegion.imageOffset = { 0, 0, 0 };
+    oCopyRegion.imageExtent = { _uWidth, _uHeight, 1 };
+    oCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oCopyRegion.imageSubresource.baseArrayLayer = 0;
+    oCopyRegion.imageSubresource.layerCount = 1;
+    oCopyRegion.imageSubresource.mipLevel = 0;
+
+    vkCmdCopyBufferToImage(hCmdBuffer, _hBuffer, _hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &oCopyRegion);
+
+    EndTempCmdBuffer(_pWindow, hCmdBuffer);
+  }
+
+  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+  {
+    VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+
+    VkImageMemoryBarrier oBarrier{};
+    oBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    oBarrier.oldLayout = _eOldLayout;
+    oBarrier.newLayout = _eNewLayout;
+    oBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    oBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    oBarrier.image = _hImage;
+    oBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oBarrier.subresourceRange.baseMipLevel = 0;
+    oBarrier.subresourceRange.levelCount = 1;
+    oBarrier.subresourceRange.baseArrayLayer = 0;
+    oBarrier.subresourceRange.layerCount = 1;    
+
+    VkPipelineStageFlags uSrcStage;
+    VkPipelineStageFlags uDstStage;
+
+    if (_eOldLayout == VK_IMAGE_LAYOUT_UNDEFINED && _eNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+      oBarrier.srcAccessMask = 0;
+      oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+      uSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      uDstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (_eOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+      oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+      oBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+      uSrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+      uDstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+    {
+      THROW_GENERIC_EXCEPTION("[API] Unsupported layout transition")
+    }
+
+    vkCmdPipelineBarrier(hCmdBuffer, uSrcStage, uDstStage, 0, 0, NULL, 0, NULL, 1, &oBarrier);
+
+    EndTempCmdBuffer(_pWindow, hCmdBuffer);
+  }
+
+  VkFormat GetVKFormat(ImageFormat _eFormat)
+  {
+    switch (_eFormat)
+    {
+    case ImageFormat::R8G8B8:
+      return VK_FORMAT_R8G8B8_SRGB;
+    case ImageFormat::R8G8B8A8:
+      return VK_FORMAT_R8G8B8A8_SRGB;
+    default:
+      break;
+    }
+    return VK_FORMAT_MAX_ENUM;
+  }
+  
 
   ///----------------------------------------------------------------------------------
   //                                    API functions
@@ -949,8 +1142,7 @@ namespace vk
   {
     APIMesh* pMesh = new APIMesh();
 
-    pMesh->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
-
+    pMesh->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;    
 
     // Create vertex buffer
     {
@@ -1012,9 +1204,9 @@ namespace vk
   {
     APIConstantBuffer* pCBuffer = new APIConstantBuffer();
 
-    pCBuffer->m_pOwnerRenderState = s_oGlobalData.m_pUsingRenderState;
+    pCBuffer->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
 
-    APIWindow* pWindow = pCBuffer->m_pOwnerRenderState->m_pOwnerWindow;    
+    APIWindow* pWindow = pCBuffer->m_pOwnerWindow;    
     
     const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
@@ -1035,88 +1227,27 @@ namespace vk
       VK_CHECK(vkMapMemory(pWindow->m_hDevice, pCBuffer->m_pUniformBuffersMemory[i], 0u, _uSize, 0u, &pCBuffer->m_pUniformBuffersMapped[i]))
     }
 
-    // Create descriptor pool
-
-    VkDescriptorPoolSize oDescPoolSize{};
-    oDescPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    oDescPoolSize.descriptorCount = uNumImages;
-
-    VkDescriptorPoolCreateInfo oDescPoolInfo {};
-    oDescPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    oDescPoolInfo.flags = 0;
-    oDescPoolInfo.poolSizeCount = 1;
-    oDescPoolInfo.pPoolSizes = &oDescPoolSize;
-    oDescPoolInfo.maxSets = uNumImages;
-
-    VK_CHECK(vkCreateDescriptorPool(pWindow->m_hDevice, &oDescPoolInfo, NULL, &pCBuffer->m_hDescPool))
-
-    // Allocate descriptor sets
-
-    VkDescriptorSetLayout* pLayouts = new VkDescriptorSetLayout[uNumImages];
-    for (int i = 0; i < uNumImages; i++)
-    {
-      pLayouts[i] = pCBuffer->m_pOwnerRenderState->m_hDescSetLayout;
-    }
-
-    pCBuffer->m_pDescSets = new VkDescriptorSet[uNumImages];
-
-    VkDescriptorSetAllocateInfo oDescSetAllocInfo {};
-    oDescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    oDescSetAllocInfo.descriptorPool = pCBuffer->m_hDescPool;
-    oDescSetAllocInfo.descriptorSetCount = uNumImages;
-    oDescSetAllocInfo.pSetLayouts = pLayouts;
-
-    VK_CHECK(vkAllocateDescriptorSets(pWindow->m_hDevice, &oDescSetAllocInfo, pCBuffer->m_pDescSets ))
-
-    // Configure descriptor sets
-
-    for (int i = 0; i < uNumImages; i++)
-    {
-      VkDescriptorBufferInfo oBufferInfo{};
-      oBufferInfo.buffer = pCBuffer->m_pUniformBuffers[i];
-      oBufferInfo.offset = 0;
-      oBufferInfo.range = _uSize;
-
-      VkWriteDescriptorSet oWriteDescSet{};
-      oWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      oWriteDescSet.dstSet = pCBuffer->m_pDescSets[i];
-      oWriteDescSet.dstBinding = 0;
-      oWriteDescSet.dstArrayElement = 0;
-      oWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      oWriteDescSet.descriptorCount = 1;
-      oWriteDescSet.pBufferInfo = &oBufferInfo;
-      oWriteDescSet.pImageInfo = NULL;
-      oWriteDescSet.pTexelBufferView = NULL;
-
-      vkUpdateDescriptorSets(pWindow->m_hDevice, 1, &oWriteDescSet, 0, nullptr);
-    }
-
-    delete[] pLayouts;
-
     return pCBuffer;
   }
 
   void UpdateAPIConstanBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize)
   {
-    APIWindow* pWindow = _pCBuffer->m_pOwnerRenderState->m_pOwnerWindow;
+    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;
 
     uint32_t uCurrImageIdx = pWindow->m_uCurrSwapchainImageIdx;
 
     memcpy(_pCBuffer->m_pUniformBuffersMapped[uCurrImageIdx], _pData, _uSize);
   }
 
-  void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
+  void BindAPIConstantBuffer(APIConstantBuffer* /*_pCbuffer*/)
   {
-    APIRenderState* pRenderState = _pCbuffer->m_pOwnerRenderState;
-    APIWindow* pWindow = pRenderState->m_pOwnerWindow;
-    uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
-    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pRenderState->m_hPipelineLayout, 0, 1, &_pCbuffer->m_pDescSets[uImageIdx], 0, NULL);
+    
   }
 
   void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer)
   {
 
-    APIWindow* pWindow = _pCBuffer->m_pOwnerRenderState->m_pOwnerWindow;
+    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;
 
     const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
@@ -1128,9 +1259,9 @@ namespace vk
       DestroyBuffer(pWindow, _pCBuffer->m_pUniformBuffers[i], _pCBuffer->m_pUniformBuffersMemory[i]);
     }
 
-    delete[] _pCBuffer->m_pDescSets;
+    /*delete[] _pCBuffer->m_pDescSets;
 
-    vkDestroyDescriptorPool(hDevice, _pCBuffer->m_hDescPool, nullptr);    
+    vkDestroyDescriptorPool(hDevice, _pCBuffer->m_hDescPool, nullptr);  */  
 
     delete[] _pCBuffer->m_pUniformBuffers;
     delete[] _pCBuffer->m_pUniformBuffersMemory;
@@ -1139,13 +1270,67 @@ namespace vk
     delete _pCBuffer;
   }
 
+  // Texture
+
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat)
+  {
+
+    APITexture* pTexture = new APITexture();
+
+    pTexture->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
+
+    APIWindow* pWindow = pTexture->m_pOwnerWindow;
+
+    VkBuffer hStagingBuffer;
+    VkDeviceMemory hStagingBufferMemory;       
+
+    size_t uSize = _uWidth* _uHeight* GetImageFormatSize(_eFormat);
+
+    VkFormat eVkFormat = GetVKFormat(_eFormat);
+
+    CreateBuffer(pWindow, uSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, hStagingBuffer, hStagingBufferMemory);
+
+    SetBufferData(pWindow, _pData, uSize, hStagingBufferMemory);    
+
+    CreateImage(pWindow, _uWidth, _uHeight, eVkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pTexture->m_hImage, pTexture->m_hMemory);
+
+    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight);
+
+    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
+
+    CreateTextureImageView(pWindow, pTexture, eVkFormat);
+
+    CreateTextureSampler(pWindow, pTexture);
+
+    return pTexture;
+  }
+
+  void BindAPITexture(APITexture* /*_pTexture*/)
+  {
+    
+  }
+
+  void DestroyAPITexture(APITexture* _pTexture)
+  {
+    APIWindow* pWindow = _pTexture->m_pOwnerWindow;
+    vkDestroySampler(pWindow->m_hDevice, _pTexture->m_hSampler, NULL);
+    vkDestroyImageView(pWindow->m_hDevice, _pTexture->m_hImageView, NULL);
+    vkDestroyImage(pWindow->m_hDevice, _pTexture->m_hImage, NULL);
+    vkFreeMemory(pWindow->m_hDevice, _pTexture->m_hMemory, NULL);
+
+    delete _pTexture;
+  }
+
   // Render state
 
   APIRenderState* CreateAPIRenderState()
   {
     APIRenderState* pRenderState = new APIRenderState();
-    pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
-    CreatePipeline(pRenderState);
+    pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;    
 
     return pRenderState;
   }
@@ -1154,22 +1339,121 @@ namespace vk
   {
     APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
     vkCmdBindPipeline(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hGraphicsPipeline);
+
+    uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
+    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hPipelineLayout, 0, 1, &_pAPIRenderState->m_pDescSets[uImageIdx], 0, NULL);
   }
 
   void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)
   {
     APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
 
+    delete[] _pAPIRenderState->m_pDescSets;
+
+    vkDestroyDescriptorPool(pWindow->m_hDevice, _pAPIRenderState->m_hDescPool, NULL);
+
     vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hDescSetLayout, NULL);
 
     vkDestroyPipelineLayout(pWindow->m_hDevice, _pAPIRenderState->m_hPipelineLayout, NULL);
 
     delete _pAPIRenderState;
+  }  
+
+  void BeginRenderStateSetup(APIRenderState* _pRenderState)
+  {
+
+    if (s_oGlobalData.m_pUsingRenderState != nullptr)
+    {
+      THROW_GENERIC_EXCEPTION("[API] EndRenderStateSetup was not called before a new BeginRenderStateSetup call")
+    }
+
+    s_oGlobalData.m_pUsingRenderState = _pRenderState;
+
+    APIWindow* pWindow = _pRenderState->m_pOwnerWindow;
+    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+    s_oGlobalData.m_oDescSetPoolBuilder.SetSwapchainSize(uNumImages);
   }
 
-  void SetUsingRenderState(APIRenderState* _pRenderState)
+  void RenderStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize)
   {
-    s_oGlobalData.m_pUsingRenderState = _pRenderState;
+
+    APIRenderState* pRenderState = s_oGlobalData.m_pUsingRenderState;
+
+    APIWindow* pWindow = pRenderState->m_pOwnerWindow;
+
+    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VkDescriptorSetLayoutBinding oUboLayoutBinding{};
+    oUboLayoutBinding.binding = 0;
+    oUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    oUboLayoutBinding.descriptorCount = 1;
+    oUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    oUboLayoutBinding.pImmutableSamplers = NULL;
+
+    s_oGlobalData.m_oDescSetLayoutBuilder.AddLayoutBinding(std::move(oUboLayoutBinding), 0);
+
+    VkDescriptorPoolSize oDescPoolSize {};
+    oDescPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    oDescPoolSize.descriptorCount = uNumImages;
+
+    s_oGlobalData.m_oDescSetPoolBuilder.AddPoolSize(std::move(oDescPoolSize));
+
+    for (int i = 0; i < uNumImages; i++)
+    {
+      VkDescriptorBufferInfo oBufferInfo{};
+      oBufferInfo.buffer = _pCBuffer->m_pUniformBuffers[i];
+      oBufferInfo.offset = 0;
+      oBufferInfo.range = _uSize;
+
+      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), i);
+    }
+  }
+
+  void RenderStateSetupTexture(APITexture* _pTexture)
+  {
+
+    APIRenderState* pRenderState = s_oGlobalData.m_pUsingRenderState;
+
+    APIWindow* pWindow = pRenderState->m_pOwnerWindow;
+
+    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VkDescriptorSetLayoutBinding oSamplerLayoutBinding{};
+    oSamplerLayoutBinding.binding = 1;
+    oSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    oSamplerLayoutBinding.descriptorCount = 1;
+    oSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    oSamplerLayoutBinding.pImmutableSamplers = NULL;
+
+    s_oGlobalData.m_oDescSetLayoutBuilder.AddLayoutBinding(std::move(oSamplerLayoutBinding), 1);
+
+    VkDescriptorPoolSize oDescPoolSize{};
+    oDescPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    oDescPoolSize.descriptorCount = uNumImages;
+
+    s_oGlobalData.m_oDescSetPoolBuilder.AddPoolSize(std::move(oDescPoolSize));
+
+    for (int i = 0; i < uNumImages; i++)
+    {
+      VkDescriptorImageInfo oImageInfo{};
+      oImageInfo.sampler = _pTexture->m_hSampler;
+      oImageInfo.imageView = _pTexture->m_hImageView;
+      oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), i);
+    }
+  }
+
+  void EndRenderStateSetup()
+  {
+
+    CreatePipeline(s_oGlobalData.m_pUsingRenderState);
+
+    s_oGlobalData.m_oDescSetLayoutBuilder.Clear();
+    s_oGlobalData.m_oDescSetPoolBuilder.Clear();
+    s_oGlobalData.m_oDescSetUpdater.Clear();
+
+    s_oGlobalData.m_pUsingRenderState = nullptr;
   }
 
   // Drawing

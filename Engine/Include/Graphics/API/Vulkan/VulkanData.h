@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Graphics/API/Vulkan/DescriptorUtils.h"
+
 namespace api
 {
 namespace vk
@@ -54,6 +56,10 @@ namespace vk
 
     APIWindow* m_pUsingWindow = nullptr;
     APIRenderState* m_pUsingRenderState = nullptr;
+
+    DescriptorSetLayoutBuilder m_oDescSetLayoutBuilder;
+    DescriptorPoolBuilder m_oDescSetPoolBuilder;
+    DescriptorSetUpdater m_oDescSetUpdater;
   };
 }
 }

@@ -8,6 +8,8 @@
 
 #include "Graphics/Window.h"
 
+#include "Core/Exception.h"
+
 class Material::Impl
 {
 public:
@@ -27,15 +29,35 @@ public:
 
 Material::Material(Window* _pWindow)
 {
-  m_pImpl = std::make_unique<Impl>(_pWindow);  
+  m_pImpl = std::make_unique<Impl>(_pWindow);    
 }
 
 Material::~Material()
 {
+  for (Resource* pResource : m_lstResources)
+  {
+    delete pResource;
+  }
+}
+
+void Material::BeginInstanceSetup(SetupKey&&) const
+{
+  api::BeginRenderStateSetup(m_pImpl->m_pAPIRenderState);
+
+  for (const Resource* pResource : m_lstResources)
+  {
+    pResource->Setup();
+  }
+}
+
+void Material::EndInstanceSetup(SetupKey&&) const
+{
+  api::EndRenderStateSetup();
 }
 
 void Material::Bind() const
 {
+
   api::BindAPIRenderState(m_pImpl->m_pAPIRenderState);
 
   for (const Resource* pResource : m_lstResources)
@@ -44,7 +66,3 @@ void Material::Bind() const
   }
 }
 
-void Material::SetUsingRenderState() const
-{
-  api::SetUsingRenderState(m_pImpl->m_pAPIRenderState);
-}

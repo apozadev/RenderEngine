@@ -4,8 +4,8 @@
 
 namespace api
 {
-namespace vk {
-
+namespace vk 
+{
   
   struct APIWindow
   {  

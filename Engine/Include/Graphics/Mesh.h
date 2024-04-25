@@ -15,11 +15,9 @@ class Mesh
 
   friend class Renderer;
 
-  //struct ConstructKey {};
-
 public:    
 
-  Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, MaterialInstance* _pMaterial, Window* _pWindow/*, ConstructKey&&*/);
+  Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, MaterialInstance* _pMaterial, Window* _pWindow);
   Mesh(Mesh&& _rMesh);
   ~Mesh();
 

@@ -10,21 +10,30 @@ class Material
 {
 public:
 
+  class SetupKey
+  {  
+  private:
+    friend class MaterialInstance;
+    SetupKey() {};
+  };
+
+public:
+
   Material(Window* _pWindow);
   ~Material();
 
   template<class T, typename ...Args>
   inline T* AddResource(Args&&... args)
-  {    
-    SetUsingRenderState();
+  {        
     T* pResource = new T(std::forward<Args>(args)...);
     m_lstResources.push_back(pResource);
     return pResource;
   }
 
-  void Bind() const;
+  void BeginInstanceSetup(SetupKey&&) const;  
+  void EndInstanceSetup(SetupKey&&) const;
 
-  void SetUsingRenderState() const;
+  void Bind() const;    
 
 private:      
 
