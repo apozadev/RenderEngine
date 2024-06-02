@@ -32,7 +32,11 @@ namespace vk
 
     uint32_t m_uSwapchainImageCount;
 
-    uint32_t m_uCurrSwapchainImageIdx;
+    uint32_t m_uCurrSwapchainImageIdx;    
+
+    VkDescriptorPool m_hDescPool;
+    VkDescriptorSetLayout m_hGlobalDescSetLayout;
+    VkDescriptorSet* m_pGlobalDescSets;    
 
     bool m_bResized = false;
   };

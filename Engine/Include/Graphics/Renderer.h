@@ -1,34 +1,26 @@
 #pragma once
 
-#include <vector>
+#include <memory>
 
 #include "Core/Singleton.h"
 
-#include "Graphics/Vertex.h"
-
-class Window;
 class Mesh;
 class MaterialInstance;
 class Transform;
+class Window;
 
 class Renderer : public Singleton<Renderer>
 {
 
-  struct Job
-  {
-    Mesh* m_pMesh;
-    const MaterialInstance* m_pMaterial;
-    const Window* m_pWindow;
-    const Transform* m_pTransform;
-    uint64_t m_uKey;
-  };
+  struct Job;
 
 public:  
 
-  void Initialize();
-  void ShutDown();  
+  Renderer();
+  ~Renderer();
 
-  //Mesh* CreateMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow);
+  void Initialize();
+  void ShutDown();   
 
   void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform);
   
@@ -36,7 +28,6 @@ public:
 
 private:
 
-  static bool Renderer::compareJob(const Job& j1, const Job& j2);
-
-  std::vector<Job> m_lstJobs;  
+  class Impl;
+  std::unique_ptr<Impl> m_pImpl;    
 };

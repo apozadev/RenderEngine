@@ -1,6 +1,5 @@
 #include "Graphics/Mesh.h"
 #include "Graphics/Window.h"
-#include "Graphics/Renderer.h"
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/API/GraphicsAPI.h"
@@ -21,10 +20,16 @@ public:
     m_uVertexCount = _lstVertices.size();
     m_uIndexCount = _lstIndices.size();
     m_mLocalTransform = glm::mat4(1.f);
-    m_pTransformCBuffer = _pMaterial->AddResource<ConstantBuffer<glm::mat4>>();
 
-    _pWindow->SetUsing();
+    m_pWindow->SetUsing();
+
+    m_pTransformCBuffer = _pMaterial->AddResource<ConstantBuffer<glm::mat4>>(0, PipelineStage::VERTEX);    
+
+    _pMaterial->Setup();
+    
     m_pAPIMesh = api::CreateAPIMesh(_lstVertices.data(), m_uVertexCount * sizeof(Vertex), _lstIndices.data(), m_uIndexCount * sizeof(uint16_t));
+
+    api::SetUsingAPIWindow(nullptr);
   }
 
   ~Impl()

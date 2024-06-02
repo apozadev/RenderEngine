@@ -1,6 +1,12 @@
 #include "Components/ModelComponent.h"
 #include "Graphics/Renderer.h"
 #include "Core/Entity.h"
+#include "Util/ModelLoader.h"
+
+ModelComponent::ModelComponent(const char* _sFilename, Window* _pWindow)
+{
+  ModelLoader::GetInstance()->LoadModel(_sFilename, _pWindow, this);
+}
 
 void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx, Window* _pWindow)
 {

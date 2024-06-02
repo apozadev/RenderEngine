@@ -4,6 +4,7 @@
 #include "Graphics/Material.h"
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Window.h"
+#include "Graphics/ConstantBuffer.h"
 
 #include "Math/Transform.h"
 
@@ -11,14 +12,41 @@
 
 #include <algorithm>
 
-bool Renderer::compareJob(const Job& j1, const Job& j2)
+struct Renderer::Job
 {
-  return j1.m_uKey < j2.m_uKey;
+  Mesh* m_pMesh;
+  const MaterialInstance* m_pMaterial;
+  const Window* m_pWindow;
+  const Transform* m_pTransform;
+  uint64_t m_uKey;
+
+  static bool Compare(const Job& j1, const Job& j2)
+  {
+    return j1.m_uKey < j2.m_uKey;
+  }
+};
+
+class Renderer::Impl
+{  
+public:
+
+  Impl() {}
+
+  ~Impl() {}
+
+  std::vector<Job> m_lstJobs;   
+};
+
+Renderer::Renderer() : m_pImpl(std::make_unique<Impl>())
+{
+
 }
+
+Renderer::~Renderer() = default;
 
 void Renderer::Initialize()
 {  
-
+   
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -36,13 +64,13 @@ void Renderer::ShutDown()
 
 void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
 {
-  m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
+  m_pImpl->m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
 }
 
 void Renderer::Draw()
 {  
 
-  std::sort(m_lstJobs.begin(), m_lstJobs.end(), compareJob);
+  std::sort(m_pImpl->m_lstJobs.begin(), m_pImpl->m_lstJobs.end(), Job::Compare);
 
   const Window* pCurrWindow = nullptr;
 
@@ -50,7 +78,7 @@ void Renderer::Draw()
 
   bool bSkipCurrWindow = false;
 
-  for (Job& rJob : m_lstJobs)
+  for (Job& rJob : m_pImpl->m_lstJobs)
   {
     if (pCurrWindow != rJob.m_pWindow)
     {
@@ -66,15 +94,19 @@ void Renderer::Draw()
     {
       const MaterialInstance* pMatInstance = rJob.m_pMaterial;
 
-      if (pMatInstance->GetMaterial() != pCurrMaterial)
+      const Material* pMaterial = pMatInstance->GetMaterial();
+
+      if (pMaterial != pCurrMaterial)
       {
-        pMatInstance->GetMaterial()->Bind();
-        pCurrMaterial = pMatInstance->GetMaterial();
+        pMaterial->Bind();        
+        pCurrWindow->UpdateGlobalBufferData(GlobalBufferData{});
+        pCurrMaterial = pMaterial;
       }
 
-      pMatInstance->Bind();
-
       rJob.m_pMesh->UpdateTransform(*rJob.m_pTransform);
+
+      pMatInstance->Bind();      
+
       rJob.m_pMesh->Draw();
     }
   }
@@ -84,5 +116,5 @@ void Renderer::Draw()
     pCurrWindow->EndDraw();
   }
 
-  m_lstJobs.clear();
+  m_pImpl->m_lstJobs.clear();
 }

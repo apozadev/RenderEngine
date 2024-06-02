@@ -17,6 +17,8 @@ endforeach()
 
 include_directories(${CMAKE_SOURCE_DIR}/Engine/Include)
 include_directories(${CMAKE_SOURCE_DIR}/glfw/include)
+include_directories(${CMAKE_SOURCE_DIR}/assimp/include)
+include_directories(${CMAKE_SOURCE_DIR}/3rd)
 
 link_directories($ENV{VULKAN_SDK}/Bin;$ENV{VULKAN_SDK}/Lib;)
 
@@ -25,14 +27,15 @@ target_link_libraries(App Vulkan::Vulkan)
 target_link_libraries(App Engine)
 target_link_libraries(App glfw ${GLFW_LIBRARIES})
 target_link_libraries(App glm::glm)
+target_link_libraries(App assimp::assimp)
 
 # Shader stuff
 
-if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
+# if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
   set(GLSL_COMPILER "$ENV{VULKAN_SDK}/Bin/glslc.exe")
-else()
-  set(GLSL_COMPILER "$ENV{VULKAN_SDK}/Bin32/glslc.exe")
-endif()
+# else()
+#   set(GLSL_COMPILER "$ENV{VULKAN_SDK}/Bin32/glslc.exe")
+# endif()
 
 file(GLOB_RECURSE SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/*.glsl")
 

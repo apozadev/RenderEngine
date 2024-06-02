@@ -4,6 +4,7 @@
 #include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/ImageFormat.h"
 #include "Graphics/Material.h"
+#include "Graphics/ResourceBindInfo.h"
 
 class Texture2D::Impl
 {
@@ -22,15 +23,20 @@ public:
 
 };
 
-Texture2D::Texture2D(const std::string& _sFilename)
+Texture2D::Texture2D(const std::string& _sFilename, int _iBinding, PipelineStage _eStage)
+  : Resource(_iBinding, _eStage)
 {
   const Image& rImage = ImageManager::GetInstance()->LoadImage(_sFilename);
   m_pImpl = std::make_unique<Impl>(rImage.m_pData, rImage.m_iWidth, rImage.m_iHeight, rImage.m_eFormat);
 }
 
-void Texture2D::Setup() const
-{
-  api::RenderStateSetupTexture(m_pImpl->m_pAPITexture);
+void Texture2D::Setup(ResourceFrequency _eFrequency) const
+{  
+  ResourceBindInfo oBindInfo {};
+  oBindInfo.m_eLevel = _eFrequency;
+  oBindInfo.m_eStage = m_eStage;
+  oBindInfo.m_iBinding = m_iBinding;
+  api::SubStateSetupTexture(m_pImpl->m_pAPITexture, oBindInfo);
 }
 
 void Texture2D::Bind() const

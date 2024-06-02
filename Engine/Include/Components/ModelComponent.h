@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Graphics/Mesh.h"
 
 #include "Graphics/MaterialInstance.h"
@@ -9,6 +11,8 @@
 class ModelComponent : public Component
 {
 
+public:
+
   struct MeshMaterialPair
   {
     Mesh m_oMesh;
@@ -16,14 +20,15 @@ class ModelComponent : public Component
   };
 
 public:
-  //ModelComponent() {};
+  ModelComponent(const char* _sFilename, Window* _pWindow);
   //~ModelComponent() {};
 
   void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx, Window* _pWindow);
 
-  void AddMaterial(MaterialInstance&& _rMaterial)
+  MaterialInstance& AddMaterial(MaterialInstance&& _rMaterial)
   {
     m_lstMaterials.push_back(std::move(_rMaterial));
+    return m_lstMaterials[m_lstMaterials.size() - 1];
   }
 
   MaterialInstance& GetMaterial(unsigned int _uIdx)

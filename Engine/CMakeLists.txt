@@ -58,15 +58,28 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/Texture2D.h" 
 	"Src/Graphics/Texture2D.cpp"
 	"Include/Graphics/API/Vulkan/APITexture.h"
-	"Include/Graphics/ImageFormat.h" "Include/Graphics/API/Vulkan/DescriptorUtils.h" "Src/Graphics/API/Vulkan/DescriptorUtils.cpp")
+	"Include/Graphics/ImageFormat.h" 
+	"Include/Graphics/API/Vulkan/DescriptorUtils.h" 
+	"Src/Graphics/API/Vulkan/DescriptorUtils.cpp"
+	"Include/Util/ModelLoader.h" 
+	"Src/Util/ModelLoader.cpp" 
+	"Include/Graphics/ResourceBindInfo.h" 
+	"Include/Graphics/API/Vulkan/APIRenderSubState.h" 
+	"Include/Graphics/ResourceFrequency.h"	"Include/Graphics/API/Vulkan/VulkanShaderReflection.h"
+	"Src/Graphics/API/Vulkan/VulkanShaderReflection.cpp"
+	"3rd/spirv-reflect/spirv_reflect.h"
+	"3rd/spirv-reflect/spirv_reflect.cpp"
+	"3rd/spirv-reflect/include/spirv/unified1/spirv.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
 	"${CMAKE_CURRENT_LIST_DIR}/Include"
 	"$ENV{VULKAN_SDK}/Include"
+	"${CMAKE_SOURCE_DIR}/3rd"
 	"${CMAKE_SOURCE_DIR}/glfw/include"
 	"${CMAKE_SOURCE_DIR}/glm"
 	"${CMAKE_SOURCE_DIR}/stb"
+	"${CMAKE_SOURCE_DIR}/assimp/include"	
  )
 
  set_target_properties(${PROJECT_NAME} PROPERTIES  

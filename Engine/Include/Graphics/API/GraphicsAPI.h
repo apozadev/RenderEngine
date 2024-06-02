@@ -3,6 +3,7 @@
 #include <inttypes.h>
 
 #include "Graphics/ImageFormat.h"
+#include "Graphics/ResourceBindInfo.h"
 
 struct GLFWwindow;
 
@@ -15,6 +16,7 @@ namespace api
     struct APIMesh;
     struct APIConstantBuffer;
     struct APIRenderState;
+    struct APIRenderSubState;
     struct APITexture;
   } 
 
@@ -22,6 +24,7 @@ namespace api
   typedef struct RENDER_API::APIMesh APIMesh;
   typedef struct RENDER_API::APIConstantBuffer APIConstantBuffer;
   typedef struct RENDER_API::APIRenderState APIRenderState;
+  typedef struct RENDER_API::APIRenderSubState APIRenderSubState;
   typedef struct RENDER_API::APITexture APITexture;
 
   // Global
@@ -34,6 +37,9 @@ namespace api
 
   APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow);
   void SetUsingAPIWindow(APIWindow* _pWindow);
+  void BeginWindowSubStateSetup(APIWindow* _pWindow);
+  void EndWindowSubStateSetup();
+  void BindWindowSubState(APIWindow* _pWindow);
   void OnWindowResize(APIWindow* _pWindow);
   void DestroyAPIWindow(APIWindow* _pWindow);
 
@@ -51,13 +57,22 @@ namespace api
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState();    
-  void BeginRenderStateSetup(APIRenderState* _pRenderState);
-  void RenderStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size);
-  void RenderStateSetupTexture(APITexture* _pTexture);
+  APIRenderState* CreateAPIRenderState();
+  void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
   void EndRenderStateSetup();
+  void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState);
   void BindAPIRenderState(APIRenderState* _pAPIRenderState);
   void DestroyAPIRenderState(APIRenderState* _pAPIRenderState);
+
+  // Render substate
+
+  APIRenderSubState* CreateAPIRenderSubState();
+  void BeginSubStateSetup(APIRenderSubState* _pAPIRenderSubState);
+  void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo);
+  void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);
+  void EndSubStateSetup();
+  void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState);
+  void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState);
 
   // Texture
 

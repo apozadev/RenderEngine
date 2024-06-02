@@ -4,6 +4,8 @@
 
 #include "Graphics/ImageFormat.h"
 
+#include "Graphics/ResourceBindInfo.h"
+
 struct GLFWwindow;
 
 namespace api
@@ -15,11 +17,12 @@ namespace vk
 	struct APIMesh;
 	struct APIConstantBuffer;
 	struct APIRenderState;
+	struct APIRenderSubState;
 	struct APITexture;
 
 	// General
 
-	void InitializeAPI();
+	void InitializeAPI();	
 
 	void ShutDownAPI();
 
@@ -28,6 +31,12 @@ namespace vk
 	APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow);	
 
 	void SetUsingAPIWindow(APIWindow* _pWindow);
+
+	void BeginWindowSubStateSetup(APIWindow* _pWindow);	
+
+	void EndWindowSubStateSetup();
+
+	void BindWindowSubState(APIWindow* _pWindow);
 
 	void OnWindowResize(APIWindow* _pWindow);
 
@@ -59,19 +68,33 @@ namespace vk
 
 	// Render state
 
-	APIRenderState* CreateAPIRenderState();		
+	APIRenderState* CreateAPIRenderState();			
 
-	void BeginRenderStateSetup(APIRenderState* _pRenderState);
-
-	void RenderStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size);
-
-	void RenderStateSetupTexture(APITexture* _pTexture);
+	void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
 
 	void EndRenderStateSetup();
 
-	void BindAPIRenderState(APIRenderState* _pAPIRenderState);
+	void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState);
+
+	void BindAPIRenderState(APIRenderState* _pAPIRenderState);	
 
 	void DestroyAPIRenderState(APIRenderState* _pAPIRenderState);
+
+	// Render substate
+
+	APIRenderSubState* CreateAPIRenderSubState();
+
+	void BeginSubStateSetup(APIRenderSubState* _pAPIRenderState);
+
+	void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo);
+
+	void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);
+
+	void EndSubStateSetup();
+
+	void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState);
+
+	void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState);
 
 	// Drawing
 

@@ -6,14 +6,16 @@
 
 class ConstantBufferBase : public Resource
 {
-public:
+protected:
 
-  ConstantBufferBase(size_t _uSize);
+  ConstantBufferBase(size_t _uSize, int _iBinding, PipelineStage _eStage);
   ~ConstantBufferBase();
 
   void Update(const void* _pData, size_t _uSize) const;
 
-  void Setup(size_t _uSize) const;
+  void Setup(size_t _uSize, ResourceFrequency _eFrequency) const;
+
+public:
 
   void Bind() const override;
 
@@ -28,7 +30,7 @@ class ConstantBuffer :public ConstantBufferBase
 {  
 public:
 
-  ConstantBuffer() : ConstantBufferBase(sizeof(T))
+  ConstantBuffer(int _iBinding, PipelineStage _eStage) : ConstantBufferBase(sizeof(T), _iBinding, _eStage)
   {}
 
   virtual ~ConstantBuffer()
@@ -41,12 +43,12 @@ public:
 
   void SetData(T* _pData)
   {
-    m_oData = *_pData
+    m_oData = *_pData;
   }  
 
-  void Setup() const override 
+  void Setup(ResourceFrequency _eFrequency) const override
   { 
-    ConstantBufferBase::Setup(sizeof(T));
+    ConstantBufferBase::Setup(sizeof(T), _eFrequency);
   }
 
   void Update() const

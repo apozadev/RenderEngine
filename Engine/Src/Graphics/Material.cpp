@@ -1,7 +1,5 @@
 #include "Graphics/Material.h"
 
-#include "Graphics/Renderer.h"
-
 #include "Graphics/Resource.h"
 
 #include "Graphics/API/GraphicsAPI.h"
@@ -40,18 +38,15 @@ Material::~Material()
   }
 }
 
-void Material::BeginInstanceSetup(SetupKey&&) const
+void Material::Setup() const
 {
   api::BeginRenderStateSetup(m_pImpl->m_pAPIRenderState);
 
-  for (const Resource* pResource : m_lstResources)
+  for (Resource* pResource : m_lstResources)
   {
-    pResource->Setup();
+    pResource->Setup(ResourceFrequency::MATERIAL);
   }
-}
 
-void Material::EndInstanceSetup(SetupKey&&) const
-{
   api::EndRenderStateSetup();
 }
 
@@ -64,5 +59,10 @@ void Material::Bind() const
   {
     pResource->Bind();
   }
+}
+
+void Material::SetUsing() const
+{
+  api::SetUsingAPIRenderState(m_pImpl->m_pAPIRenderState);
 }
 

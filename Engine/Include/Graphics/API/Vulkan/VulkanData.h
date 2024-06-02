@@ -10,7 +10,7 @@ namespace vk
 {
 
   struct APIWindow;
-  struct APIRenderState;
+  struct APIRenderSubState;
 
   struct VulkanData
   {
@@ -47,7 +47,7 @@ namespace vk
 
     ImportTable m_oImportTable;
 
-    VkInstance m_hInstance;
+    VkInstance m_hInstance;    
 
     uint32_t m_uRenderQueueFamilyIdx;
     uint32_t m_uPresentQueueFamilyIdx;
@@ -55,11 +55,13 @@ namespace vk
     VkPhysicalDevice m_hPhysicalDevice;   
 
     APIWindow* m_pUsingWindow = nullptr;
-    APIRenderState* m_pUsingRenderState = nullptr;
 
-    DescriptorSetLayoutBuilder m_oDescSetLayoutBuilder;
-    DescriptorPoolBuilder m_oDescSetPoolBuilder;
+    APIRenderState* m_pUsingRenderState = nullptr;
+    APIRenderSubState* m_pUsingSubState = nullptr;
+       
+    DescriptorSetLayoutBuilder m_oLayoutBuilder;
     DescriptorSetUpdater m_oDescSetUpdater;
+
   };
 }
 }

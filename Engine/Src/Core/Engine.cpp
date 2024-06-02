@@ -25,14 +25,14 @@ int Engine::Initialize()
 
 Window* Engine::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle)
 {    
-  m_lstWindows.emplace_back(_iWidth, _iHeight, _sTitle);
-  return &m_lstWindows[m_lstWindows.size() - 1];
+  Window& rWindow = m_lstWindows.emplace_back(_iWidth, _iHeight, _sTitle);  
+  rWindow.Setup();
+  return &rWindow;
 }
 
 Scene* Engine::CreateScene(Window* _pWindow)
 {
-  m_lstScenes.emplace_back(Scene());
-  return &m_lstScenes[m_lstScenes.size()-1];
+  return &m_lstScenes.emplace_back(Scene());  
 }
 
 void Engine::UpdateWindows()

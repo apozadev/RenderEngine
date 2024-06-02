@@ -15,10 +15,10 @@ public:
 
   ~Entity();
 
-  template<typename T>
-  T* AddComponent()
+  template<class T, typename ...Args>
+  T* AddComponent(Args&&... args)
   {
-    m_lstComponents.push_back(new T());
+    m_lstComponents.push_back(new T(std::forward<Args>(args)...));
     T* pComp = static_cast<T*>(m_lstComponents[m_lstComponents.size() - 1]);
     pComp->m_pEntity = this;
     return pComp;
@@ -34,13 +34,13 @@ protected:
 public:
   
   const Transform& GetGlobalTransform() { return m_oGlobalTransform; }
-  const Transform& GetLocalTransform() { return m_oLocalTransform; }  
+  Transform& GetLocalTransform() { return m_oLocalTransform; }  
 
   void SetLocalTransform(const Transform& _rTransform)
   {
     m_bTransformDirty = true;
     m_oLocalTransform = _rTransform;
-  }
+  }  
 
   Entity(ConstructKey&&) {}
 

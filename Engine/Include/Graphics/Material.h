@@ -10,15 +10,6 @@ class Material
 {
 public:
 
-  class SetupKey
-  {  
-  private:
-    friend class MaterialInstance;
-    SetupKey() {};
-  };
-
-public:
-
   Material(Window* _pWindow);
   ~Material();
 
@@ -28,12 +19,13 @@ public:
     T* pResource = new T(std::forward<Args>(args)...);
     m_lstResources.push_back(pResource);
     return pResource;
-  }
+  }  
 
-  void BeginInstanceSetup(SetupKey&&) const;  
-  void EndInstanceSetup(SetupKey&&) const;
+  void Setup() const;
 
-  void Bind() const;    
+  void Bind() const;   
+
+  void SetUsing() const;
 
 private:      
 

@@ -12,16 +12,15 @@ namespace vk
   {
   public:
 
-    void AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding, int _iGroupId);
+    void AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding);
 
     VkDescriptorSetLayout Build(VkDevice _hDevice);
 
-    void Clear() { m_lstDescSetInfos.clear(); m_lstGroupIds.clear(); }
+    void Clear() { m_lstDescSetInfos.clear();}
 
   private:
 
-    std::vector<VkDescriptorSetLayoutBinding> m_lstDescSetInfos;
-    std::vector<int> m_lstGroupIds;
+    std::vector<VkDescriptorSetLayoutBinding> m_lstDescSetInfos;    
   };
 
   //------------------------------------------------------
@@ -52,22 +51,24 @@ namespace vk
 
   private:
 
-    struct SetBufferInfos
+    struct SetBoundBufferInfoList
     {
-      uint32_t m_uSetIdx;
+      uint32_t m_uSetIdx;      
+      uint32_t m_uBinding;
       std::vector<VkDescriptorBufferInfo> m_lstBufferInfos;
     };
 
-    struct SetImageInfos
+    struct SetBoundImgInfoList
     {
       uint32_t m_uSetIdx;
-      std::vector<VkDescriptorImageInfo> m_lstImageInfos;
+      uint32_t m_uBinding;
+      std::vector<VkDescriptorImageInfo> m_lstImgInfos;
     };
 
   public:
 
-    void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uSetIdx);
-    void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uSetIdx);
+    void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx);
+    void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx);
 
     void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount);
 
@@ -79,8 +80,8 @@ namespace vk
 
   private:
 
-    std::vector<SetBufferInfos> m_lstSetBufferInfos;
-    std::vector<SetImageInfos> m_lstSetImageInfos;
+    std::vector<SetBoundBufferInfoList> m_lstSetBufferInfos;
+    std::vector<SetBoundImgInfoList> m_lstSetImageInfos;
 
   };
 

@@ -12,11 +12,6 @@
 
 #include <string>
 
-// TODO: Descriptor layout, pools y sets. Lo movemos del CBuffer al RenderState. Implementar DescriptorUtils. 
-// Los poolSize de descriptors de CBuffer se multiplican por numero de swpchain images. Las imagenes NO hace falta.
-// Primero crearemos lo que podamos de RenderState. Hacemos un visitor por los recursos del material que metan sus cosas en los Builders. Al final se hace un Build con la info.
-
-
 int main(){
 
   try
@@ -29,11 +24,11 @@ int main(){
 
   Entity* pEntity = pScene->AddEntity();
 
-  std::vector<Vertex> lstVertices {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+  /*std::vector<Vertex> lstVertices {
+    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
   };
 
   std::vector<uint16_t> lstIndices{
@@ -48,7 +43,11 @@ int main(){
   pModelComp->AddMesh(lstVertices, lstIndices, 0u, pWindow);
 
   pModelComp->GetMaterial(0).AddResource<Texture2D>(std::string("Assets/Images/ripple.png"));
-  pModelComp->GetMaterial(0).Setup();
+  pModelComp->GetMaterial(0).Setup();*/
+
+  pEntity->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
+
+  pEntity->GetLocalTransform().SetPos({ 0.f,0.f, -10.f });
 
   Engine::GetInstance()->Run();
 

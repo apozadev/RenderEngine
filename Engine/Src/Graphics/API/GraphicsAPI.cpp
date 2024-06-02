@@ -31,6 +31,21 @@ namespace api
     RENDER_API::SetUsingAPIWindow(_pWindow);
   }
 
+  void BeginWindowSubStateSetup(APIWindow* _pWindow)
+  {
+    RENDER_API::BeginWindowSubStateSetup(_pWindow);
+  }
+
+  void EndWindowSubStateSetup()
+  {
+    RENDER_API::EndWindowSubStateSetup();
+  }
+
+  void BindWindowSubState(APIWindow* _pWindow)
+  {
+    RENDER_API::BindWindowSubState(_pWindow);
+  }
+
   void OnWindowResize(APIWindow* _pWindow)
   {
     RENDER_API::OnWindowResize(_pWindow);
@@ -99,6 +114,21 @@ namespace api
     return RENDER_API::CreateAPIRenderState();
   }
 
+  void BeginRenderStateSetup(APIRenderState* _pAPIRenderState)
+  {
+    RENDER_API::BeginRenderStateSetup(_pAPIRenderState);
+  }
+
+  void EndRenderStateSetup()
+  {
+    RENDER_API::EndRenderStateSetup();
+  }
+
+  void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState)
+  {
+    RENDER_API::SetUsingAPIRenderState(_pAPIRenderState);
+  }
+
   void BindAPIRenderState(APIRenderState* _pAPIRenderState)
   {
     RENDER_API::BindAPIRenderState(_pAPIRenderState);
@@ -109,24 +139,41 @@ namespace api
     RENDER_API::DestroyAPIRenderState(_pAPIRenderState);
   }
 
-  void BeginRenderStateSetup(APIRenderState* _pRenderState)
+  // Render sub state
+
+  APIRenderSubState* CreateAPIRenderSubState()
   {
-    RENDER_API::BeginRenderStateSetup(_pRenderState);
+    return RENDER_API::CreateAPIRenderSubState();
   }
 
-  void RenderStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size)
+  void BeginSubStateSetup(APIRenderSubState* _pAPIRenderSubState)
   {
-    RENDER_API::RenderStateSetupConstantBuffer(_pCBuffer, size);
+    RENDER_API::BeginSubStateSetup(_pAPIRenderSubState);
   }
 
-  void RenderStateSetupTexture(APITexture* _pTexture)
+  void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo)
   {
-    RENDER_API::RenderStateSetupTexture(_pTexture);
+    RENDER_API::SubStateSetupConstantBuffer(_pCBuffer, size, _oBindInfo);
   }
 
-  void EndRenderStateSetup()
+  void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
   {
-    RENDER_API::EndRenderStateSetup();
+    RENDER_API::SubStateSetupTexture(_pTexture, _oBindInfo);
+  }
+
+  void EndSubStateSetup()
+  {
+    RENDER_API::EndSubStateSetup();
+  }
+
+  void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState)
+  {
+    RENDER_API::BindAPIRenderSubState(_pAPIRenderSubState);
+  }
+
+  void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState)
+  {
+    RENDER_API::DestroyRenderSubState(_pAPIRenderSubState);
   }
 
   // Drawing

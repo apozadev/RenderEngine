@@ -14,14 +14,13 @@ namespace vk
 
 // DescriptorSetLayoutBuilder
 
-void DescriptorSetLayoutBuilder::AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding, int _iGroupId)
+void DescriptorSetLayoutBuilder::AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding)
 {
   for (int i = 0; i < m_lstDescSetInfos.size(); i++)
   {
     VkDescriptorSetLayoutBinding& rOther = m_lstDescSetInfos[i];
     // If new layout binding matches present one, just update count      
-    if (m_lstGroupIds[i] == _iGroupId
-      && _rBinding.binding == rOther.binding
+    if (_rBinding.binding == rOther.binding
       && _rBinding.descriptorType == rOther.descriptorType
       && _rBinding.pImmutableSamplers == rOther.pImmutableSamplers
       && _rBinding.stageFlags == rOther.stageFlags)
@@ -32,8 +31,7 @@ void DescriptorSetLayoutBuilder::AddLayoutBinding(VkDescriptorSetLayoutBinding&&
   }
 
   // Match not found, add entry
-  m_lstDescSetInfos.push_back(std::move(_rBinding));
-  m_lstGroupIds.push_back(_iGroupId);
+  m_lstDescSetInfos.push_back(std::move(_rBinding));  
 }
 
 VkDescriptorSetLayout DescriptorSetLayoutBuilder::Build(VkDevice _hDevice)
@@ -55,6 +53,9 @@ VkDescriptorSetLayout DescriptorSetLayoutBuilder::Build(VkDevice _hDevice)
 
 void DescriptorPoolBuilder::AddPoolSize(VkDescriptorPoolSize&& _rPoolSize)
 {
+
+  _rPoolSize.descriptorCount *= m_uSwapchainSize; 
+
   for (VkDescriptorPoolSize& rPoolSize : m_lstPoolSizes)
   {
     if (rPoolSize.type == _rPoolSize.type)
@@ -83,85 +84,118 @@ VkDescriptorPool DescriptorPoolBuilder::Build(VkDevice _hDevice)
   return hDescPool;
 }
 
-void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uSetIdx)
+void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx)
 {
-  for (SetBufferInfos& rSetBufferinfo : m_lstSetBufferInfos)
+  for (SetBoundBufferInfoList& rInfoList : m_lstSetBufferInfos)
   {
-    if (rSetBufferinfo.m_uSetIdx == _uSetIdx)
+    if (rInfoList.m_uSetIdx == _uSetIdx
+      && rInfoList.m_uBinding == _uBinding)
     {
-      rSetBufferinfo.m_lstBufferInfos.push_back(std::move(_oBufferInfo));
+      rInfoList.m_lstBufferInfos.push_back(std::move(_oBufferInfo));      
       return;
     }
   }
-  
-  // No match found. Create entry
-  SetBufferInfos oSetBufferInfo{};
-  oSetBufferInfo.m_uSetIdx = _uSetIdx;
-  oSetBufferInfo.m_lstBufferInfos.push_back(std::move(_oBufferInfo));
-  m_lstSetBufferInfos.push_back(std::move(oSetBufferInfo));
+
+  // No match found. Create entry  
+
+  SetBoundBufferInfoList oInfoList{};
+  oInfoList.m_uSetIdx = _uSetIdx;
+  oInfoList.m_uBinding = _uBinding;
+  oInfoList.m_lstBufferInfos.push_back(std::move(_oBufferInfo));
+  m_lstSetBufferInfos.push_back(std::move(oInfoList));
 }
 
-void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uSetIdx)
+void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx)
 {
-  for (SetImageInfos& rSetImageinfo : m_lstSetImageInfos)
+  for (SetBoundImgInfoList& rInfoList : m_lstSetImageInfos)
   {
-    if (rSetImageinfo.m_uSetIdx == _uSetIdx)
-    {
-      rSetImageinfo.m_lstImageInfos.push_back(std::move(_oImageInfo));
+    if (rInfoList.m_uSetIdx == _uSetIdx
+      && rInfoList.m_uBinding == _uBinding)
+    {      
+      rInfoList.m_lstImgInfos.push_back(std::move(_oImageInfo));      
       return;
     }
   }
 
-  // No match found. Create entry
-  SetImageInfos oSetImageInfo{};
-  oSetImageInfo.m_uSetIdx = _uSetIdx;
-  oSetImageInfo.m_lstImageInfos.push_back(std::move(_oImageInfo));
-  m_lstSetImageInfos.push_back(std::move(oSetImageInfo));
+  // No match found. Create entry  
+
+  SetBoundImgInfoList oInfoList{};
+  oInfoList.m_uSetIdx = _uSetIdx;
+  oInfoList.m_uBinding = _uBinding;
+  oInfoList.m_lstImgInfos.push_back(std::move(_oImageInfo));
+  m_lstSetImageInfos.push_back(std::move(oInfoList));
 }
 
 void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount)
-{
+{  
 
-  if (m_lstSetBufferInfos.size() < _uCount || m_lstSetImageInfos.size() < _uCount)
+  //if (m_lstSetBufferInfos.size() < _uCount || m_lstSetImageInfos.size() < _uCount)
+  //{
+  //  THROW_GENERIC_EXCEPTION("[API] Trying to update too many descriptor sets")
+  //}
+
+  bool bHasUboDesc = !m_lstSetBufferInfos.empty();
+  bool bHasImgDesc = !m_lstSetImageInfos.empty();
+
+  unsigned int uDescCount = 0u;
+
+  if (bHasUboDesc)
   {
-    THROW_GENERIC_EXCEPTION("[API] Trying to update too many descriptor sets")
+    uDescCount += _uCount;
+  } 
+  if (bHasImgDesc)
+  {
+    uDescCount += _uCount;
   }
 
-  std::vector<VkWriteDescriptorSet> lstWriteDescSets(_uCount * 2);
+  std::vector<VkWriteDescriptorSet> lstWriteDescSets(uDescCount);
 
-  for (uint32_t i = 0; i < _uCount; i++)
-  {    
+  uint32_t uCurrIdx = 0u;
 
-    std::vector<VkDescriptorBufferInfo>& lstBufferInfos = m_lstSetBufferInfos[i].m_lstBufferInfos;
-    VkWriteDescriptorSet oUboWriteDescSet{};
-    oUboWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    oUboWriteDescSet.dstSet = _pDescSets[i];
-    oUboWriteDescSet.dstBinding = 0;
-    oUboWriteDescSet.dstArrayElement = 0;
-    oUboWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    oUboWriteDescSet.descriptorCount = lstBufferInfos.size();
-    oUboWriteDescSet.pBufferInfo = lstBufferInfos.size()? lstBufferInfos.data() : NULL;
-    oUboWriteDescSet.pImageInfo = NULL;
-    oUboWriteDescSet.pTexelBufferView = NULL;
+  if (bHasUboDesc)
+  {
+    for (uint32_t i = 0; i < _uCount; i++)
+    {
+      std::vector<VkDescriptorBufferInfo>& lstBufferInfos = m_lstSetBufferInfos[i].m_lstBufferInfos;
+      VkWriteDescriptorSet oUboWriteDescSet{};
+      oUboWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      oUboWriteDescSet.dstSet = _pDescSets[i];
+      oUboWriteDescSet.dstBinding = m_lstSetBufferInfos[i].m_uBinding;
+      oUboWriteDescSet.dstArrayElement = 0;
+      oUboWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      oUboWriteDescSet.descriptorCount = lstBufferInfos.size();
+      oUboWriteDescSet.pBufferInfo = lstBufferInfos.size() ? lstBufferInfos.data() : NULL;
+      oUboWriteDescSet.pImageInfo = NULL;
+      oUboWriteDescSet.pTexelBufferView = NULL;
 
-    lstWriteDescSets[i * 2] = std::move(oUboWriteDescSet);
-    
-    std::vector<VkDescriptorImageInfo>& lstImageInfos = m_lstSetImageInfos[i].m_lstImageInfos;
-    VkWriteDescriptorSet oImageWriteDescSet{};
-    oImageWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    oImageWriteDescSet.dstSet = _pDescSets[i];
-    oImageWriteDescSet.dstBinding = 1;
-    oImageWriteDescSet.dstArrayElement = 0;
-    oImageWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    oImageWriteDescSet.descriptorCount = lstImageInfos.size();
-    oImageWriteDescSet.pBufferInfo = NULL;
-    oImageWriteDescSet.pImageInfo = lstImageInfos.size() ? lstImageInfos.data() : NULL;
-    oImageWriteDescSet.pTexelBufferView = NULL;
+      lstWriteDescSets[uCurrIdx++] = std::move(oUboWriteDescSet);
+    }
+  }
+   
+  if (bHasImgDesc)
+  {
+    for (uint32_t i = 0; i < _uCount; i++)
+    {
+      std::vector<VkDescriptorImageInfo>& lstImgInfos = m_lstSetImageInfos[i].m_lstImgInfos;
+      VkWriteDescriptorSet oImageWriteDescSet{};
+      oImageWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      oImageWriteDescSet.dstSet = _pDescSets[i];
+      oImageWriteDescSet.dstBinding = m_lstSetImageInfos[i].m_uBinding;
+      oImageWriteDescSet.dstArrayElement = 0;
+      oImageWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      oImageWriteDescSet.descriptorCount = lstImgInfos.size();
+      oImageWriteDescSet.pBufferInfo = NULL;
+      oImageWriteDescSet.pImageInfo = lstImgInfos.size() ? lstImgInfos.data() : NULL;
+      oImageWriteDescSet.pTexelBufferView = NULL;
 
-    lstWriteDescSets[i * 2 + 1] = std::move(oImageWriteDescSet);
+      lstWriteDescSets[uCurrIdx++] = std::move(oImageWriteDescSet);
+    }
   }
 
-  vkUpdateDescriptorSets(_hDevice, lstWriteDescSets.size(), lstWriteDescSets.data(), 0, nullptr);
+  if (bHasImgDesc || bHasUboDesc)
+  {
+    vkUpdateDescriptorSets(_hDevice, lstWriteDescSets.size(), lstWriteDescSets.data(), 0, nullptr);
+  }
 }
 
 }

@@ -1,18 +1,18 @@
 #pragma once
 
-#include "Graphics/Material.h"
-
+#include <memory>
 #include <vector>
 
 class Resource;
 
+class Material;
+
 class MaterialInstance
 {
 public:
-
-  MaterialInstance(Material* _pMaterial) : m_pMaterial(_pMaterial), m_bSetup(false)
-  {}
-
+  
+  MaterialInstance(Material* _pMaterial);
+  MaterialInstance(MaterialInstance&& _rMatInstance);
   ~MaterialInstance();
 
   template<class T, typename ...Args>
@@ -23,7 +23,7 @@ public:
     return pResource;
   }
 
-  Material* GetMaterial() const { return m_pMaterial; }
+  Material* GetMaterial() const;
 
   void Setup();
 
@@ -31,7 +31,8 @@ public:
 
 private:
 
-  Material* m_pMaterial;
+  class Impl;
+  std::unique_ptr<Impl> m_pImpl;  
 
   std::vector<Resource*> m_lstResources;
 

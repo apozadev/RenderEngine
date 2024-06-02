@@ -39,7 +39,7 @@ namespace vk
 
       oAttributeDesc[0].binding = 0;
       oAttributeDesc[0].location = 0;
-      oAttributeDesc[0].format = VK_FORMAT_R32G32_SFLOAT;
+      oAttributeDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
       oAttributeDesc[0].offset = offsetof(Vertex, m_vPos);
 
       oAttributeDesc[1].binding = 0;
