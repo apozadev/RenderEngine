@@ -11,6 +11,7 @@
 #include "Core/Exception.h"
 #include "Core/InputManager.h"
 #include "Graphics/Renderer.h"
+#include "Graphics/MaterialLibrary.h"
 
 int Engine::Initialize()
 {    
@@ -32,7 +33,7 @@ Window* Engine::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle)
 
 Scene* Engine::CreateScene(Window* _pWindow)
 {
-  return &m_lstScenes.emplace_back(Scene());  
+  return &m_lstScenes.emplace_back(Scene(_pWindow));  
 }
 
 void Engine::UpdateWindows()
@@ -42,13 +43,32 @@ void Engine::UpdateWindows()
   {
     if (m_lstWindows[i].ShouldClose())
     {
+
+      Window& rWindow = m_lstWindows[i];
+
+      for (int j = 0; j < m_lstScenes.size(); j++)
+      {        
+        if (m_lstScenes[j].GetWindow() == &rWindow)
+        {
+          if (j < m_lstScenes.size() - 1)
+          {
+            Scene oAux(std::move(m_lstScenes[j]));
+            m_lstScenes[j] = std::move(m_lstScenes[m_lstScenes.size() - 1]);
+            m_lstScenes[m_lstScenes.size() - 1] = std::move(oAux);
+          }
+          m_lstScenes.pop_back();
+        }
+      }
+
+      MaterialLibrary::GetInstance()->DestroyWindowMaterials(&rWindow);
+
       if (i < uCurrSize - 1)
       {        
         Window oAux(std::move(m_lstWindows[i]));
         m_lstWindows[i] = std::move(m_lstWindows[m_lstWindows.size() - 1]);
         m_lstWindows[m_lstWindows.size() - 1] = std::move(oAux);
+      }      
 
-      }
       m_lstWindows.pop_back();
     }
   }    

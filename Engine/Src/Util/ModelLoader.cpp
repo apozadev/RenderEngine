@@ -6,6 +6,7 @@
 #include "Graphics/Material.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/Vertex.h"
+#include "Graphics/MaterialLibrary.h"
 
 //#include <fileapi.h>
 //#include <algorithm>
@@ -37,7 +38,7 @@ void ModelLoader::LoadModel(const char* _sFilename, Window* _pWindow, ModelCompo
   
   std::string sDirectory = sFullFilename.substr(0, sFullFilename.find_last_of('/') + 1);
 
-  Material* pMaterial = new Material(_pWindow);
+  Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(_pWindow);
 
   pMaterial->Setup();
 

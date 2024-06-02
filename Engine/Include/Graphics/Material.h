@@ -11,6 +11,7 @@ class Material
 public:
 
   Material(Window* _pWindow);
+  Material(Material&& rMaterial);
   ~Material();
 
   template<class T, typename ...Args>
@@ -26,6 +27,8 @@ public:
   void Bind() const;   
 
   void SetUsing() const;
+
+  Material& operator=(Material&& _rMaterial);
 
 private:      
 

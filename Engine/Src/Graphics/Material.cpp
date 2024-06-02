@@ -30,6 +30,11 @@ Material::Material(Window* _pWindow)
   m_pImpl = std::make_unique<Impl>(_pWindow);    
 }
 
+Material::Material(Material&& rMaterial)
+  : m_pImpl(std::move(rMaterial.m_pImpl))
+{
+}
+
 Material::~Material()
 {
   for (Resource* pResource : m_lstResources)
@@ -66,3 +71,9 @@ void Material::SetUsing() const
   api::SetUsingAPIRenderState(m_pImpl->m_pAPIRenderState);
 }
 
+Material& Material::operator=(Material&& _rMaterial)
+{
+  m_lstResources = _rMaterial.m_lstResources;
+  m_pImpl = std::move(_rMaterial.m_pImpl);
+  return *this;
+}

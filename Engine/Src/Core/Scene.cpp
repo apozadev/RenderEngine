@@ -6,6 +6,11 @@
 #include <stack>
 #include <cstdint>
 
+Scene::~Scene()
+{
+
+}
+
 Entity* Scene::AddEntity(Entity* _pParent)
 {
   uint32_t uParentId = _MAX_UINT32;

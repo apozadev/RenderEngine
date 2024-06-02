@@ -1185,19 +1185,29 @@ namespace vk
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
 
+    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+
     DestroySwapchain(_pWindow);
 
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hImageAvailableSemaphore, NULL);
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hRenderFinishedSemaphore, NULL);
 
     vkDestroyFence(_pWindow->m_hDevice, _pWindow->m_hInFlightFence, NULL);
+        
+
+    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hGlobalDescSetLayout, NULL);    
 
     vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, NULL);
-    vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hPresentCmdPool, NULL);    
+    if (_pWindow->m_hRenderCmdPool != _pWindow->m_hPresentCmdPool)
+    {
+      vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hPresentCmdPool, NULL);
+    }
 
     vkDestroyRenderPass(_pWindow->m_hDevice, _pWindow->m_hRenderPass, NULL);     
 
-    vkDestroyDescriptorPool(_pWindow->m_hDevice, _pWindow->m_hDescPool, NULL);
+    vkDestroyDescriptorPool(_pWindow->m_hDevice, _pWindow->m_hDescPool, NULL);    
+
+    vkDestroySurfaceKHR(s_oGlobalData.m_hInstance, _pWindow->m_hSurface, NULL);    
 
     vkDestroyDevice(_pWindow->m_hDevice, NULL);   
 
@@ -1262,7 +1272,13 @@ namespace vk
 
   void DestroyAPIMesh(APIMesh* _pMesh)
   {
+
+    APIWindow* pWindow = _pMesh->m_pOwnerWindow;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+
     DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hVertexBuffer, _pMesh->m_hVertexBufferMemory);
+    DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hIndexBuffer, _pMesh->m_hIndexBufferMemory);
 
     delete _pMesh;
   }
@@ -1316,7 +1332,9 @@ namespace vk
   void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer)
   {
 
-    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;
+    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;    
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
 
     const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
@@ -1382,6 +1400,9 @@ namespace vk
   void DestroyAPITexture(APITexture* _pTexture)
   {
     APIWindow* pWindow = _pTexture->m_pOwnerWindow;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+
     vkDestroySampler(pWindow->m_hDevice, _pTexture->m_hSampler, NULL);
     vkDestroyImageView(pWindow->m_hDevice, _pTexture->m_hImageView, NULL);
     vkDestroyImage(pWindow->m_hDevice, _pTexture->m_hImage, NULL);
@@ -1477,12 +1498,16 @@ namespace vk
   {
     APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
 
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+
     delete[] _pAPIRenderState->m_pDescSets;    
 
     vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hDescSetLayout, NULL);
     vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hSubDescSetLayout, NULL);
 
     vkDestroyPipelineLayout(pWindow->m_hDevice, _pAPIRenderState->m_hPipelineLayout, NULL);
+
+    vkDestroyPipeline(pWindow->m_hDevice, _pAPIRenderState->m_hGraphicsPipeline, NULL);
 
     delete _pAPIRenderState;
   }  
@@ -1612,9 +1637,12 @@ namespace vk
 
   void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState)
   {
-    APIWindow* pWindow = _pAPIRenderSubState->m_pRenderState->m_pOwnerWindow;
+    /*APIWindow* pWindow = _pAPIRenderSubState->m_pRenderState->m_pOwnerWindow;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+
     uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
-    vkFreeDescriptorSets(pWindow->m_hDevice, pWindow->m_hDescPool, uNumImages, _pAPIRenderSubState->m_pDescSets);
+    vkFreeDescriptorSets(pWindow->m_hDevice, pWindow->m_hDescPool, uNumImages, _pAPIRenderSubState->m_pDescSets);*/
 
     delete _pAPIRenderSubState;
   }
