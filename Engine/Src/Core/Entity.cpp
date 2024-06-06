@@ -1,29 +1,48 @@
 #include "Core/Entity.h"
 
+Entity::Entity(Entity&& _rEntity)
+{
+  m_bEnabled = std::move(_rEntity.m_bEnabled);
+  m_bStarted = std::move(_rEntity.m_bStarted);
+  m_bTransformDirty = std::move(_rEntity.m_bTransformDirty);
+  m_oLocalTransform = std::move(_rEntity.m_oLocalTransform);
+  m_oGlobalTransform = std::move(_rEntity.m_oGlobalTransform);  
+  m_uNextSiblingId = std::move(_rEntity.m_uNextSiblingId);
+  m_uParentId = std::move(_rEntity.m_uParentId);  
+  m_lstChildren = std::move(_rEntity.m_lstChildren);
+  m_lstComponents = std::move(_rEntity.m_lstComponents);
+}
+
 Entity::~Entity()
 {
-  for (Component* pComponent : m_lstComponents)
-  {
-    delete pComponent;
-  }
+}
+
+Entity& Entity::operator=(Entity&& _rEntity)
+{  
+  m_lstChildren = std::move(_rEntity.m_lstChildren);
+  m_lstComponents = std::move(_rEntity.m_lstComponents);
+  return *this;
 }
 
 void Entity::Start()
 {
-  for (Component* pComp : m_lstComponents)
+  for (std::unique_ptr<Component>& pComp : m_lstComponents)
   {
     pComp->Start();
   }
 }
 
+void Entity::PreTransformUpdate(float _fTimeStep)
+{  
+  for (std::unique_ptr<Component>& pComp : m_lstComponents)
+  {
+    pComp->PreTransformUpdate(_fTimeStep);
+  }
+}
+
 void Entity::Update(float _fTimeStep)
-{
-  constexpr float fSpeed = 1.f;
-  m_oLocalTransform.SetRot(m_oLocalTransform.GetRot() * glm::quat(glm::vec3(0.f, fSpeed * _fTimeStep, 0.f)));
-
-  m_bTransformDirty = true;
-
-  for (Component* pComp : m_lstComponents)
+{ 
+  for (std::unique_ptr<Component>& pComp : m_lstComponents)
   {
     pComp->Update(_fTimeStep);
   }

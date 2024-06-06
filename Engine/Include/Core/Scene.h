@@ -12,6 +12,7 @@ public:
 public:    
 
   Scene(Window* _pWindow) : m_pWindow(_pWindow) {}
+  Scene(Scene&& _rScene);
   ~Scene();
 
   Entity* AddEntity(Entity* _pParent = nullptr);  
@@ -28,6 +29,8 @@ public:
   }  
 
   Window* GetWindow() const { return m_pWindow; }
+
+  Scene& operator=(Scene&& _rScene);
 
 private:    
 

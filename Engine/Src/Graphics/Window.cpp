@@ -6,8 +6,6 @@
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/API/GraphicsAPI.h"
 
-#include <glm/ext/matrix_clip_space.hpp>
-
 uint8_t s_uCurrId = 0u;
 
 class Window::Impl
@@ -18,10 +16,9 @@ public:
   GLFWwindow* m_pGlfwWindow;
   int m_iWidth, m_iHeight;    
   api::APIWindow* m_pAPIWindow;
-  uint8_t m_uId;
-  ConstantBuffer<GlobalBufferData>* m_pGlobalCBuffer;
+  uint8_t m_uId;  
 
-  Impl(int _fWidth, int _fHeight, const char* _sTitle)    
+  Impl(int _fWidth, int _fHeight, const char* _sTitle, Window* _pWindow)    
   {
     m_pGlfwWindow = nullptr;
     m_iWidth = _fWidth;
@@ -41,13 +38,7 @@ public:
       THROW_GENERIC_EXCEPTION("Could not create GLFW window")
     }
 
-    m_pAPIWindow = api::CreateAPIWindow(m_pGlfwWindow);
-
-    api::SetUsingAPIWindow(m_pAPIWindow);
-
-    m_pGlobalCBuffer = new ConstantBuffer<GlobalBufferData>(0, PipelineStage::VERTEX);
-
-    api::SetUsingAPIWindow(nullptr);
+    m_pAPIWindow = api::CreateAPIWindow(m_pGlfwWindow);    
 
     glfwSetWindowUserPointer(m_pGlfwWindow, static_cast<void*>(m_pAPIWindow));
     glfwSetFramebufferSizeCallback(m_pGlfwWindow, [](GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
@@ -55,11 +46,10 @@ public:
       api::APIWindow* pAPIWindow = static_cast<api::APIWindow*>(glfwGetWindowUserPointer(_pGflwWindow));
       api::OnWindowResize(pAPIWindow);
     });
-  }
+  }    
 
   ~Impl()
-  {
-    delete m_pGlobalCBuffer;
+  {    
     api::DestroyAPIWindow(m_pAPIWindow);
     glfwDestroyWindow(m_pGlfwWindow);
   }
@@ -67,7 +57,7 @@ public:
 
 Window::Window(int _fWidth, int _fHeight, const char* _sTitle)
 { 
-  m_pImpl = std::make_unique<Impl>(_fWidth, _fHeight, _sTitle);
+  m_pImpl = std::make_unique<Impl>(_fWidth, _fHeight, _sTitle, this);
 }
 
 Window::Window(Window&& _rWindow)
@@ -94,20 +84,6 @@ void Window::EndDraw() const
   api::EndDraw(m_pImpl->m_pAPIWindow);
 }
 
-void Window::UpdateGlobalBufferData(GlobalBufferData&& /*_rData*/) const
-{
-
-  GlobalBufferData oData{};
-  oData.m_mViewProj = glm::perspective(45.f, (float)m_pImpl->m_iWidth / m_pImpl->m_iHeight, 0.1f, 100.0f);
-
-  //m_pImpl->m_pGlobalCBuffer->SetData(&_rData);  
-  m_pImpl->m_pGlobalCBuffer->SetData(&oData);
-
-  m_pImpl->m_pGlobalCBuffer->Update();
-
-  api::BindWindowSubState(m_pImpl->m_pAPIWindow);
-}
-
 void Window::PollEvents() const 
 {        
   //glfwMakeContextCurrent(m_pImpl->m_pGlfwWindow);
@@ -119,23 +95,29 @@ void Window::SetUsing() const
   api::SetUsingAPIWindow(m_pImpl->m_pAPIWindow);
 }
 
-void Window::Setup() const
-{
-  api::BeginWindowSubStateSetup(m_pImpl->m_pAPIWindow);
-
-  m_pImpl->m_pGlobalCBuffer->Setup(ResourceFrequency::GLOBAL);
-
-  api::EndWindowSubStateSetup();
-}
-
 void Window::SwapBuffers() const 
 {
   //glfwSwapBuffers(m_pImpl->m_pGlfwWindow);
 }
 
+int Window::GetWidth() const
+{
+  return m_pImpl->m_iWidth;
+}
+
+int Window::GetHeight() const
+{
+  return m_pImpl->m_iHeight;
+}
+
 bool Window::ShouldClose() const 
 {
   return glfwWindowShouldClose(m_pImpl->m_pGlfwWindow);
+}
+
+bool Window::IsKeyPressed(char _cKeyCode) const
+{ 
+  return glfwGetKey(m_pImpl->m_pGlfwWindow, static_cast<int>(_cKeyCode) == GLFW_PRESS);
 }
   
 Window& Window::operator=(Window&& _rWindow) noexcept

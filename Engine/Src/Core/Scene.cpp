@@ -6,6 +6,20 @@
 #include <stack>
 #include <cstdint>
 
+Scene::Scene(Scene&& _rScene)
+  : m_pWindow(std::move(_rScene.m_pWindow))
+  , m_lstEntities(std::move(_rScene.m_lstEntities))
+{
+
+}
+
+Scene& Scene::operator=(Scene&& _rScene)
+{
+  m_pWindow = _rScene.m_pWindow;
+  m_lstEntities = std::move(_rScene.m_lstEntities);
+  return *this;
+}
+
 Scene::~Scene()
 {
 
@@ -18,15 +32,22 @@ Entity* Scene::AddEntity(Entity* _pParent)
   if (_pParent != nullptr)
   {
     std::uintptr_t uBeginPtr = reinterpret_cast<std::uintptr_t>(m_lstEntities.data());
-    uParentId = static_cast<uint32_t>(reinterpret_cast<std::uintptr_t>(_pParent) - uBeginPtr);
+    uParentId = static_cast<uint32_t>((reinterpret_cast<std::uintptr_t>(_pParent) - uBeginPtr) / sizeof(Entity*));
   }
 
   if (uParentId  == _MAX_UINT32 || uParentId < m_lstEntities.size())
-  {
-    m_lstEntities.push_back(Entity(Entity::ConstructKey()));
-    Entity* pEntity = &m_lstEntities[m_lstEntities.size()-1];
+  {    
+    m_lstEntities.push_back(Entity());
+
+    Entity* pEntity = &m_lstEntities.back();
+
     pEntity->m_uParentId = uParentId;
-    pEntity->m_lstChildren.push_back(static_cast<uint32_t>(m_lstEntities.size() - 1));
+
+    if (uParentId != _MAX_UINT32)
+    {      
+      Entity* pParent = &m_lstEntities[uParentId];
+      pEntity->m_lstChildren.push_back(static_cast<uint32_t>(m_lstEntities.size() - 1));
+    }    
 
     if (Engine::GetInstance()->IsRunning())
     {
@@ -69,8 +90,13 @@ uint32_t Scene::BuildTraverse(Entity& _rEntity, std::vector<Entity>& _lstNewScen
 {
   uint32_t uCurrId = _lstNewScene.size();
 
-  _lstNewScene.push_back(std::move(_rEntity));
+  _lstNewScene.push_back(std::move(_rEntity ));
   Entity& rNewEntity = _lstNewScene[uCurrId];
+
+  for (std::unique_ptr<Component>& pComponent : rNewEntity.m_lstComponents)
+  {
+    pComponent->m_pEntity = &rNewEntity;
+  }
 
   for (uint32_t& uChildId : rNewEntity.m_lstChildren)
   {
@@ -108,6 +134,9 @@ void Scene::Update(float _fTimeStep)
 
     if (rEntity.m_bEnabled)
     {
+
+      rEntity.PreTransformUpdate(_fTimeStep);
+
       if (rEntity.m_bTransformDirty)
       {
         if (!lstTransformStack.empty())

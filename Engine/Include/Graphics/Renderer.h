@@ -8,6 +8,7 @@ class Mesh;
 class MaterialInstance;
 class Transform;
 class Window;
+class Camera;
 
 class Renderer : public Singleton<Renderer>
 {
@@ -22,6 +23,7 @@ public:
   void Initialize();
   void ShutDown();   
 
+  void SubmitCamera(Camera* _pCamera);
   void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform);
   
   void Draw();

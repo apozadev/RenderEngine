@@ -13,6 +13,7 @@ namespace api
   namespace RENDER_API 
   { 
     struct APIWindow; 
+    struct APICamera;
     struct APIMesh;
     struct APIConstantBuffer;
     struct APIRenderState;
@@ -21,6 +22,7 @@ namespace api
   } 
 
   typedef struct RENDER_API::APIWindow APIWindow;
+  typedef struct RENDER_API::APICamera APICamera;
   typedef struct RENDER_API::APIMesh APIMesh;
   typedef struct RENDER_API::APIConstantBuffer APIConstantBuffer;
   typedef struct RENDER_API::APIRenderState APIRenderState;
@@ -37,11 +39,16 @@ namespace api
 
   APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow);
   void SetUsingAPIWindow(APIWindow* _pWindow);
-  void BeginWindowSubStateSetup(APIWindow* _pWindow);
-  void EndWindowSubStateSetup();
-  void BindWindowSubState(APIWindow* _pWindow);
   void OnWindowResize(APIWindow* _pWindow);
   void DestroyAPIWindow(APIWindow* _pWindow);
+
+  // Camera
+
+  APICamera* CreateAPICamera();
+  void BeginCameraSubStateSetup(APICamera* _pCamera);
+  void EndCameraSubstateSetup(APICamera* _pCamera);
+  void BindAPICamera(APICamera* _pCamera);
+  void DestroyAPICamera(APICamera* _pCamera);
 
   // Mesh
 

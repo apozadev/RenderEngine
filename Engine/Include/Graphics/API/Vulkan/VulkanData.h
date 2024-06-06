@@ -59,7 +59,7 @@ namespace vk
     APIRenderState* m_pUsingRenderState = nullptr;
     APIRenderSubState* m_pUsingSubState = nullptr;
        
-    DescriptorSetLayoutBuilder m_oLayoutBuilder;
+    //DescriptorSetLayoutBuilder m_oLayoutBuilder;
     DescriptorSetUpdater m_oDescSetUpdater;
 
   };

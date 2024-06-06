@@ -3,11 +3,6 @@
 #include <memory>
 
 #include <glm/mat4x4.hpp>
-
-struct GlobalBufferData
-{
-  glm::mat4 m_mViewProj;
-};
  
 class Window
 {
@@ -25,22 +20,23 @@ public:
   uint8_t GetId() const;
 
   int BeginDraw() const;
-  void EndDraw() const;
-
-  void UpdateGlobalBufferData (GlobalBufferData&& _rData) const;
+  void EndDraw() const;  
 
   void PollEvents() const;
   void SwapBuffers() const;
 
   bool ShouldClose() const;
 
-  void SetUsing() const;
+  void SetUsing() const;  
 
-  void Setup() const;
+  int GetWidth() const;
+  int GetHeight() const;
+
+  bool IsKeyPressed(char _cKeyCode) const;
 
 private:            
 
-  Window& operator=(Window&& _rWindow) noexcept;
+  Window& operator=(Window&& _rWindow) noexcept;  
 
   class Impl;
   std::unique_ptr<Impl> m_pImpl;

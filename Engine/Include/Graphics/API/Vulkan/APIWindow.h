@@ -35,8 +35,7 @@ namespace vk
     uint32_t m_uCurrSwapchainImageIdx;    
 
     VkDescriptorPool m_hDescPool;
-    VkDescriptorSetLayout m_hGlobalDescSetLayout;
-    VkDescriptorSet* m_pGlobalDescSets;    
+    VkDescriptorSetLayout m_hGlobalDescSetLayout;    
 
     bool m_bResized = false;
   };

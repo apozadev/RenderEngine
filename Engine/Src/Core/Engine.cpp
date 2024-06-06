@@ -25,15 +25,15 @@ int Engine::Initialize()
 }
 
 Window* Engine::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle)
-{    
-  Window& rWindow = m_lstWindows.emplace_back(_iWidth, _iHeight, _sTitle);  
-  rWindow.Setup();
-  return &rWindow;
+{      
+  m_lstWindows.push_back(Window(_iWidth, _iHeight, _sTitle));
+  return &m_lstWindows.back();
 }
 
 Scene* Engine::CreateScene(Window* _pWindow)
 {
-  return &m_lstScenes.emplace_back(Scene(_pWindow));  
+  m_lstScenes.push_back(std::move(Scene(_pWindow)));  
+  return &m_lstScenes.back();
 }
 
 void Engine::UpdateWindows()

@@ -4,6 +4,7 @@
 #include "Graphics/Material.h"
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Window.h"
+#include "Graphics/Camera.h"
 #include "Graphics/ConstantBuffer.h"
 
 #include "Math/Transform.h"
@@ -35,6 +36,7 @@ public:
   ~Impl() {}
 
   std::vector<Job> m_lstJobs;   
+  std::vector<Camera*> m_lstCameras;
 };
 
 Renderer::Renderer() : m_pImpl(std::make_unique<Impl>())
@@ -62,6 +64,11 @@ void Renderer::ShutDown()
   api::ShutDownAPI();
 }
 
+void Renderer::SubmitCamera(Camera* _pCamera)
+{
+  m_pImpl->m_lstCameras.push_back(_pCamera);
+}
+
 void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
 {
   m_pImpl->m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
@@ -78,43 +85,54 @@ void Renderer::Draw()
 
   bool bSkipCurrWindow = false;
 
-  for (Job& rJob : m_pImpl->m_lstJobs)
-  {
-    if (pCurrWindow != rJob.m_pWindow)
+  for (Camera* pCamera : m_pImpl->m_lstCameras)
+  {    
+
+    for (Job& rJob : m_pImpl->m_lstJobs)
     {
-      if (pCurrWindow != nullptr && !bSkipCurrWindow)
+
+      if (rJob.m_pWindow != pCamera->GetWindow())
       {
-        pCurrWindow->EndDraw();
-      }
-      bSkipCurrWindow = rJob.m_pWindow->BeginDraw() != 0;
-      pCurrWindow = rJob.m_pWindow;      
-    }
-
-    if (!bSkipCurrWindow)
-    {
-      const MaterialInstance* pMatInstance = rJob.m_pMaterial;
-
-      const Material* pMaterial = pMatInstance->GetMaterial();
-
-      if (pMaterial != pCurrMaterial)
-      {
-        pMaterial->Bind();        
-        pCurrWindow->UpdateGlobalBufferData(GlobalBufferData{});
-        pCurrMaterial = pMaterial;
+        continue;
       }
 
-      rJob.m_pMesh->UpdateTransform(*rJob.m_pTransform);
+      if (pCurrWindow != rJob.m_pWindow)
+      {
+        if (pCurrWindow != nullptr && !bSkipCurrWindow)
+        {
+          pCurrWindow->EndDraw();
+        }
+        bSkipCurrWindow = rJob.m_pWindow->BeginDraw() != 0;
+        pCamera->Bind();
+        pCurrWindow = rJob.m_pWindow;
+      }
 
-      pMatInstance->Bind();      
+      if (!bSkipCurrWindow)
+      {
+        const MaterialInstance* pMatInstance = rJob.m_pMaterial;
 
-      rJob.m_pMesh->Draw();
+        const Material* pMaterial = pMatInstance->GetMaterial();
+
+        if (pMaterial != pCurrMaterial)
+        {
+          pMaterial->Bind();
+          pCurrMaterial = pMaterial;
+        }
+
+        rJob.m_pMesh->UpdateTransform(*rJob.m_pTransform);
+
+        pMatInstance->Bind();
+
+        rJob.m_pMesh->Draw();
+      }
     }
-  }
 
-  if (pCurrWindow != nullptr && !bSkipCurrWindow)
-  {
-    pCurrWindow->EndDraw();
+    if (pCurrWindow != nullptr && !bSkipCurrWindow)
+    {
+      pCurrWindow->EndDraw();
+    }
   }
 
   m_pImpl->m_lstJobs.clear();
+  m_pImpl->m_lstCameras.clear();
 }

@@ -14,11 +14,12 @@ namespace vk
 {
 
 	struct APIWindow;
+	struct APICamera;
 	struct APIMesh;
 	struct APIConstantBuffer;
 	struct APIRenderState;
 	struct APIRenderSubState;
-	struct APITexture;
+	struct APITexture;	
 
 	// General
 
@@ -30,17 +31,23 @@ namespace vk
 
 	APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow);	
 
-	void SetUsingAPIWindow(APIWindow* _pWindow);
-
-	void BeginWindowSubStateSetup(APIWindow* _pWindow);	
-
-	void EndWindowSubStateSetup();
-
-	void BindWindowSubState(APIWindow* _pWindow);
+	void SetUsingAPIWindow(APIWindow* _pWindow);	
 
 	void OnWindowResize(APIWindow* _pWindow);
 
 	void DestroyAPIWindow(APIWindow* _pAPIWindow);
+
+	// Camera
+
+	APICamera* CreateAPICamera();
+
+	void BeginCameraSubStateSetup(APICamera* _pCamera);
+
+	void EndCameraSubstateSetup(APICamera* _pCamera);
+
+	void BindAPICamera(APICamera* _pCamera);
+
+	void DestroyAPICamera(APICamera* _pCamera);
 
 	// Mesh
 

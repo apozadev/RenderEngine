@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include "Core/Component.h"
 #include "Math/Transform.h"
@@ -7,46 +8,48 @@
 class Entity
 {
 
-  friend class Scene;
+  friend class Scene;  
 
-  struct ConstructKey {};
+public:  
 
-public:
-
+  Entity() = default;  
+  Entity(Entity&& _rEntity);
   ~Entity();
 
   template<class T, typename ...Args>
   T* AddComponent(Args&&... args)
   {
-    m_lstComponents.push_back(new T(std::forward<Args>(args)...));
-    T* pComp = static_cast<T*>(m_lstComponents[m_lstComponents.size() - 1]);
+    m_lstComponents.push_back(std::make_unique<T>(std::forward<Args>(args)...));
+    T* pComp = static_cast<T*>(m_lstComponents[m_lstComponents.size() - 1].get());
     pComp->m_pEntity = this;
     return pComp;
   }
 
   uint32_t GetParentId() { return m_uParentId; }
 
+  Entity& operator=(Entity&& _rEntity);
+
 protected:
 
   void Start();
+  void PreTransformUpdate(float _fTimeStep);
   void Update(float _fTimeStep);  
 
 public:
   
   const Transform& GetGlobalTransform() { return m_oGlobalTransform; }
-  Transform& GetLocalTransform() { return m_oLocalTransform; }  
+  const Transform& GetLocalTransform() { return m_oLocalTransform; }  
+  Transform& GetMutableLocalTransform() { m_bTransformDirty = true;  return m_oLocalTransform; }
 
   void SetLocalTransform(const Transform& _rTransform)
   {
     m_bTransformDirty = true;
     m_oLocalTransform = _rTransform;
-  }  
-
-  Entity(ConstructKey&&) {}
+  }    
 
 private:    
 
-  std::vector<Component*> m_lstComponents;
+  std::vector<std::unique_ptr<Component>> m_lstComponents;
   std::vector<uint32_t> m_lstChildren;
 
   Transform m_oGlobalTransform;

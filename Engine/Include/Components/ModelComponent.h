@@ -44,6 +44,7 @@ public:
 protected:
 
   virtual void Start() override;
+  virtual void PreTransformUpdate(float _fTimeStep) override;
   virtual void Update(float _fTimeStep) override;
 
 private:

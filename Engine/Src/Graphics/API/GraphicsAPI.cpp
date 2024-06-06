@@ -31,21 +31,6 @@ namespace api
     RENDER_API::SetUsingAPIWindow(_pWindow);
   }
 
-  void BeginWindowSubStateSetup(APIWindow* _pWindow)
-  {
-    RENDER_API::BeginWindowSubStateSetup(_pWindow);
-  }
-
-  void EndWindowSubStateSetup()
-  {
-    RENDER_API::EndWindowSubStateSetup();
-  }
-
-  void BindWindowSubState(APIWindow* _pWindow)
-  {
-    RENDER_API::BindWindowSubState(_pWindow);
-  }
-
   void OnWindowResize(APIWindow* _pWindow)
   {
     RENDER_API::OnWindowResize(_pWindow);
@@ -54,6 +39,33 @@ namespace api
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
     RENDER_API::DestroyAPIWindow(_pWindow);
+  }
+
+  // Camera
+
+  APICamera* CreateAPICamera()
+  {
+    return RENDER_API::CreateAPICamera();
+  }
+
+  void BeginCameraSubStateSetup(APICamera* _pCamera)
+  {
+    RENDER_API::BeginCameraSubStateSetup(_pCamera);
+  }
+
+  void EndCameraSubstateSetup(APICamera* _pCamera)
+  {
+    RENDER_API::EndCameraSubstateSetup(_pCamera);
+  }
+
+  void BindAPICamera(APICamera* _pCamera)
+  {
+    RENDER_API::BindAPICamera(_pCamera);
+  }
+
+  void DestroyAPICamera(APICamera* _pCamera)
+  {
+    RENDER_API::DestroyAPICamera(_pCamera);
   }
 
   // Mesh

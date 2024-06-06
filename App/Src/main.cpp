@@ -9,6 +9,7 @@
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Texture2D.h"
 #include "Components/ModelComponent.h"
+#include "Components/CameraComponent.h"
 
 #include <string>
 
@@ -22,32 +23,17 @@ int main(){
 
   Scene* pScene = Engine::GetInstance()->CreateScene(pWindow);
 
-  Entity* pEntity = pScene->AddEntity();
+  Entity* pCameraEntity = pScene->AddEntity();
 
-  /*std::vector<Vertex> lstVertices {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-  };
+  pCameraEntity->AddComponent<CameraComponent>(pWindow);
 
-  std::vector<uint16_t> lstIndices{
-    0,1,2,
-    2,3,0
-  };
+  Entity* pModelEntity = pScene->AddEntity();
 
-  Material oMaterial(pWindow);  
-  
-  ModelComponent* pModelComp = pEntity->AddComponent<ModelComponent>();  
-  pModelComp->AddMaterial(MaterialInstance(&oMaterial));
-  pModelComp->AddMesh(lstVertices, lstIndices, 0u, pWindow);
+  pModelEntity->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
 
-  pModelComp->GetMaterial(0).AddResource<Texture2D>(std::string("Assets/Images/ripple.png"));
-  pModelComp->GetMaterial(0).Setup();*/
+  pModelEntity->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
 
-  pEntity->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
-
-  pEntity->GetLocalTransform().SetPos({ 0.f,0.f, -10.f });
+  pScene->Build();
 
   Engine::GetInstance()->Run();
 

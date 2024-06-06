@@ -5,14 +5,18 @@ class Entity;
 class Component
 {
   friend class Entity;
+  friend class Scene;
 
 public:
 
+  Component() {}
   virtual ~Component() {}
 
 protected:
 
   virtual void Start() {};
+
+  virtual void PreTransformUpdate(float /*_fTimeStep*/) {}
   virtual void Update(float /*_fTimeStep*/) {};
 
 protected:
