@@ -25,4 +25,11 @@ private:
   float m_fFov;
   float m_fNear;
   float m_fFar;
+
+  float m_fLastMousePosX;
+  float m_fLastMousePosY;
+
+  float m_fYaw;
+  float m_fPitch;
+
 };

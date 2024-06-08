@@ -141,14 +141,14 @@ void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, Window* _pW
         _pAssimpMesh->mVertices[i].z
     };
 
-    /*if (mesh->HasNormals())
+    if (_pAssimpMesh->HasNormals())
     {
       oVertex.m_vNormal = {
-          _pMesh->mNormals[i].x,
-          _pMesh->mNormals[i].y,
-          _pMesh->mNormals[i].z
+          _pAssimpMesh->mNormals[i].x,
+          _pAssimpMesh->mNormals[i].y,
+          _pAssimpMesh->mNormals[i].z
       };
-    }*/
+    }
 
     if (_pAssimpMesh->mTextureCoords[0])
     {

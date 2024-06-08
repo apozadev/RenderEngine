@@ -32,6 +32,12 @@ namespace vk
 
   constexpr uint32_t QUEUE_COUNT = 1u;
 
+  // Forward declarations
+
+  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
+  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
+  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
+
   ///----------------------------------------------------------------------------------
   //                                Helper functions
   ///----------------------------------------------------------------------------------
@@ -278,12 +284,12 @@ namespace vk
     oMultisampling.alphaToCoverageEnable = VK_FALSE; // Optional
     oMultisampling.alphaToOneEnable = VK_FALSE; // Optional
 
-    // Depth stencil (disabled)
+    // Depth stencil 
 
     VkPipelineDepthStencilStateCreateInfo oDepthStencil {};
     oDepthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    oDepthStencil.depthTestEnable = VK_FALSE;
-    oDepthStencil.depthWriteEnable = VK_FALSE;
+    oDepthStencil.depthTestEnable = VK_TRUE;
+    oDepthStencil.depthWriteEnable = VK_TRUE;
     oDepthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     oDepthStencil.depthBoundsTestEnable = VK_FALSE;
     oDepthStencil.stencilTestEnable = VK_FALSE;
@@ -470,6 +476,27 @@ namespace vk
     }
   }
 
+  void CreateDepthBuffer(APIWindow*_pWindow)
+  {
+
+    VkFormat eFormat = VK_FORMAT_D32_SFLOAT;
+    VkImageAspectFlags uAspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+    CreateImage(_pWindow, 
+      _pWindow->m_oExtent.width, 
+      _pWindow->m_oExtent.height,
+      eFormat,
+      VK_IMAGE_TILING_OPTIMAL, 
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+      _pWindow->m_hDepthImage,
+      _pWindow->m_hDepthImageMemory);
+
+    CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, uAspectFlags,_pWindow->m_hDepthImageView);
+
+    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, eFormat, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+  }
+
   void CreateSwapchain(APIWindow* _pWindow)
   {
     // Choose from supported formats for swapchain    
@@ -628,27 +655,44 @@ namespace vk
     oColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     oColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+    VkAttachmentDescription oDepthAttachmentDesc{};
+    oDepthAttachmentDesc.format = VK_FORMAT_D32_SFLOAT;;
+    oDepthAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    oDepthAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    oDepthAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    oDepthAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    oDepthAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    oDepthAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    oDepthAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
     VkAttachmentReference oColorAttachmentRef{};
     oColorAttachmentRef.attachment = 0u;
     oColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentReference oDepthAttachmentRef{};
+    oDepthAttachmentRef.attachment = 1u;
+    oDepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
     VkSubpassDescription oSubpassDesc{};
     oSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     oSubpassDesc.colorAttachmentCount = 1u;
-    oSubpassDesc.pColorAttachments = &oColorAttachmentRef;
+    oSubpassDesc.pColorAttachments = &oColorAttachmentRef;    
+    oSubpassDesc.pDepthStencilAttachment = &oDepthAttachmentRef;
 
     VkSubpassDependency oSubpassDependency{};
     oSubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     oSubpassDependency.dstSubpass = 0u;
-    oSubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    oSubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     oSubpassDependency.srcAccessMask = 0;
-    oSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    oSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    oSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    oSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+    VkAttachmentDescription aAttachments[2]{ oColorAttachmentDesc, oDepthAttachmentDesc };
 
     VkRenderPassCreateInfo oRenderPassCreateInfo{};
     oRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    oRenderPassCreateInfo.attachmentCount = 1u;
-    oRenderPassCreateInfo.pAttachments = &oColorAttachmentDesc;
+    oRenderPassCreateInfo.attachmentCount = 2u;
+    oRenderPassCreateInfo.pAttachments = aAttachments;
     oRenderPassCreateInfo.subpassCount = 1u;
     oRenderPassCreateInfo.pSubpasses = &oSubpassDesc;
     oRenderPassCreateInfo.dependencyCount = 1u;
@@ -663,11 +707,11 @@ namespace vk
 
     for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
     {
-      VkImageView pAttachments[] = { _pWindow->m_pSwapChainImageViews[i] };
+      VkImageView pAttachments[] = { _pWindow->m_pSwapChainImageViews[i], _pWindow->m_hDepthImageView};
 
       VkFramebufferCreateInfo oFramebufferInfo = {};
       oFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-      oFramebufferInfo.attachmentCount = 1u;
+      oFramebufferInfo.attachmentCount = 2u;
       oFramebufferInfo.pAttachments = pAttachments;
       oFramebufferInfo.renderPass = _pWindow->m_hRenderPass;
       oFramebufferInfo.width = _pWindow->m_oExtent.width;
@@ -898,7 +942,7 @@ namespace vk
     VK_CHECK(vkBindImageMemory(_pWindow->m_hDevice, hImage_, hMemory_, 0))
   }
 
-  void CreateTextureImageView(APIWindow* _pWindow, APITexture* _pTexture, VkFormat _eFormat)
+  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_)
   {
     VkImageViewCreateInfo oCreateInfo = {};
     oCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -907,16 +951,16 @@ namespace vk
     oCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     oCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
     oCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    oCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oCreateInfo.subresourceRange.aspectMask = _uAspectFlags;
     oCreateInfo.subresourceRange.levelCount = 1u;
     oCreateInfo.subresourceRange.baseMipLevel = 0u;
     oCreateInfo.subresourceRange.layerCount = 1u;
     oCreateInfo.subresourceRange.baseArrayLayer = 0u;
-    oCreateInfo.image = _pTexture->m_hImage;
+    oCreateInfo.image = _hImage;
     oCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     oCreateInfo.format = _eFormat;
 
-    VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &_pTexture->m_hImageView))
+    VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &hImageView_))
   }
 
   void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture)
@@ -1032,7 +1076,7 @@ namespace vk
     EndTempCmdBuffer(_pWindow, hCmdBuffer);
   }
 
-  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
   {
     VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
 
@@ -1043,7 +1087,7 @@ namespace vk
     oBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     oBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     oBarrier.image = _hImage;
-    oBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oBarrier.subresourceRange.aspectMask = _uAspectFlags;
     oBarrier.subresourceRange.baseMipLevel = 0;
     oBarrier.subresourceRange.levelCount = 1;
     oBarrier.subresourceRange.baseArrayLayer = 0;
@@ -1067,6 +1111,14 @@ namespace vk
 
       uSrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
       uDstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else if (_eOldLayout == VK_IMAGE_LAYOUT_UNDEFINED && _eNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+      oBarrier.srcAccessMask = 0;
+      oBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+      uSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      uDstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     }
     else
     {
@@ -1134,10 +1186,11 @@ namespace vk
     CreateLogicalDevice(pWindow);
     RetrieveQueues(pWindow);
     CreateSurface(pWindow, _pGlfwWindow);
+    CreateCommandBuffers(pWindow);
     CreateSwapchain(pWindow);
+    CreateDepthBuffer(pWindow);    
     CreateRenderPass(pWindow);
-    CreateFramebuffers(pWindow);
-    CreateCommandBuffers(pWindow);    
+    CreateFramebuffers(pWindow);    
     CreateSyncObjects(pWindow);  
     CreateDescriptorPool(pWindow);
     CreateGlobalDescriptorLayout(pWindow);
@@ -1411,15 +1464,15 @@ namespace vk
 
     CreateImage(pWindow, _uWidth, _uHeight, eVkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pTexture->m_hImage, pTexture->m_hMemory);
 
-    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight);
 
-    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
 
-    CreateTextureImageView(pWindow, pTexture, eVkFormat);
+    CreateImageView(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, pTexture->m_hImageView);
 
     CreateTextureSampler(pWindow, pTexture);
 
@@ -1688,15 +1741,18 @@ namespace vk
 
     VK_CHECK(vkBeginCommandBuffer(_pWindow->m_hRenderCmdBuffer, &oCommandBufferBeginInfo))
 
+    VkClearValue aClearColors[2];
+    aClearColors[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    aClearColors[1].depthStencil = { 1.0f, 0 };
+
     VkRenderPassBeginInfo oRenderPassBeginInfo {};
     oRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     oRenderPassBeginInfo.renderPass = _pWindow->m_hRenderPass;
     oRenderPassBeginInfo.framebuffer = _pWindow->m_pFramebuffers[_pWindow->m_uCurrSwapchainImageIdx];
     oRenderPassBeginInfo.renderArea.extent = _pWindow->m_oExtent;
-    oRenderPassBeginInfo.renderArea.offset = { 0,0 };
-    VkClearValue oClearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-    oRenderPassBeginInfo.pClearValues = &oClearColor;
-    oRenderPassBeginInfo.clearValueCount = 1u;
+    oRenderPassBeginInfo.renderArea.offset = { 0,0 };    
+    oRenderPassBeginInfo.clearValueCount = 2u;
+    oRenderPassBeginInfo.pClearValues = aClearColors;    
 
     vkCmdBeginRenderPass(_pWindow->m_hRenderCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);    
 

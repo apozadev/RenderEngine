@@ -5,6 +5,7 @@
 #include "Graphics/Window.h"
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/API/GraphicsAPI.h"
+#include "Util/KeyboardUtil.h"
 
 uint8_t s_uCurrId = 0u;
 
@@ -117,7 +118,17 @@ bool Window::ShouldClose() const
 
 bool Window::IsKeyPressed(char _cKeyCode) const
 { 
-  return glfwGetKey(m_pImpl->m_pGlfwWindow, static_cast<int>(_cKeyCode) == GLFW_PRESS);
+  return glfwGetKey(m_pImpl->m_pGlfwWindow, GetCharKeyCode(_cKeyCode)) == GLFW_PRESS;
+}
+
+bool Window::IsMousePressed(int _iButton) const
+{
+  return glfwGetMouseButton(m_pImpl->m_pGlfwWindow, _iButton) == GLFW_PRESS;
+}
+
+void Window::GetMousePos(double& iX_, double& iY_) const
+{
+  glfwGetCursorPos(m_pImpl->m_pGlfwWindow, &iX_, &iY_);
 }
   
 Window& Window::operator=(Window&& _rWindow) noexcept

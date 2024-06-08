@@ -64,6 +64,24 @@ public:
   const glm::vec3& GetScale() const { return m_vScale; }
   const glm::quat& GetRot() const { return m_qRot; }
 
+  glm::vec3 GetUp() const
+  {
+    glm::mat4 mMat(GetMatrix());
+    return glm::vec3(mMat[1][0], mMat[1][1], mMat[1][2]);
+  }
+
+  glm::vec3 GetFront() const
+  {
+    glm::mat4 mMat(GetMatrix());
+    return glm::vec3(mMat[2][0], mMat[2][1], mMat[2][2]);
+  }
+
+  glm::vec3 GetRight() const
+  {
+    glm::mat4 mMat(GetMatrix());
+    return glm::vec3(mMat[0][0], mMat[0][1], mMat[0][2]);
+  }
+
   glm::mat4 GetMatrix() const
   {
     glm::mat4 mMat(1.f);

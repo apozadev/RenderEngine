@@ -33,6 +33,8 @@ public:
   int GetHeight() const;
 
   bool IsKeyPressed(char _cKeyCode) const;
+  bool IsMousePressed(int _iButton) const;
+  void GetMousePos(double& iX_, double& iY_) const;
 
 private:            
 

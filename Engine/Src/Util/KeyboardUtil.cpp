@@ -1,0 +1,89 @@
+#include "Util/KeyboardUtil.h"
+#include <GLFW/glfw3.h>
+
+int GetCharKeyCode(char _cChar)
+{
+  switch (_cChar)
+  {
+  case 'a':
+  case 'A':
+    return GLFW_KEY_A;
+  case 'b':
+  case 'B':
+    return GLFW_KEY_B;
+  case 'c':
+  case 'C':
+    return GLFW_KEY_C;
+  case 'd':
+  case 'D':
+    return GLFW_KEY_D;
+  case 'e':
+  case 'E':
+    return GLFW_KEY_E;
+  case 'f':
+  case 'F':
+    return GLFW_KEY_F;
+  case 'g':
+  case 'G':
+    return GLFW_KEY_G;
+  case 'h':
+  case 'H':
+    return GLFW_KEY_H;
+  case 'i':
+  case 'I':
+    return GLFW_KEY_I;
+  case 'j':
+  case 'J':
+    return GLFW_KEY_J;
+  case 'k':
+  case 'K':
+    return GLFW_KEY_K;
+  case 'l':
+  case 'L':
+    return GLFW_KEY_L;
+  case 'm':
+  case 'M':
+    return GLFW_KEY_M;
+  case 'n':
+  case 'N':
+    return GLFW_KEY_N;
+  case 'o':
+  case 'O':
+    return GLFW_KEY_O;
+  case 'p':
+  case 'P':
+    return GLFW_KEY_P;
+  case 'q':
+  case 'Q':
+    return GLFW_KEY_Q;
+  case 'r':
+  case 'R':
+    return GLFW_KEY_R;
+  case 's':
+  case 'S':
+    return GLFW_KEY_S;
+  case 't':
+  case 'T':
+    return GLFW_KEY_T;
+  case 'u':
+  case 'U':
+    return GLFW_KEY_U;
+  case 'v':
+  case 'V':
+    return GLFW_KEY_V;
+  case 'w':
+  case 'W':
+    return GLFW_KEY_W;
+  case 'x':
+  case 'X':
+    return GLFW_KEY_X;
+  case 'y':
+  case 'Y':
+    return GLFW_KEY_Y;
+  case 'z':
+  case 'Z':
+    return GLFW_KEY_Z;
+  default:
+    return GLFW_KEY_LAST;
+  }
+}

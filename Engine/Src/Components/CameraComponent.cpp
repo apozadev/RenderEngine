@@ -4,6 +4,7 @@
 #include "Graphics/Window.h"
 #include "Graphics/Renderer.h"
 #include "Components/CameraComponent.h"
+#include "Math/Utils.h"
 
 CameraComponent::CameraComponent(Window* _pWindow)
   : m_oCamera(_pWindow)
@@ -16,26 +17,80 @@ void CameraComponent::Start()
   m_fFov = 90.f;
   m_fNear = 0.1F;
   m_fFar = 100.f;
+
+  Window& rWindow = *m_oCamera.GetWindow();
+
+  double dPosX, dPosY;
+  rWindow.GetMousePos(dPosX, dPosY);
+  m_fLastMousePosX = static_cast<float>(dPosX);
+  m_fLastMousePosY = static_cast<float>(dPosY);
+
+  glm::vec3 vRot = glm::eulerAngles(m_pEntity->GetGlobalTransform().GetRot());
+  m_fPitch = vRot.x;
+  m_fYaw = vRot.y;
 }
 
 void CameraComponent::PreTransformUpdate(float _fTimeStep)
 {
-  constexpr float fSpeed = 5.f;
+  constexpr float fMoveSpeed = 10.f;
+  constexpr float fRotSpeed = 0.3f;  
+
+  Window& rWindow = *m_oCamera.GetWindow();
+
+  Transform& rTr = m_pEntity->GetMutableLocalTransform();  
+
+  double dMousePosX, dMousePosY;
+
+  rWindow.GetMousePos(dMousePosX, dMousePosY);
 
   glm::vec3 vTranslation(0.f);
 
-  if (m_oCamera.GetWindow()->IsKeyPressed('a'))
+  if (rWindow.IsKeyPressed('a'))
   {
-    vTranslation -= fSpeed * _fTimeStep;
+    vTranslation -= rTr.GetRight() * fMoveSpeed * _fTimeStep;
   }
 
-  if (m_oCamera.GetWindow()->IsKeyPressed('d'))
+  if (rWindow.IsKeyPressed('d'))
   {
-    vTranslation += fSpeed * _fTimeStep;
+    vTranslation += rTr.GetRight() * fMoveSpeed * _fTimeStep;
   }
 
-  Transform& oTr = m_pEntity->GetMutableLocalTransform();
-  oTr.SetPos(oTr.GetPos() + vTranslation);
+  if (rWindow.IsKeyPressed('w'))
+  {
+    vTranslation -= rTr.GetFront() * fMoveSpeed * _fTimeStep;
+  }
+
+  if (rWindow.IsKeyPressed('s'))
+  {
+    vTranslation += rTr.GetFront() * fMoveSpeed * _fTimeStep;
+  }
+
+  if (rWindow.IsKeyPressed('q'))
+  {
+    vTranslation += rTr.GetUp() * fMoveSpeed * _fTimeStep;
+  }
+
+  if (rWindow.IsKeyPressed('e'))
+  {
+    vTranslation -= rTr.GetUp() * fMoveSpeed * _fTimeStep;
+  }
+
+  rTr.SetPos(rTr.GetPos() + vTranslation);
+
+  if (rWindow.IsMousePressed(0))
+  {        
+    float fDeltaX = dMousePosX - static_cast<float>(m_fLastMousePosX);
+    float fDeltaY = dMousePosY - static_cast<float>(m_fLastMousePosY);            
+
+    m_fYaw += fRotSpeed * fDeltaY * _fTimeStep;    
+    m_fPitch -= fRotSpeed * fDeltaX * _fTimeStep;    
+
+    rTr.SetRot(glm::quat(glm::vec3(m_fYaw, m_fPitch, 0.f)));
+  }  
+
+  m_fLastMousePosX = static_cast<float>(dMousePosX);
+  m_fLastMousePosY = static_cast<float>(dMousePosY);
+
 }
 
 void CameraComponent::Update(float _fTimeStep) 
