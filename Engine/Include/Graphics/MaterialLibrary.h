@@ -19,7 +19,8 @@ public:
 
   Material* CreateMaterial(Window* _pWindow) 
   {    
-    return &(m_lstMaterials.emplace_back(WindowMatPair{ _pWindow, Material(_pWindow) }).m_oMaterial);
+    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::move(Material(_pWindow)) });
+    return &(m_lstMaterials.back().m_oMaterial);
   }
 
   void DestroyWindowMaterials(Window* _pWindow)

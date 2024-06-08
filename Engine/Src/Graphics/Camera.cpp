@@ -21,7 +21,7 @@ public:
 
   api::APICamera* m_pAPICamera;
 
-  ConstantBuffer<GlobalBufferData>* m_pCBuffer;
+  std::unique_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
 
   Window* m_pWindow;
 
@@ -31,7 +31,7 @@ public:
     _pWindow->SetUsing();
     m_pAPICamera = api::CreateAPICamera();
 
-    m_pCBuffer = new ConstantBuffer<GlobalBufferData>(0, PipelineStage::VERTEX);
+    m_pCBuffer = std::make_unique<ConstantBuffer<GlobalBufferData>>(0, PipelineStage::VERTEX);
 
     api::BeginCameraSubStateSetup(m_pAPICamera);
     m_pCBuffer->Setup(ResourceFrequency::GLOBAL);

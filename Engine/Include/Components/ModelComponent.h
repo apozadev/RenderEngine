@@ -25,9 +25,9 @@ public:
 
   void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx, Window* _pWindow);
 
-  MaterialInstance& AddMaterial(MaterialInstance&& _rMaterial)
+  MaterialInstance& AddMaterialInstance(Material* _pMaterial)
   {
-    m_lstMaterials.push_back(std::move(_rMaterial));
+    m_lstMaterials.emplace_back(_pMaterial);
     return m_lstMaterials[m_lstMaterials.size() - 1];
   }
 

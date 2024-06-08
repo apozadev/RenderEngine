@@ -1216,6 +1216,10 @@ namespace vk
 
     DestroySwapchain(_pWindow);
 
+    vkDestroyImage(_pWindow->m_hDevice, _pWindow->m_hDepthImage, NULL);
+    vkFreeMemory(_pWindow->m_hDevice, _pWindow->m_hDepthImageMemory, NULL);
+    vkDestroyImageView(_pWindow->m_hDevice, _pWindow->m_hDepthImageView, NULL);
+
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hImageAvailableSemaphore, NULL);
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hRenderFinishedSemaphore, NULL);
 

@@ -131,7 +131,7 @@ bool Engine::ShouldShutDown()
 
 void Engine::ShutDown()
 {
-  // Shut down subsystems    
+  // Shut down subsystems      
   InputManager::GetInstance()->ShutDown();
   Renderer::GetInstance()->ShutDown();
 }

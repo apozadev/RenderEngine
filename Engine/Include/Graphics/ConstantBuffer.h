@@ -9,7 +9,7 @@ class ConstantBufferBase : public Resource
 protected:
 
   ConstantBufferBase(size_t _uSize, int _iBinding, PipelineStage _eStage);
-  ~ConstantBufferBase();
+  virtual ~ConstantBufferBase();
 
   void Update(const void* _pData, size_t _uSize) const;
 
@@ -31,9 +31,6 @@ class ConstantBuffer :public ConstantBufferBase
 public:
 
   ConstantBuffer(int _iBinding, PipelineStage _eStage) : ConstantBufferBase(sizeof(T), _iBinding, _eStage)
-  {}
-
-  virtual ~ConstantBuffer()
   {}
 
   T* GetData()

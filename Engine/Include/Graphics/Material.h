@@ -18,7 +18,7 @@ public:
   inline T* AddResource(Args&&... args)
   {        
     T* pResource = new T(std::forward<Args>(args)...);
-    m_lstResources.push_back(pResource);
+    AddResourceInternal(pResource);
     return pResource;
   }  
 
@@ -32,8 +32,10 @@ public:
 
 private:      
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+  void AddResourceInternal(Resource* _pResource);
 
-  std::vector<Resource*> m_lstResources;
+private:
+
+  class Impl;
+  std::unique_ptr<Impl> m_pImpl;  
 };

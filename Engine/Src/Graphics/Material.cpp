@@ -12,6 +12,7 @@ class Material::Impl
 {
 public:
   api::APIRenderState* m_pAPIRenderState;
+  std::vector<Resource*> m_lstResources;
 
   Impl(Window* _pWindow)
   {
@@ -21,6 +22,11 @@ public:
 
   ~Impl()
   {
+    for (Resource* pResource : m_lstResources)
+    {
+      delete pResource;
+    }
+
     api::DestroyAPIRenderState(m_pAPIRenderState);
   }
 };
@@ -37,17 +43,13 @@ Material::Material(Material&& rMaterial)
 
 Material::~Material()
 {
-  for (Resource* pResource : m_lstResources)
-  {
-    delete pResource;
-  }
 }
 
 void Material::Setup() const
 {
   api::BeginRenderStateSetup(m_pImpl->m_pAPIRenderState);
 
-  for (Resource* pResource : m_lstResources)
+  for (Resource* pResource : m_pImpl->m_lstResources)
   {
     pResource->Setup(ResourceFrequency::MATERIAL);
   }
@@ -60,7 +62,7 @@ void Material::Bind() const
 
   api::BindAPIRenderState(m_pImpl->m_pAPIRenderState);
 
-  for (const Resource* pResource : m_lstResources)
+  for (const Resource* pResource : m_pImpl->m_lstResources)
   {
     pResource->Bind();
   }
@@ -71,9 +73,13 @@ void Material::SetUsing() const
   api::SetUsingAPIRenderState(m_pImpl->m_pAPIRenderState);
 }
 
-Material& Material::operator=(Material&& _rMaterial)
+void Material::AddResourceInternal(Resource* _pResource)
 {
-  m_lstResources = _rMaterial.m_lstResources;
+  m_pImpl->m_lstResources.push_back(_pResource);
+}
+
+Material& Material::operator=(Material&& _rMaterial)
+{  
   m_pImpl = std::move(_rMaterial.m_pImpl);
   return *this;
 }

@@ -75,7 +75,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
   for (unsigned int i = 0; i < _pAssimpScene->mNumMaterials; i++)
   {
     aiMaterial* aiMat = _pAssimpScene->mMaterials[i];
-    MaterialInstance& rMatInstance = pModelComp_->AddMaterial(MaterialInstance(_pMaterial));
+    MaterialInstance& rMatInstance = pModelComp_->AddMaterialInstance(_pMaterial);
     std::vector<aiTextureType> types = {
         aiTextureType_DIFFUSE, // t0
         aiTextureType_NORMALS, // t1
