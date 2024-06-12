@@ -6,6 +6,10 @@
 
 #include "Graphics/Window.h"
 
+#include "Graphics/Mesh.h"
+
+#include "Graphics/RenderStateInfo.h"
+
 #include "Core/Exception.h"
 
 class Material::Impl
@@ -17,7 +21,11 @@ public:
   Impl(Window* _pWindow)
   {
     _pWindow->SetUsing();
-    m_pAPIRenderState = api::CreateAPIRenderState();
+
+    RenderStateInfo oInfo{};
+    oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
+
+    m_pAPIRenderState = api::CreateAPIRenderState(oInfo);
   }
 
   ~Impl()

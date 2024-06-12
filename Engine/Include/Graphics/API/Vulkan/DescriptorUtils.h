@@ -14,7 +14,9 @@ namespace vk
 
     void AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding);
 
-    VkDescriptorSetLayout Build(VkDevice _hDevice);
+    VkDescriptorSetLayout Build(VkDevice _hDevice);    
+
+    bool Contains(VkDescriptorSetLayoutBinding _oBinding) const;
 
     void Clear() { m_lstDescSetInfos.clear();}
 
@@ -70,7 +72,7 @@ namespace vk
     void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx);
     void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx);
 
-    void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount);
+    void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, const DescriptorSetLayoutBuilder& _oLayoutBuilder);
 
     void Clear() 
     { 

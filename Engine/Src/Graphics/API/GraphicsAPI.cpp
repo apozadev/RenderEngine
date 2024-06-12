@@ -121,9 +121,9 @@ namespace api
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState()
+  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo)
   {
-    return RENDER_API::CreateAPIRenderState();
+    return RENDER_API::CreateAPIRenderState(_oInfo);
   }
 
   void BeginRenderStateSetup(APIRenderState* _pAPIRenderState)
@@ -195,9 +195,9 @@ namespace api
     return RENDER_API::BeginDraw(_pWindow);
   }
 
-  void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount)
+  void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, void* _pConstantData, uint32_t _uConstantSize)
   {
-    RENDER_API::DrawMesh(_pMesh, _uVertexCount);
+    RENDER_API::DrawMesh(_pMesh, _uVertexCount, _pConstantData, _uConstantSize);
   }
 
   void EndDraw(APIWindow* _pWindow)

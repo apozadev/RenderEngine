@@ -50,5 +50,5 @@ protected:
 private:
   std::vector<MeshMaterialPair> m_lstMeshes;
 
-  std::vector<MaterialInstance> m_lstMaterials;
+  std::vector<MaterialInstance> m_lstMaterials;  
 };

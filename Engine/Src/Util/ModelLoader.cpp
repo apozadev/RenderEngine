@@ -18,7 +18,7 @@
 #include "assimp/Importer.hpp"
 
 void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, Window* _pWindow, ModelComponent* pModelComp_);
-void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_);
+void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, Window* _pWindow, ModelComponent* pModelComp_);
 void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, Window* _pWindow, ModelComponent* pModelComp_);
 
 void ModelLoader::LoadModel(const char* _sFilename, Window* _pWindow, ModelComponent* pModelComp_)
@@ -40,9 +40,11 @@ void ModelLoader::LoadModel(const char* _sFilename, Window* _pWindow, ModelCompo
 
   Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(_pWindow);
 
+  pMaterial->AddResource<Texture2D>(_pWindow, "D:/Documents/RenderEngine/Assets/Images/ripple.png", 0, PipelineStage::PIXEL);
+
   pMaterial->Setup();
 
-  ProcessMaterials(oScene, pMaterial, sDirectory, pModelComp_);
+  ProcessMaterials(oScene, pMaterial, sDirectory, _pWindow, pModelComp_);
 
   ProcessNode(oScene->mRootNode, oScene, _pWindow, pModelComp_);
 
@@ -70,7 +72,7 @@ void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, Window* _pW
   }
 }
 
-void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_)
+void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, Window* _pWindow, ModelComponent* pModelComp_)
 {
   for (unsigned int i = 0; i < _pAssimpScene->mNumMaterials; i++)
   {
@@ -115,10 +117,9 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
       {
 
         //regular file, read it from disk        
-        rMatInstance.AddResource<Texture2D>(_sDirectory + str.C_Str(), j, PipelineStage::PIXEL);
+        rMatInstance.AddResource<Texture2D>(_pWindow, _sDirectory + str.C_Str(), j, PipelineStage::PIXEL);
       }
-    }   
-
+    }  
     rMatInstance.Setup();
   }
 }

@@ -10,6 +10,11 @@ class Window;
 
 class MaterialInstance;
 
+struct MeshConstant
+{
+  glm::mat4 m_mModel;
+};
+
 class Mesh
 {
 
@@ -17,7 +22,7 @@ class Mesh
 
 public:    
 
-  Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, MaterialInstance* _pMaterial, Window* _pWindow);
+  Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow);
   Mesh(Mesh&& _rMesh);
   ~Mesh();
 

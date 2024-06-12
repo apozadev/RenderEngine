@@ -21,7 +21,7 @@ class ImageManager : public Singleton<ImageManager>
 {
 public:
 	const Image* TryGetLoadedImage(const std::string& _sFilename);
-	const Image& LoadImage(const std::string& _sPath);
+	const Image& LoadImage(const std::string& _sPath, bool _bAbsolute = false);
 	const Image& DecodeFromMemory(const std::string& _sPath, unsigned char* _pData, int _iSize);
 private:
 	std::map<std::string, Image> m_mapLoadedImages;

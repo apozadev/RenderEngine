@@ -11,7 +11,7 @@ ModelComponent::ModelComponent(const char* _sFilename, Window* _pWindow)
 void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx, Window* _pWindow)
 {
   m_lstMeshes.push_back({
-    std::move(Mesh(_lstVertices, _lstIndices, &m_lstMaterials[_uMaterialIdx], _pWindow))
+    std::move(Mesh(_lstVertices, _lstIndices, _pWindow))
     , _uMaterialIdx
     });
 }

@@ -80,7 +80,7 @@ const Image& ImageManager::DecodeFromMemory(const std::string& _sPath, unsigned 
   return m_mapLoadedImages.emplace(_sPath, img).first->second;
 }
 
-const Image& ImageManager::LoadImage(const std::string& _sPath)
+const Image& ImageManager::LoadImage(const std::string& _sPath, bool _bAbsolute/* = false*/)
 {
 
   const Image* loadedImg = TryGetLoadedImage(_sPath);
@@ -101,7 +101,7 @@ const Image& ImageManager::LoadImage(const std::string& _sPath)
       isHDR = extension == "exr" || extension == "hdr";
     }
 
-    std::string sFullPath = file::GetWorkingDirectory() + _sPath;
+    std::string sFullPath = _bAbsolute? _sPath : file::GetWorkingDirectory() + _sPath;
 
     if (isHDR)
     {
@@ -149,7 +149,7 @@ const Image& ImageManager::LoadImage(const std::string& _sPath)
       break;*/
     case 3:
       RGB2RGBA((unsigned char**)(&img.m_pData), img.m_iWidth, img.m_iHeight);
-      img.m_eFormat = ImageFormat::R8G8B8;
+      img.m_eFormat = ImageFormat::R8G8B8A8;
       img.m_iChannels = 4;
       break;
     case 4:

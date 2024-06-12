@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+#include "Graphics/Window.h"
+
 class Resource;
 
 class Material;
@@ -16,8 +18,9 @@ public:
   ~MaterialInstance();
 
   template<class T, typename ...Args>
-  inline T* AddResource(Args&&... args)
+  inline T* AddResource(Window* _pWindow, Args&&... args)
   {     
+    _pWindow->SetUsing();
     T* pResource = new T(std::forward<Args>(args)...);
     m_lstResources.push_back(pResource);
     return pResource;

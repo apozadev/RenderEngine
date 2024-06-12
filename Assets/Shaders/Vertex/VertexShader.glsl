@@ -11,20 +11,21 @@ layout(set = 0, binding = 0) uniform GlobalBuffer {
     mat4 viewproj;
 };
 
-layout(set = 2, binding = 0) uniform ModelBuffer {
-    mat4 model;
-};
+layout( push_constant ) uniform constants
+{	
+	mat4 model;
+} PushConstants;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;
 
 void main() {
-    gl_Position = viewproj * model * vec4(inPosition, 1.0);
+    gl_Position = viewproj * PushConstants.model * vec4(inPosition, 1.0);
 
     //gl_Position = viewproj * vec4(inPosition, 1.0);
 
-    fragNormal = vec3(model * vec4(inNormal, 1.0));
+    fragNormal = vec3(PushConstants.model * vec4(inNormal, 1.0));
 
     fragColor = inColor;
     fragTexCoord = inUv;

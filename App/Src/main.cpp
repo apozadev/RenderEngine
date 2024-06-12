@@ -19,7 +19,7 @@ int main(){
   {
 
   Engine::GetInstance()->Initialize();
-  Window* pWindow = Engine::GetInstance()->CreateNewWindow(640, 420, "App");  
+  Window* pWindow = Engine::GetInstance()->CreateNewWindow(1080, 920, "App");  
 
   Scene* pScene = Engine::GetInstance()->CreateScene(pWindow);
 
@@ -29,7 +29,7 @@ int main(){
 
   Entity* pModelEntity = pScene->AddEntity();
 
-  pModelEntity->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
+  ModelComponent* pModelComp = pModelEntity->AddComponent<ModelComponent>("Assets/Models/cyborg/cyborg.obj", pWindow);    
 
   pModelEntity->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
 

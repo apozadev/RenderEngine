@@ -49,6 +49,21 @@ VkDescriptorSetLayout DescriptorSetLayoutBuilder::Build(VkDevice _hDevice)
     return hDescSetLayout;
 }
 
+bool DescriptorSetLayoutBuilder::Contains(VkDescriptorSetLayoutBinding _oBinding) const
+{
+  for (const VkDescriptorSetLayoutBinding& rBind : m_lstDescSetInfos)
+  {
+    if (rBind.binding == _oBinding.binding
+      && rBind.descriptorCount == _oBinding.descriptorCount
+      && rBind.descriptorType == _oBinding.descriptorType
+      && rBind.stageFlags == _oBinding.stageFlags)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 // DescriptorPoolBuilder
 
 void DescriptorPoolBuilder::AddPoolSize(VkDescriptorPoolSize&& _rPoolSize)
@@ -126,73 +141,75 @@ void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uin
   m_lstSetImageInfos.push_back(std::move(oInfoList));
 }
 
-void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount)
+void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, const DescriptorSetLayoutBuilder& _oLayoutBuilder)
 {  
 
-  //if (m_lstSetBufferInfos.size() < _uCount || m_lstSetImageInfos.size() < _uCount)
-  //{
-  //  THROW_GENERIC_EXCEPTION("[API] Trying to update too many descriptor sets")
-  //}
-
-  bool bHasUboDesc = !m_lstSetBufferInfos.empty();
-  bool bHasImgDesc = !m_lstSetImageInfos.empty();
-
-  unsigned int uDescCount = 0u;
-
-  if (bHasUboDesc)
-  {
-    uDescCount += _uCount;
-  } 
-  if (bHasImgDesc)
-  {
-    uDescCount += _uCount;
-  }
-
-  std::vector<VkWriteDescriptorSet> lstWriteDescSets(uDescCount);
-
-  uint32_t uCurrIdx = 0u;
-
-  if (bHasUboDesc)
-  {
-    for (uint32_t i = 0; i < _uCount; i++)
+  std::vector<VkWriteDescriptorSet> lstWriteDescSets;
+  
+  for (const SetBoundBufferInfoList& lstSetBufferInfo : m_lstSetBufferInfos)
+  { 
+    VkDescriptorSetLayoutBinding oBinding{};
+    oBinding.binding = lstSetBufferInfo.m_uBinding;
+    oBinding.descriptorCount = lstSetBufferInfo.m_lstBufferInfos.size();
+    oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    if (!_oLayoutBuilder.Contains(oBinding))
     {
-      std::vector<VkDescriptorBufferInfo>& lstBufferInfos = m_lstSetBufferInfos[i].m_lstBufferInfos;
-      VkWriteDescriptorSet oUboWriteDescSet{};
-      oUboWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      oUboWriteDescSet.dstSet = _pDescSets[i];
-      oUboWriteDescSet.dstBinding = m_lstSetBufferInfos[i].m_uBinding;
-      oUboWriteDescSet.dstArrayElement = 0;
-      oUboWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      oUboWriteDescSet.descriptorCount = lstBufferInfos.size();
-      oUboWriteDescSet.pBufferInfo = lstBufferInfos.size() ? lstBufferInfos.data() : NULL;
-      oUboWriteDescSet.pImageInfo = NULL;
-      oUboWriteDescSet.pTexelBufferView = NULL;
-
-      lstWriteDescSets[uCurrIdx++] = std::move(oUboWriteDescSet);
+      continue;
     }
-  }
-   
-  if (bHasImgDesc)
-  {
-    for (uint32_t i = 0; i < _uCount; i++)
+
+    if (lstSetBufferInfo.m_uSetIdx > _uCount)
     {
-      std::vector<VkDescriptorImageInfo>& lstImgInfos = m_lstSetImageInfos[i].m_lstImgInfos;
-      VkWriteDescriptorSet oImageWriteDescSet{};
-      oImageWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      oImageWriteDescSet.dstSet = _pDescSets[i];
-      oImageWriteDescSet.dstBinding = m_lstSetImageInfos[i].m_uBinding;
-      oImageWriteDescSet.dstArrayElement = 0;
-      oImageWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      oImageWriteDescSet.descriptorCount = lstImgInfos.size();
-      oImageWriteDescSet.pBufferInfo = NULL;
-      oImageWriteDescSet.pImageInfo = lstImgInfos.size() ? lstImgInfos.data() : NULL;
-      oImageWriteDescSet.pTexelBufferView = NULL;
-
-      lstWriteDescSets[uCurrIdx++] = std::move(oImageWriteDescSet);
+      THROW_GENERIC_EXCEPTION("WTF?")
     }
-  }
 
-  if (bHasImgDesc || bHasUboDesc)
+    VkWriteDescriptorSet oUboWriteDescSet{};
+    oUboWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    oUboWriteDescSet.dstSet = _pDescSets[lstSetBufferInfo.m_uSetIdx];
+    oUboWriteDescSet.dstBinding = lstSetBufferInfo.m_uBinding;
+    oUboWriteDescSet.dstArrayElement = 0;
+    oUboWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    oUboWriteDescSet.descriptorCount = lstSetBufferInfo.m_lstBufferInfos.size();
+    oUboWriteDescSet.pBufferInfo = lstSetBufferInfo.m_lstBufferInfos.data();
+    oUboWriteDescSet.pImageInfo = NULL;
+    oUboWriteDescSet.pTexelBufferView = NULL;
+
+    lstWriteDescSets.push_back(std::move(oUboWriteDescSet));    
+  }  
+     
+  for (const SetBoundImgInfoList& lstSetImageInfo : m_lstSetImageInfos)
+  {      
+
+    VkDescriptorSetLayoutBinding oBinding{};
+    oBinding.binding = lstSetImageInfo.m_uBinding;
+    oBinding.descriptorCount = lstSetImageInfo.m_lstImgInfos.size();
+    oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    if (!_oLayoutBuilder.Contains(oBinding))
+    {
+      continue;
+    }
+
+    if (lstSetImageInfo.m_uSetIdx > _uCount)
+    {
+      THROW_GENERIC_EXCEPTION("WTF?")
+    }
+
+    VkWriteDescriptorSet oImageWriteDescSet{};
+    oImageWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    oImageWriteDescSet.dstSet = _pDescSets[lstSetImageInfo.m_uSetIdx];
+    oImageWriteDescSet.dstBinding = lstSetImageInfo.m_uBinding;
+    oImageWriteDescSet.dstArrayElement = 0;
+    oImageWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    oImageWriteDescSet.descriptorCount = lstSetImageInfo.m_lstImgInfos.size();
+    oImageWriteDescSet.pBufferInfo = NULL;
+    oImageWriteDescSet.pImageInfo = lstSetImageInfo.m_lstImgInfos.data();
+
+    lstWriteDescSets.push_back(std::move(oImageWriteDescSet));
+  }
+  
+
+  if (!lstWriteDescSets.empty())
   {
     vkUpdateDescriptorSets(_hDevice, lstWriteDescSets.size(), lstWriteDescSets.data(), 0, nullptr);
   }

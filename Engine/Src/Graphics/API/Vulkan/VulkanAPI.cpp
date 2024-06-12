@@ -153,6 +153,7 @@ namespace vk
 
   void CreatePipeline(const file::File& _oVSFile, 
     const file::File& _oPSFile,   
+    const RenderStateInfo& _oInfo,
     APIRenderState* _pRenderState_)
   {
 
@@ -328,12 +329,19 @@ namespace vk
       , _pRenderState_->m_hSubDescSetLayout
     };
 
+    // Push constants
+    
+    VkPushConstantRange push_constant;
+    push_constant.offset = 0;    
+    push_constant.size = _oInfo.m_uMeshConstantSize;    
+    push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
     VkPipelineLayoutCreateInfo oPipelineLayoutCreateInfo {};
     oPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     oPipelineLayoutCreateInfo.setLayoutCount = 3u;
     oPipelineLayoutCreateInfo.pSetLayouts = aSetLayouts;
-    oPipelineLayoutCreateInfo.pushConstantRangeCount = 0u;
-    oPipelineLayoutCreateInfo.pPushConstantRanges = NULL;
+    oPipelineLayoutCreateInfo.pushConstantRangeCount = 1u;
+    oPipelineLayoutCreateInfo.pPushConstantRanges = &push_constant;
 
     VK_CHECK(vkCreatePipelineLayout(pWindow->m_hDevice, &oPipelineLayoutCreateInfo, NULL, &_pRenderState_->m_hPipelineLayout))
 
@@ -820,10 +828,7 @@ namespace vk
   }
 
   void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
-  {
-
-    DescriptorSetLayoutBuilder oLayoutBuilder{};
-
+  {    
     VkDescriptorSetLayoutBinding oBinding{};
     oBinding.binding = 0;
     oBinding.descriptorCount = 1u;
@@ -831,9 +836,9 @@ namespace vk
     oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     oBinding.pImmutableSamplers = NULL;
 
-    oLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+    s_oGlobalData.m_oGlobalLayoutBuilder.AddLayoutBinding(std::move(oBinding));
 
-    _pWindow->m_hGlobalDescSetLayout = oLayoutBuilder.Build(_pWindow->m_hDevice);
+    _pWindow->m_hGlobalDescSetLayout = s_oGlobalData.m_oGlobalLayoutBuilder.Build(_pWindow->m_hDevice);
     
   }
 
@@ -1286,7 +1291,7 @@ namespace vk
   {
     APIWindow* pWindow = _pCamera->m_pOwnerWindow;
     uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
-    s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, _pCamera->m_pDescSets, uNumImages);
+    s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, _pCamera->m_pDescSets, uNumImages, s_oGlobalData.m_oGlobalLayoutBuilder);
     s_oGlobalData.m_oDescSetUpdater.Clear();
   }
 
@@ -1504,25 +1509,22 @@ namespace vk
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState()
+  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo)
   {
     APIRenderState* pRenderState = new APIRenderState();
     pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;  
     uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;
 
     file::File oVSFile("Assets/Shaders/Vertex/VertexShader.spv");
-    file::File oPSFile("Assets/Shaders/Pixel/PixelShader.spv");
+    file::File oPSFile("Assets/Shaders/Pixel/PixelShader.spv");    
 
-    DescriptorSetLayoutBuilder oMatLayoutBuilder;
-    DescriptorSetLayoutBuilder oInstLayoutBuilder;    
-
-    ReflectSetLayouts(oVSFile, oMatLayoutBuilder, oInstLayoutBuilder);
-    ReflectSetLayouts(oPSFile, oMatLayoutBuilder, oInstLayoutBuilder);
+    ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);
+    ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);
 
     VkDevice hDevice = pRenderState->m_pOwnerWindow->m_hDevice;
     
-    pRenderState->m_hDescSetLayout = oMatLayoutBuilder.Build(hDevice);
-    pRenderState->m_hSubDescSetLayout = oInstLayoutBuilder.Build(hDevice);
+    pRenderState->m_hDescSetLayout = pRenderState->m_oMaterialLayoutBuilder.Build(hDevice);
+    pRenderState->m_hSubDescSetLayout = pRenderState->m_oMatInstanceLayoutBuilder.Build(hDevice);
 
     std::vector<VkDescriptorSetLayout> lstLayouts;
     for (int i = 0; i < uNumImages; i++)
@@ -1541,7 +1543,7 @@ namespace vk
 
     VK_CHECK(vkAllocateDescriptorSets(hDevice, &oDescSetAllocInfo, pRenderState->m_pDescSets))
 
-    CreatePipeline(oVSFile, oPSFile, pRenderState);
+    CreatePipeline(oVSFile, oPSFile, _oInfo, pRenderState);
 
     return pRenderState;
   }
@@ -1565,7 +1567,7 @@ namespace vk
 
     uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
-    s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pRenderState->m_pDescSets, uNumImages);
+    s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pRenderState->m_pDescSets, uNumImages, pRenderState->m_oMaterialLayoutBuilder);
     s_oGlobalData.m_oDescSetUpdater.Clear();
   }
 
@@ -1610,15 +1612,33 @@ namespace vk
     return pSubState;
   }
 
-  void BeginSubStateSetup(APIRenderSubState* _pRenderState)
+  void BeginSubStateSetup(APIRenderSubState* _pSubState)
   {
     if (s_oGlobalData.m_pUsingSubState != nullptr)
     {
       THROW_GENERIC_EXCEPTION("[API] EndSubStateSetup was not called before a new BeginSubStateSetup call")
     }
 
-    s_oGlobalData.m_pUsingSubState = _pRenderState;
-    s_oGlobalData.m_pUsingWindow = _pRenderState->m_pRenderState->m_pOwnerWindow;
+    s_oGlobalData.m_pUsingSubState = _pSubState;
+    s_oGlobalData.m_pUsingWindow = _pSubState->m_pRenderState->m_pOwnerWindow;
+
+    uint32_t uNumImages = s_oGlobalData.m_pUsingWindow->m_uSwapchainImageCount;
+
+    std::vector<VkDescriptorSetLayout> lstLayouts;
+    for (int i = 0; i < uNumImages; i++)
+    {
+      lstLayouts.push_back(_pSubState->m_pRenderState->m_hSubDescSetLayout);
+    }
+
+    VkDescriptorSetAllocateInfo oDescSetAllocInfo{};
+    oDescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    oDescSetAllocInfo.descriptorPool = s_oGlobalData.m_pUsingWindow->m_hDescPool;
+    oDescSetAllocInfo.descriptorSetCount = uNumImages;
+    oDescSetAllocInfo.pSetLayouts = lstLayouts.data();
+
+    _pSubState->m_pDescSets = new VkDescriptorSet[uNumImages];
+
+    VK_CHECK(vkAllocateDescriptorSets(s_oGlobalData.m_pUsingWindow->m_hDevice, &oDescSetAllocInfo, _pSubState->m_pDescSets))
   }
 
   void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo)
@@ -1666,25 +1686,9 @@ namespace vk
 
     APIWindow* pWindow = pRenderState->m_pOwnerWindow;
 
-    uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;    
+    uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;        
 
-    std::vector<VkDescriptorSetLayout> lstLayouts;
-    for (int i = 0; i < uNumImages; i++)
-    {
-      lstLayouts.push_back(pRenderState->m_hSubDescSetLayout);
-    }
-    
-    VkDescriptorSetAllocateInfo oDescSetAllocInfo{};
-    oDescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    oDescSetAllocInfo.descriptorPool = pWindow->m_hDescPool;
-    oDescSetAllocInfo.descriptorSetCount = uNumImages;
-    oDescSetAllocInfo.pSetLayouts = lstLayouts.data();
-
-    pSubState->m_pDescSets = new VkDescriptorSet[uNumImages];
-
-    VK_CHECK(vkAllocateDescriptorSets(pWindow->m_hDevice, &oDescSetAllocInfo, pSubState->m_pDescSets))
-
-    s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pSubState->m_pDescSets, uNumImages);
+    s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pSubState->m_pDescSets, uNumImages, pRenderState->m_oMatInstanceLayoutBuilder);
 
     s_oGlobalData.m_oDescSetUpdater.Clear();
 
@@ -1765,16 +1769,20 @@ namespace vk
     return 0;
   }
 
-  void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount)
+  void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, void* _pConstantData, uint32_t _uConstantSize)
   {
 
     VkCommandBuffer& hCmdBuffer = _pMesh->m_pOwnerWindow->m_hRenderCmdBuffer;
+
+    APIRenderState* pRenderState = s_oGlobalData.m_pUsingRenderState;
 
     VkBuffer vertexBuffers[] = { _pMesh->m_hVertexBuffer };
     VkDeviceSize offsets[] = { 0u };
     vkCmdBindVertexBuffers(hCmdBuffer, 0u, 1u, vertexBuffers, offsets);
 
     vkCmdBindIndexBuffer(hCmdBuffer, _pMesh->m_hIndexBuffer, 0u, VK_INDEX_TYPE_UINT16);
+
+    vkCmdPushConstants(hCmdBuffer, pRenderState->m_hPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, _uConstantSize, _pConstantData);
 
     vkCmdDrawIndexed(hCmdBuffer, _uIndexCount, 1u, 0u, 0u, 0u);
 

@@ -4,6 +4,7 @@
 
 #include "Graphics/ImageFormat.h"
 #include "Graphics/ResourceBindInfo.h"
+#include "Graphics/RenderStateInfo.h"
 
 struct GLFWwindow;
 
@@ -64,7 +65,7 @@ namespace api
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState();
+  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo);
   void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
   void EndRenderStateSetup();
   void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState);
@@ -90,7 +91,7 @@ namespace api
   // Drawing
 
   int BeginDraw(APIWindow* _pWindow);
-  void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount);
+  void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, void* _pConstantData, uint32_t _uConstantSize);
   void EndDraw(APIWindow* _pWindow);    
 
 }

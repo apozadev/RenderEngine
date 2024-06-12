@@ -26,7 +26,7 @@ public:
 Texture2D::Texture2D(const std::string& _sFilename, int _iBinding, PipelineStage _eStage)
   : Resource(_iBinding, _eStage)
 {
-  const Image& rImage = ImageManager::GetInstance()->LoadImage(_sFilename);
+  const Image& rImage = ImageManager::GetInstance()->LoadImage(_sFilename, true);
   m_pImpl = std::make_unique<Impl>(rImage.m_pData, rImage.m_iWidth, rImage.m_iHeight, rImage.m_eFormat);
 }
 

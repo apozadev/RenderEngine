@@ -23,6 +23,9 @@ public:
   VkDescriptorSetLayout m_hSubDescSetLayout;
 
   APIWindow* m_pOwnerWindow;
+  
+  DescriptorSetLayoutBuilder m_oMaterialLayoutBuilder;
+  DescriptorSetLayoutBuilder m_oMatInstanceLayoutBuilder;
 };
 
 }
