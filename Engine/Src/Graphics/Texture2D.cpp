@@ -13,7 +13,7 @@ public:
 
   Impl(void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat)
   {    
-    m_pAPITexture = api::CreateAPITexture(_pData, _uHeight, _uHeight, _eFormat);
+    m_pAPITexture = api::CreateAPITexture(_pData, _uHeight, _uHeight, _eFormat, 0u);
   }
 
   ~Impl()

@@ -34,9 +34,9 @@ namespace vk
 
   // Forward declarations
 
-  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
-  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
-  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
+  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
+  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
+  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
 
   ///----------------------------------------------------------------------------------
   //                                Helper functions
@@ -494,15 +494,16 @@ namespace vk
       _pWindow->m_oExtent.width, 
       _pWindow->m_oExtent.height,
       eFormat,
+      1u,
       VK_IMAGE_TILING_OPTIMAL, 
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
       _pWindow->m_hDepthImage,
       _pWindow->m_hDepthImageMemory);
 
-    CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, uAspectFlags,_pWindow->m_hDepthImageView);
+    CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, uAspectFlags, _pWindow->m_hDepthImageView);
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, eFormat, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
   }
 
   void CreateSwapchain(APIWindow* _pWindow)
@@ -913,7 +914,7 @@ namespace vk
     VK_CHECK(vkBindBufferMemory(hDevice, hBuffer_, hDeviceMemory_, 0))    
   }
 
-  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_)
+  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_)
   {
     VkImageCreateInfo oImageCreateInfo{};
 
@@ -922,7 +923,7 @@ namespace vk
     oImageCreateInfo.extent.width = _uWidth;
     oImageCreateInfo.extent.height = _uHeight;
     oImageCreateInfo.extent.depth = 1u;
-    oImageCreateInfo.mipLevels = 1;
+    oImageCreateInfo.mipLevels = _uMipLevels;
     oImageCreateInfo.arrayLayers = 1;
     oImageCreateInfo.format = _eFormat;
     oImageCreateInfo.tiling = _eTiling;
@@ -945,9 +946,9 @@ namespace vk
     VK_CHECK(vkAllocateMemory(_pWindow->m_hDevice, &oAllocInfo, NULL, &hMemory_))
 
     VK_CHECK(vkBindImageMemory(_pWindow->m_hDevice, hImage_, hMemory_, 0))
-  }
+  }  
 
-  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_)
+  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_)
   {
     VkImageViewCreateInfo oCreateInfo = {};
     oCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -956,11 +957,11 @@ namespace vk
     oCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     oCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
     oCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    oCreateInfo.subresourceRange.aspectMask = _uAspectFlags;
-    oCreateInfo.subresourceRange.levelCount = 1u;
+    oCreateInfo.subresourceRange.aspectMask = _uAspectFlags;    
     oCreateInfo.subresourceRange.baseMipLevel = 0u;
-    oCreateInfo.subresourceRange.layerCount = 1u;
+    oCreateInfo.subresourceRange.levelCount = _uMipLevels;
     oCreateInfo.subresourceRange.baseArrayLayer = 0u;
+    oCreateInfo.subresourceRange.layerCount = 1u;    
     oCreateInfo.image = _hImage;
     oCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     oCreateInfo.format = _eFormat;
@@ -968,7 +969,7 @@ namespace vk
     VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &hImageView_))
   }
 
-  void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture)
+  void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels)
   {
 
     VkPhysicalDeviceProperties oProperties{};
@@ -985,10 +986,10 @@ namespace vk
     oSamplerInfo.unnormalizedCoordinates = VK_FALSE;
     oSamplerInfo.compareEnable = VK_FALSE;
     oSamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    oSamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    oSamplerInfo.mipLodBias = 0.0f;
+    oSamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;    
     oSamplerInfo.minLod = 0.0f;
-    oSamplerInfo.maxLod = 0.0f;
+    oSamplerInfo.maxLod = static_cast<float>(_uMipLevels);
+    oSamplerInfo.mipLodBias = 0.0f;
 
     VK_CHECK(vkCreateSampler(_pWindow->m_hDevice, &oSamplerInfo, NULL, &_pTexture->m_hSampler))
   }
@@ -1081,7 +1082,7 @@ namespace vk
     EndTempCmdBuffer(_pWindow, hCmdBuffer);
   }
 
-  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
   {
     VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
 
@@ -1094,7 +1095,7 @@ namespace vk
     oBarrier.image = _hImage;
     oBarrier.subresourceRange.aspectMask = _uAspectFlags;
     oBarrier.subresourceRange.baseMipLevel = 0;
-    oBarrier.subresourceRange.levelCount = 1;
+    oBarrier.subresourceRange.levelCount = _uMipLevels;
     oBarrier.subresourceRange.baseArrayLayer = 0;
     oBarrier.subresourceRange.layerCount = 1;    
 
@@ -1131,6 +1132,88 @@ namespace vk
     }
 
     vkCmdPipelineBarrier(hCmdBuffer, uSrcStage, uDstStage, 0, 0, NULL, 0, NULL, 1, &oBarrier);
+
+    EndTempCmdBuffer(_pWindow, hCmdBuffer);
+  }
+
+  void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels)
+  {
+    VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+
+    VkImageMemoryBarrier oBarrier{};
+    oBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    oBarrier.image = _hImage;
+    oBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    oBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    oBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oBarrier.subresourceRange.baseArrayLayer = 0;
+    oBarrier.subresourceRange.layerCount = 1;
+    oBarrier.subresourceRange.levelCount = 1;
+
+    int32_t iMipWidth = _iWidth;
+    int32_t iMipHeight = _iHeight;
+
+    for (uint32_t i = 1; i < _uMipLevels; i++)
+    {
+      oBarrier.subresourceRange.baseMipLevel = i - 1;
+      oBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+      oBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+      oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+      oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+      vkCmdPipelineBarrier(hCmdBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+        0, nullptr,
+        0, nullptr,
+        1, &oBarrier);
+
+      VkImageBlit oBlit{};
+      oBlit.srcOffsets[0] = { 0, 0, 0 };
+      oBlit.srcOffsets[1] = { iMipWidth, iMipHeight, 1 };
+      oBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+      oBlit.srcSubresource.mipLevel = i - 1;
+      oBlit.srcSubresource.baseArrayLayer = 0;
+      oBlit.srcSubresource.layerCount = 1;
+      oBlit.dstOffsets[0] = { 0, 0, 0 };
+      oBlit.dstOffsets[1] = { iMipWidth > 1 ? iMipWidth / 2 : 1, iMipHeight > 1 ? iMipHeight / 2 : 1, 1 };
+      oBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+      oBlit.dstSubresource.mipLevel = i;
+      oBlit.dstSubresource.baseArrayLayer = 0;
+      oBlit.dstSubresource.layerCount = 1;
+
+      vkCmdBlitImage(hCmdBuffer,
+        _hImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        _hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1u, &oBlit,
+        VK_FILTER_LINEAR);
+
+      oBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+      oBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;;
+      oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+      oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+      vkCmdPipelineBarrier(hCmdBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+        0, nullptr,
+        0, nullptr,
+        1, &oBarrier);
+
+      if (iMipWidth > 1) iMipWidth /= 2;
+      if (iMipHeight > 1) iMipHeight /= 2;
+
+    }
+
+    oBarrier.subresourceRange.baseMipLevel = _uMipLevels - 1;
+    oBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    oBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;;
+    oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+    vkCmdPipelineBarrier(hCmdBuffer,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+      0, nullptr,
+      0, nullptr,
+      1, &oBarrier);
 
     EndTempCmdBuffer(_pWindow, hCmdBuffer);
   }
@@ -1451,7 +1534,7 @@ namespace vk
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat)
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels)
   {
 
     APITexture* pTexture = new APITexture();
@@ -1467,23 +1550,28 @@ namespace vk
 
     VkFormat eVkFormat = GetVKFormat(_eFormat);
 
+    uint32_t uMaxMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_uWidth, _uWidth)))) + 1;
+    _uMipLevels = _uMipLevels == 0u? uMaxMipLevels : std::min(_uMipLevels, uMaxMipLevels);
+
     CreateBuffer(pWindow, uSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, hStagingBuffer, hStagingBufferMemory);
 
     SetBufferData(pWindow, _pData, uSize, hStagingBufferMemory);    
 
-    CreateImage(pWindow, _uWidth, _uHeight, eVkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pTexture->m_hImage, pTexture->m_hMemory);
+    CreateImage(pWindow, _uWidth, _uHeight, eVkFormat, _uMipLevels, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pTexture->m_hImage, pTexture->m_hMemory);
 
-    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight);
+    CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight);    
 
-    TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels);
+
+    //TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
 
-    CreateImageView(pWindow, pTexture->m_hImage, eVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, pTexture->m_hImageView);
+    CreateImageView(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, pTexture->m_hImageView);
 
-    CreateTextureSampler(pWindow, pTexture);
+    CreateTextureSampler(pWindow, pTexture, _uMipLevels);
 
     return pTexture;
   }

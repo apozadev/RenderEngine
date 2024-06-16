@@ -68,7 +68,7 @@ namespace vk
 
 	// Texture
 
-	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat);
+	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels);
 
 	void BindAPITexture(APITexture* _pTexture);
 

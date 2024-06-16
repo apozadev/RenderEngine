@@ -22,9 +22,9 @@ void ModelComponent::Start()
 
 void ModelComponent::PreTransformUpdate(float _fTimeStep) 
 {
-  constexpr float fSpeed = 1.f;
-  Transform& oTr = m_pEntity->GetMutableLocalTransform();
-  oTr.SetRot(glm::quat(glm::vec3(0.f, fSpeed * _fTimeStep, 0.f)) * oTr.GetRot());
+  //constexpr float fSpeed = 1.f;
+  //Transform& oTr = m_pEntity->GetMutableLocalTransform();
+  //oTr.SetRot(glm::quat(glm::vec3(0.f, fSpeed * _fTimeStep, 0.f)) * oTr.GetRot());
 }
 
 void ModelComponent::Update(float _fTimeStep)
