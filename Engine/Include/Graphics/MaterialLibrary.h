@@ -6,21 +6,23 @@
 
 class Window;
 
+typedef uint32_t MaterialId;
+
 class MaterialLibrary : public Singleton<MaterialLibrary>
 {
 
   struct WindowMatPair
-  {
+  {    
     Window* m_pWindow;
-    Material m_oMaterial;
+    std::unique_ptr<Material> m_pMaterial;
   };
 
 public:
 
   Material* CreateMaterial(Window* _pWindow) 
   {    
-    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::move(Material(_pWindow)) });
-    return &(m_lstMaterials.back().m_oMaterial);
+    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::make_unique<Material>(_pWindow) });
+    return m_lstMaterials.back().m_pMaterial.get();
   }
 
   void DestroyWindowMaterials(Window* _pWindow)
@@ -43,4 +45,6 @@ public:
 private:  
 
   std::vector<WindowMatPair> m_lstMaterials;
+
+  MaterialId m_uNextId = 0u;
 };

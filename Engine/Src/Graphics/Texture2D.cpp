@@ -30,6 +30,12 @@ Texture2D::Texture2D(const std::string& _sFilename, int _iBinding, PipelineStage
   m_pImpl = std::make_unique<Impl>(rImage.m_pData, rImage.m_iWidth, rImage.m_iHeight, rImage.m_eFormat);
 }
 
+Texture2D::Texture2D(const Image& _rImage, int _iBinding , PipelineStage _eStage)
+  : Resource(_iBinding, _eStage)
+{  
+  m_pImpl = std::make_unique<Impl>(_rImage.m_pData, _rImage.m_iWidth, _rImage.m_iHeight, _rImage.m_eFormat);
+}
+
 void Texture2D::Setup(ResourceFrequency _eFrequency) const
 {  
   ResourceBindInfo oBindInfo {};

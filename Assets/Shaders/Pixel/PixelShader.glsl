@@ -17,10 +17,12 @@ void main() {
     //outColor = vec4(fragColor, 1.0);
     //outColor = texture(texSampler, fragTexCoord);    
     //outColor = vec4(1,0,0,1);  
-    
+    //outColor = vec4(normalize(fragNormal), 1.0);
+        
     vec4 color = texture(texSampler, fragTexCoord);
 
     float ambientFactor = 0.1;
 
     outColor = color * (max(0, dot(lightDir, fragNormal)) + ambientFactor);
+    
 }

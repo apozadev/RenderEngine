@@ -40,8 +40,6 @@ void ModelLoader::LoadModel(const char* _sFilename, Window* _pWindow, ModelCompo
 
   Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(_pWindow);
 
-  pMaterial->AddResource<Texture2D>(_pWindow, "D:/Documents/RenderEngine/Assets/Images/ripple.png", 0, PipelineStage::PIXEL);
-
   pMaterial->Setup();
 
   ProcessMaterials(oScene, pMaterial, sDirectory, _pWindow, pModelComp_);
@@ -90,30 +88,30 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
       if (aiMat->GetTextureCount(types[j]) == 0) continue;
       aiString str;
       aiMat->Get(AI_MATKEY_TEXTURE(types[j], 0), str);
-      /*
+      
       if (const aiTexture* aiTex = _pAssimpScene->GetEmbeddedTexture(str.C_Str()))
       {
         //returned pointer is not null, read texture from memory
-
         if (aiTex->mHeight == 0)
         {
           // Compressed image data, we need to decode it
-          Image img = ImageManager::decodeFromMemory(aiTex->mFilename.C_Str(), (unsigned char*)aiTex->pcData, aiTex->mWidth);
-          if (img.data)
+          const Image& oImage = ImageManager::GetInstance()->DecodeFromMemory(aiTex->mFilename.C_Str(), (unsigned char*)aiTex->pcData, aiTex->mWidth);
+          if (oImage.m_pData)
           {
-            gfx::Texture2D* texture = memory::Factory::Create < gfx::Texture2D>((unsigned char*)img.data, img.width, img.height, img.channels, SRV_FREE_SLOT + j);
-            matInstance->AddBindable(texture);
+            rMatInstance.AddResource<Texture2D>(_pWindow, oImage, j, PipelineStage::PIXEL);
           }
         }
         else
         {
-          gfx::Texture2D* texture = memory::Factory::Create < gfx::Texture2D>((unsigned char*)aiTex->pcData, aiTex->mWidth, aiTex->mHeight, 4, SRV_FREE_SLOT + j);
-          matInstance->AddBindable(texture);
+          Image oImage{};
+          oImage.m_pData = aiTex->pcData;
+          oImage.m_iWidth = aiTex->mWidth;
+          oImage.m_iHeight = aiTex->mHeight;
+          oImage.m_eFormat = ImageFormat::R8G8B8A8;
+          rMatInstance.AddResource<Texture2D>(_pWindow, oImage, j, PipelineStage::PIXEL);
         }
       }
-      else
-        */
-      //if (INVALID_FILE_ATTRIBUTES != GetFileAttributes(str.C_Str()))
+      else //if (INVALID_FILE_ATTRIBUTES != GetFileAttributes(str.C_Str()))
       {
 
         //regular file, read it from disk        

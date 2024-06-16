@@ -14,6 +14,7 @@ layout(set = 0, binding = 0) uniform GlobalBuffer {
 layout( push_constant ) uniform constants
 {	
 	mat4 model;
+	mat4 normal;
 } PushConstants;
 
 layout(location = 0) out vec3 fragColor;
@@ -25,7 +26,7 @@ void main() {
 
     //gl_Position = viewproj * vec4(inPosition, 1.0);
 
-    fragNormal = vec3(PushConstants.model * vec4(inNormal, 1.0));
+    fragNormal = normalize(vec3(PushConstants.normal * vec4(inNormal, 1.0)));
 
     fragColor = inColor;
     fragTexCoord = inUv;

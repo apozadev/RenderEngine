@@ -6,12 +6,14 @@
 #include "Graphics/Resource.h"
 
 class Material;
+struct Image;
 
 class Texture2D : public Resource
 {
 public:
   //Texture2D() {};
   Texture2D(const std::string& _sFilename, int _iBinding, PipelineStage _eStage);
+  Texture2D(const Image& _rImage, int _iBinding, PipelineStage _eStage);
 
   virtual ~Texture2D() = default;
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include "Core/Entity.h"
 
@@ -21,11 +22,11 @@ public:
 
   void Update(float _fTimeStep);
 
-  Entity* GetParent(Entity& _rEntity);
+  Entity* GetParent(Entity* _rEntity);
 
-  Entity* GetChild(Entity& _rEntity, uint32_t _uChildIdx)
+  Entity* GetChild(Entity* _rEntity, uint32_t _uChildIdx)
   {
-    return &m_lstEntities[_rEntity.m_lstChildren[_uChildIdx]];
+    return m_lstEntities[_rEntity->m_lstChildren[_uChildIdx]].get();
   }  
 
   Window* GetWindow() const { return m_pWindow; }
@@ -34,9 +35,9 @@ public:
 
 private:    
 
-  uint32_t BuildTraverse(Entity& _rEntity, std::vector<Entity>& _lstNewScene);
+  uint32_t BuildTraverse(std::unique_ptr<Entity>& _rEntity, std::vector<std::unique_ptr<Entity>>& _lstNewScene);
 
-  std::vector<Entity> m_lstEntities;    
+  std::vector<std::unique_ptr<Entity>> m_lstEntities;    
 
   Window* m_pWindow;
 

@@ -13,6 +13,7 @@ class MaterialInstance;
 struct MeshConstant
 {
   glm::mat4 m_mModel;
+  glm::mat4 m_mNormal;
 };
 
 class Mesh

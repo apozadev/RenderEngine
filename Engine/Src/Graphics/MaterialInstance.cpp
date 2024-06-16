@@ -14,7 +14,7 @@ public:
   {    
     m_pMaterial->SetUsing();
     m_pSubState = api::CreateAPIRenderSubState();
-    //api::SetUsingAPIRenderState(nullptr);
+    api::SetUsingAPIRenderState(nullptr);
   }
 
   ~Impl()

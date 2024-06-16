@@ -102,8 +102,7 @@ void Renderer::Draw()
         {
           pCurrWindow->EndDraw();
         }
-        bSkipCurrWindow = rJob.m_pWindow->BeginDraw() != 0;
-        pCamera->Bind();
+        bSkipCurrWindow = rJob.m_pWindow->BeginDraw() != 0;        
         pCurrWindow = rJob.m_pWindow;
       }
 
@@ -116,6 +115,7 @@ void Renderer::Draw()
         if (pMaterial != pCurrMaterial)
         {
           pMaterial->Bind();
+          pCamera->Bind();
           pCurrMaterial = pMaterial;
         }
 

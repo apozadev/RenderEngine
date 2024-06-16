@@ -1569,6 +1569,8 @@ namespace vk
 
     s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pRenderState->m_pDescSets, uNumImages, pRenderState->m_oMaterialLayoutBuilder);
     s_oGlobalData.m_oDescSetUpdater.Clear();
+
+    s_oGlobalData.m_pUsingRenderState = nullptr;
   }
 
   void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState)
@@ -1692,8 +1694,7 @@ namespace vk
 
     s_oGlobalData.m_oDescSetUpdater.Clear();
 
-    s_oGlobalData.m_pUsingSubState = nullptr;
-    //s_oGlobalData.m_pUsingWindow = nullptr; 
+    s_oGlobalData.m_pUsingSubState = nullptr;    
   }
 
   void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState)

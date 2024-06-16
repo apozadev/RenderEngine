@@ -27,11 +27,15 @@ int main(){
 
   pCameraEntity->AddComponent<CameraComponent>(pWindow);
 
-  Entity* pModelEntity = pScene->AddEntity();
+  Entity* pModelEntity1 = pScene->AddEntity();
+  Entity* pModelEntity2 = pScene->AddEntity();
 
-  ModelComponent* pModelComp = pModelEntity->AddComponent<ModelComponent>("Assets/Models/cyborg/cyborg.obj", pWindow);    
+  pModelEntity1->AddComponent<ModelComponent>("Assets/Models/cyborg/cyborg.obj", pWindow);    
+  pModelEntity2->AddComponent<ModelComponent>("Assets/Models/demon.fbx", pWindow);    
 
-  pModelEntity->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
+  pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
+  pModelEntity2->GetMutableLocalTransform().SetPos({ 5.f,0.f, -10.f });
+  pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f});
 
   pScene->Build();
 

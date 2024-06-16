@@ -37,15 +37,15 @@ Entity* Scene::AddEntity(Entity* _pParent)
 
   if (uParentId  == _MAX_UINT32 || uParentId < m_lstEntities.size())
   {    
-    m_lstEntities.push_back(Entity());
+    m_lstEntities.push_back(std::make_unique<Entity>());
 
-    Entity* pEntity = &m_lstEntities.back();
+    Entity* pEntity = m_lstEntities.back().get();
 
     pEntity->m_uParentId = uParentId;
 
     if (uParentId != _MAX_UINT32)
     {      
-      Entity* pParent = &m_lstEntities[uParentId];
+      Entity* pParent = m_lstEntities[uParentId].get();
       pEntity->m_lstChildren.push_back(static_cast<uint32_t>(m_lstEntities.size() - 1));
     }    
 
@@ -65,15 +65,15 @@ Entity* Scene::AddEntity(Entity* _pParent)
 void Scene::Build()
 {
   // create new vector for ordered entities
-  std::vector<Entity> lstNewScene;
+  std::vector<std::unique_ptr<Entity>> lstNewScene;
   lstNewScene.reserve(m_lstEntities.size());
   
   // Traverse top-level entities (depth first) and fill new vector
-  for (Entity& rEntity : m_lstEntities)
+  for (auto& rEntityPtr : m_lstEntities)
   {
-    if (GetParent(rEntity) == nullptr)
+    if (GetParent(rEntityPtr.get()) == nullptr)
     {
-      BuildTraverse(rEntity, lstNewScene);
+      BuildTraverse(rEntityPtr, lstNewScene);
     }
   }
 
@@ -86,38 +86,38 @@ void Scene::Build()
   m_lstEntities.swap(lstNewScene);
 }
 
-uint32_t Scene::BuildTraverse(Entity& _rEntity, std::vector<Entity>& _lstNewScene)
+uint32_t Scene::BuildTraverse(std::unique_ptr<Entity>& _pEntity, std::vector<std::unique_ptr<Entity>>& _lstNewScene)
 {
   uint32_t uCurrId = _lstNewScene.size();
 
-  _lstNewScene.push_back(std::move(_rEntity ));
-  Entity& rNewEntity = _lstNewScene[uCurrId];
+  _lstNewScene.push_back(std::move(_pEntity ));
+  std::unique_ptr<Entity>& rNewEntity = _lstNewScene[uCurrId];
 
-  for (std::unique_ptr<Component>& pComponent : rNewEntity.m_lstComponents)
+  for (std::unique_ptr<Component>& pComponent : rNewEntity->m_lstComponents)
   {
-    pComponent->m_pEntity = &rNewEntity;
+    pComponent->m_pEntity = rNewEntity.get();
   }
 
-  for (uint32_t& uChildId : rNewEntity.m_lstChildren)
+  for (uint32_t& uChildId : rNewEntity->m_lstChildren)
   {
-    Entity& rChild = m_lstEntities[uChildId];
-    rChild.m_uParentId = uCurrId;
+    auto& rChild = m_lstEntities[uChildId];
+    rChild->m_uParentId = uCurrId;
     uChildId = BuildTraverse(rChild, _lstNewScene);
   }
 
-  rNewEntity.m_uNextSiblingId = _lstNewScene.size();
+  rNewEntity->m_uNextSiblingId = _lstNewScene.size();
 
   return uCurrId;
 }
 
-Entity* Scene::GetParent(Entity& _rEntity)
+Entity* Scene::GetParent(Entity* _pEntity)
 {
-  if (_rEntity.m_uParentId == _MAX_UINT32)
+  if (_pEntity->m_uParentId == _MAX_UINT32)
   {
     return nullptr;
   }
 
-  return &m_lstEntities[_rEntity.m_uParentId];
+  return m_lstEntities[_pEntity->m_uParentId].get();
 }
 
 void Scene::Update(float _fTimeStep)
@@ -130,34 +130,34 @@ void Scene::Update(float _fTimeStep)
   // Update transforms
   for (unsigned int uIdx = 0u; uIdx < uNumEntities; uIdx++)
   {
-    Entity& rEntity = m_lstEntities[uIdx];
+    auto& rEntityPtr = m_lstEntities[uIdx];
 
-    if (rEntity.m_bEnabled)
+    if (rEntityPtr->m_bEnabled)
     {
 
-      rEntity.PreTransformUpdate(_fTimeStep);
+      rEntityPtr->PreTransformUpdate(_fTimeStep);
 
-      if (rEntity.m_bTransformDirty)
+      if (rEntityPtr->m_bTransformDirty)
       {
         if (!lstTransformStack.empty())
         {
-          rEntity.m_oGlobalTransform = lstTransformStack.top() * rEntity.GetLocalTransform();
+          rEntityPtr->m_oGlobalTransform = lstTransformStack.top() * rEntityPtr->GetLocalTransform();
         }
         else
         {
-          rEntity.m_oGlobalTransform = rEntity.GetLocalTransform();
+          rEntityPtr->m_oGlobalTransform = rEntityPtr->GetLocalTransform();
         }
-        rEntity.m_bTransformDirty = false;
+        rEntityPtr->m_bTransformDirty = false;
       }
 
       if (uIdx < uNumEntities - 1)
       {
-        uint32_t uNextParentIdx = m_lstEntities[uIdx + 1].GetParentId();
+        uint32_t uNextParentIdx = m_lstEntities[uIdx + 1]->GetParentId();
         if (uNextParentIdx == uIdx)
         {
-          lstTransformStack.push(rEntity.m_oGlobalTransform);
+          lstTransformStack.push(rEntityPtr->m_oGlobalTransform);
         }
-        else if (uNextParentIdx != rEntity.GetParentId())
+        else if (uNextParentIdx != rEntityPtr->GetParentId())
         {
           lstTransformStack.pop();
         }
@@ -165,26 +165,26 @@ void Scene::Update(float _fTimeStep)
     }
     else
     {
-      uIdx = rEntity.m_uNextSiblingId - 1u;
+      uIdx = rEntityPtr->m_uNextSiblingId - 1u;
     }
   }
 
   // Update logic
   for (unsigned int uIdx = 0u; uIdx < uNumEntities; uIdx++)
   {
-    Entity& rEntity = m_lstEntities[uIdx];
-    if (rEntity.m_bEnabled)
+    auto& rEntityPtr = m_lstEntities[uIdx];
+    if (rEntityPtr->m_bEnabled)
     {
-      if (!rEntity.m_bStarted)
+      if (!rEntityPtr->m_bStarted)
       {
-        rEntity.Start();
-        rEntity.m_bStarted = true;
+        rEntityPtr->Start();
+        rEntityPtr->m_bStarted = true;
       }
-      rEntity.Update(_fTimeStep);
+      rEntityPtr->Update(_fTimeStep);
     }
     else
     {
-      uIdx = rEntity.m_uNextSiblingId - 1u;
+      uIdx = rEntityPtr->m_uNextSiblingId - 1u;
     }
   }
 }
