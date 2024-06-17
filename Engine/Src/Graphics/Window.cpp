@@ -14,16 +14,13 @@ class Window::Impl
 
 public:
 
-  GLFWwindow* m_pGlfwWindow;
-  int m_iWidth, m_iHeight;    
+  GLFWwindow* m_pGlfwWindow;  
   api::APIWindow* m_pAPIWindow;
   uint8_t m_uId;  
 
   Impl(int _fWidth, int _fHeight, const char* _sTitle, Window* _pWindow)    
   {
-    m_pGlfwWindow = nullptr;
-    m_iWidth = _fWidth;
-    m_iHeight = _fHeight;
+    m_pGlfwWindow = nullptr;    
     m_uId = s_uCurrId++;    
 
     if (!glfwInit())
@@ -44,6 +41,14 @@ public:
     glfwSetWindowUserPointer(m_pGlfwWindow, static_cast<void*>(m_pAPIWindow));
     glfwSetFramebufferSizeCallback(m_pGlfwWindow, [](GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
     {
+      int width = 0, height = 0;
+      glfwGetFramebufferSize(_pGflwWindow, &width, &height);
+      while (width == 0 || height == 0)
+      {
+        glfwGetFramebufferSize(_pGflwWindow, &width, &height);
+        glfwWaitEvents();
+      }      
+
       api::APIWindow* pAPIWindow = static_cast<api::APIWindow*>(glfwGetWindowUserPointer(_pGflwWindow));
       api::OnWindowResize(pAPIWindow);
     });
@@ -103,12 +108,12 @@ void Window::SwapBuffers() const
 
 int Window::GetWidth() const
 {
-  return m_pImpl->m_iWidth;
+  return api::GetWindowWidth(m_pImpl->m_pAPIWindow);
 }
 
 int Window::GetHeight() const
 {
-  return m_pImpl->m_iHeight;
+  return api::GetWindowHeight(m_pImpl->m_pAPIWindow);
 }
 
 bool Window::ShouldClose() const 

@@ -36,6 +36,16 @@ namespace api
     RENDER_API::OnWindowResize(_pWindow);
   }
 
+  uint32_t GetWindowWidth(APIWindow* _pWindow)
+  {
+    return RENDER_API::GetWindowWidth(_pWindow);
+  }
+
+  uint32_t GetWindowHeight(APIWindow* _pWindow)
+  {
+    return RENDER_API::GetWindowHeight(_pWindow);
+  }
+
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
     RENDER_API::DestroyAPIWindow(_pWindow);

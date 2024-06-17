@@ -54,6 +54,8 @@ namespace vk
 
     VkPhysicalDevice m_hPhysicalDevice;   
 
+    VkSampleCountFlagBits m_eMaxMsaaSampleCount;
+
     APIWindow* m_pUsingWindow = nullptr;
 
     APIRenderState* m_pUsingRenderState = nullptr;

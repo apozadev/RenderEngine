@@ -36,6 +36,10 @@ namespace vk
 
 	void OnWindowResize(APIWindow* _pWindow);
 
+	uint32_t GetWindowWidth(APIWindow* _pWindow);
+
+	uint32_t GetWindowHeight(APIWindow* _pWindow);
+
 	void DestroyAPIWindow(APIWindow* _pAPIWindow);
 
 	// Camera

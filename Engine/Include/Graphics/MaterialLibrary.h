@@ -38,6 +38,7 @@ public:
           m_lstMaterials[m_lstMaterials.size() - 1] = std::move(oAux);
         }
         m_lstMaterials.pop_back();
+        i--;
       }
     }
   }

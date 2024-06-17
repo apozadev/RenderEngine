@@ -45,7 +45,7 @@ int main(){
   catch (const Exception& e)
   {
     MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
-  }
+  }/*
   catch (const std::exception& e)
   {
     MessageBoxA(nullptr, e.what(), "Generic Exception", MB_OK | MB_ICONEXCLAMATION);
@@ -53,7 +53,7 @@ int main(){
   catch (...)
   {
     MessageBoxA(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
-  }
+  }*/
 
   return -1;
 

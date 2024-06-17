@@ -27,6 +27,10 @@ namespace vk
     VkImageView* m_pSwapChainImageViews;
     VkFramebuffer* m_pFramebuffers;
 
+    VkImage m_hColorImage;
+    VkDeviceMemory m_hColorImageMemory;
+    VkImageView m_hColorImageView;
+
     VkImage m_hDepthImage;
     VkDeviceMemory m_hDepthImageMemory;
     VkImageView m_hDepthImageView;

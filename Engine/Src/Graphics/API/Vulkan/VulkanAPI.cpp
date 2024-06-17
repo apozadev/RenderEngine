@@ -34,7 +34,7 @@ namespace vk
 
   // Forward declarations
 
-  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
+  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
   void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
   void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
 
@@ -80,6 +80,23 @@ namespace vk
 
     s_oGlobalData.m_hInstance = VK_NULL_HANDLE;
     VK_CHECK(vkCreateInstance(&oInstanceCreateInfo, NULL, &s_oGlobalData.m_hInstance))
+  }
+
+  VkSampleCountFlagBits GetMaxMSAASampleCount()
+  {
+    VkPhysicalDeviceProperties oDeviceProperties;
+    vkGetPhysicalDeviceProperties(s_oGlobalData.m_hPhysicalDevice, &oDeviceProperties);
+
+    VkSampleCountFlags uCounts = oDeviceProperties.limits.framebufferColorSampleCounts & oDeviceProperties.limits.framebufferDepthSampleCounts;
+    if (uCounts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+    if (uCounts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+    if (uCounts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+    if (uCounts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+    if (uCounts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+    if (uCounts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+    return VK_SAMPLE_COUNT_1_BIT;
+
   }
 
   void CreatePhysicalDevice()
@@ -141,7 +158,7 @@ namespace vk
 
         delete[] pQueueFamilyProperties;
       }
-    }
+    }    
 
     delete[] pPhysicalDevices;
 
@@ -149,6 +166,8 @@ namespace vk
     {
       THROW_GENERIC_EXCEPTION("[API] No device with graphics capabilities was found")
     }
+
+    s_oGlobalData.m_eMaxMsaaSampleCount = GetMaxMSAASampleCount();
   }  
 
   void CreatePipeline(const file::File& _oVSFile, 
@@ -221,43 +240,23 @@ namespace vk
     oTesselationInfo.patchControlPoints = 0u;
     oTesselationInfo.flags = 0u;
 
-    // Viewport and scissors fixed state
-    
-    VkViewport oViewport{};
-    oViewport.x = 0.0f;
-    oViewport.y = 0.0f;
-    oViewport.width = (float)pWindow->m_oExtent.width;
-    oViewport.height = (float)pWindow->m_oExtent.height;
-    oViewport.minDepth = 0.0f;
-    oViewport.maxDepth = 1.0f;    
-
-    VkRect2D oScissor{};
-    oScissor.offset = { 0, 0 };
-    oScissor.extent = pWindow->m_oExtent;    
-
-    VkPipelineViewportStateCreateInfo oViewportState{};
-    oViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    oViewportState.viewportCount = 1;
-    oViewportState.pViewports = &oViewport;
-    oViewportState.scissorCount = 1;
-    oViewportState.pScissors = &oScissor;
-
     // Dynamic state for viewport and scissors
 
-    /*VkDynamicState aDynamicStates [] = {
-    VK_DYNAMIC_STATE_VIEWPORT,
-    VK_DYNAMIC_STATE_SCISSOR
-    };
+    VkPipelineViewportStateCreateInfo oViewportState = {};
+    oViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    oViewportState.viewportCount = 1;
+    oViewportState.pViewports = nullptr; // Set to nullptr for dynamic state
+    oViewportState.scissorCount = 1;
+    oViewportState.pScissors = nullptr;  // Set to nullptr for dynamic state
 
-    VkPipelineDynamicStateCreateInfo oDynamicState{};
+    VkPipelineDynamicStateCreateInfo oDynamicState = {};
     oDynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    oDynamicState.dynamicStateCount = static_cast<uint32_t>(sizeof(aDynamicStates) / sizeof(VkDynamicState));
-    oDynamicState.pDynamicStates = aDynamicStates;
-
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.scissorCount = 1;*/
+    std::vector<VkDynamicState> dynamicStates = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR
+    };
+    oDynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    oDynamicState.pDynamicStates = dynamicStates.data();
 
     // Rasterizer
 
@@ -279,7 +278,7 @@ namespace vk
     VkPipelineMultisampleStateCreateInfo oMultisampling{};
     oMultisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     oMultisampling.sampleShadingEnable = VK_FALSE;
-    oMultisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    oMultisampling.rasterizationSamples = s_oGlobalData.m_eMaxMsaaSampleCount;
     oMultisampling.minSampleShading = 1.0f; // Optional
     oMultisampling.pSampleMask = NULL; // Optional
     oMultisampling.alphaToCoverageEnable = VK_FALSE; // Optional
@@ -365,6 +364,7 @@ namespace vk
     oPipelineInfo.subpass = 0u;
     oPipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     oPipelineInfo.basePipelineIndex = -1; // Optional
+    oPipelineInfo.pDynamicState = &oDynamicState;
 
     VK_CHECK(vkCreateGraphicsPipelines(pWindow->m_hDevice, VK_NULL_HANDLE, 1u, &oPipelineInfo, NULL, &_pRenderState_->m_hGraphicsPipeline))
 
@@ -484,6 +484,15 @@ namespace vk
     }
   }
 
+  void CreateColorBuffer(APIWindow* _pWindow)
+  {
+    CreateImage(_pWindow, _pWindow->m_oExtent.width, _pWindow->m_oExtent.height, _pWindow->m_eSwapchainFormat, 1u, s_oGlobalData.m_eMaxMsaaSampleCount,
+      VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+      _pWindow->m_hColorImage, _pWindow->m_hColorImageMemory);
+
+    CreateImageView(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, 1u, VK_IMAGE_ASPECT_COLOR_BIT, _pWindow->m_hColorImageView);
+  }
+
   void CreateDepthBuffer(APIWindow*_pWindow)
   {
 
@@ -495,6 +504,7 @@ namespace vk
       _pWindow->m_oExtent.height,
       eFormat,
       1u,
+      s_oGlobalData.m_eMaxMsaaSampleCount,
       VK_IMAGE_TILING_OPTIMAL, 
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
@@ -656,23 +666,33 @@ namespace vk
 
     VkAttachmentDescription oColorAttachmentDesc{};
     oColorAttachmentDesc.format = _pWindow->m_eSwapchainFormat;
-    oColorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    oColorAttachmentDesc.samples = s_oGlobalData.m_eMaxMsaaSampleCount;
     oColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     oColorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     oColorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     oColorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     oColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    oColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    oColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription oDepthAttachmentDesc{};
     oDepthAttachmentDesc.format = VK_FORMAT_D32_SFLOAT;;
-    oDepthAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    oDepthAttachmentDesc.samples = s_oGlobalData.m_eMaxMsaaSampleCount;
     oDepthAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     oDepthAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     oDepthAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     oDepthAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     oDepthAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     oDepthAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentDescription oColorResolveAttachmentDesc{};
+    oColorResolveAttachmentDesc.format = oColorAttachmentDesc.format;
+    oColorResolveAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    oColorResolveAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    oColorResolveAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    oColorResolveAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    oColorResolveAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    oColorResolveAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    oColorResolveAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentReference oColorAttachmentRef{};
     oColorAttachmentRef.attachment = 0u;
@@ -682,11 +702,16 @@ namespace vk
     oDepthAttachmentRef.attachment = 1u;
     oDepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentReference oColorResolveAttachmentRef{};
+    oColorResolveAttachmentRef.attachment = 2u;
+    oColorResolveAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
     VkSubpassDescription oSubpassDesc{};
     oSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     oSubpassDesc.colorAttachmentCount = 1u;
     oSubpassDesc.pColorAttachments = &oColorAttachmentRef;    
     oSubpassDesc.pDepthStencilAttachment = &oDepthAttachmentRef;
+    oSubpassDesc.pResolveAttachments = &oColorResolveAttachmentRef;
 
     VkSubpassDependency oSubpassDependency{};
     oSubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -696,11 +721,13 @@ namespace vk
     oSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     oSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    VkAttachmentDescription aAttachments[2]{ oColorAttachmentDesc, oDepthAttachmentDesc };
+
+    constexpr uint32_t uAttachmentCount = 3u;
+    VkAttachmentDescription aAttachments[uAttachmentCount]{ oColorAttachmentDesc, oDepthAttachmentDesc, oColorResolveAttachmentDesc };
 
     VkRenderPassCreateInfo oRenderPassCreateInfo{};
     oRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    oRenderPassCreateInfo.attachmentCount = 2u;
+    oRenderPassCreateInfo.attachmentCount = uAttachmentCount;
     oRenderPassCreateInfo.pAttachments = aAttachments;
     oRenderPassCreateInfo.subpassCount = 1u;
     oRenderPassCreateInfo.pSubpasses = &oSubpassDesc;
@@ -716,11 +743,11 @@ namespace vk
 
     for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
     {
-      VkImageView pAttachments[] = { _pWindow->m_pSwapChainImageViews[i], _pWindow->m_hDepthImageView};
+      VkImageView pAttachments[] = { _pWindow->m_hColorImageView, _pWindow->m_hDepthImageView, _pWindow->m_pSwapChainImageViews[i] };
 
       VkFramebufferCreateInfo oFramebufferInfo = {};
       oFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-      oFramebufferInfo.attachmentCount = 2u;
+      oFramebufferInfo.attachmentCount = 3u;
       oFramebufferInfo.pAttachments = pAttachments;
       oFramebufferInfo.renderPass = _pWindow->m_hRenderPass;
       oFramebufferInfo.width = _pWindow->m_oExtent.width;
@@ -845,6 +872,15 @@ namespace vk
 
   void DestroySwapchain(APIWindow* _pWindow)
   {
+
+    vkDestroyImageView(_pWindow->m_hDevice, _pWindow->m_hColorImageView, nullptr);
+    vkDestroyImage(_pWindow->m_hDevice, _pWindow->m_hColorImage, nullptr);
+    vkFreeMemory(_pWindow->m_hDevice, _pWindow->m_hColorImageMemory, nullptr);
+
+    vkDestroyImageView(_pWindow->m_hDevice, _pWindow->m_hDepthImageView, nullptr);
+    vkDestroyImage(_pWindow->m_hDevice, _pWindow->m_hDepthImage, nullptr);
+    vkFreeMemory(_pWindow->m_hDevice, _pWindow->m_hDepthImageMemory, nullptr);
+
     for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
     {
       vkDestroyFramebuffer(_pWindow->m_hDevice, _pWindow->m_pFramebuffers[i], NULL);
@@ -858,15 +894,13 @@ namespace vk
     delete[] _pWindow->m_pSwapChainImageViews;
   }
 
-  void OnWindowResize(APIWindow* _pWindow)
-  {
-    _pWindow->m_bResized = true;
-  }
-
   void RecreateSwapchain(APIWindow* _pWindow)
-  {
+  {    
+    vkDeviceWaitIdle(_pWindow->m_hDevice);
     DestroySwapchain(_pWindow);
-    CreateSwapchain(_pWindow);
+    CreateSwapchain(_pWindow);   
+    CreateColorBuffer(_pWindow);
+    CreateDepthBuffer(_pWindow);
     CreateFramebuffers(_pWindow);
   }
 
@@ -914,7 +948,7 @@ namespace vk
     VK_CHECK(vkBindBufferMemory(hDevice, hBuffer_, hDeviceMemory_, 0))    
   }
 
-  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_)
+  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_)
   {
     VkImageCreateInfo oImageCreateInfo{};
 
@@ -930,8 +964,8 @@ namespace vk
     oImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     oImageCreateInfo.usage = _uUsage;
     oImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    oImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    oImageCreateInfo.flags = 0u;
+    oImageCreateInfo.samples = _eMsaaSampleCount;
+    oImageCreateInfo.flags = 0u;    
 
     VK_CHECK(vkCreateImage(_pWindow->m_hDevice, &oImageCreateInfo, NULL, &hImage_))
 
@@ -1276,6 +1310,7 @@ namespace vk
     CreateSurface(pWindow, _pGlfwWindow);
     CreateCommandBuffers(pWindow);
     CreateSwapchain(pWindow);
+    CreateColorBuffer(pWindow);
     CreateDepthBuffer(pWindow);    
     CreateRenderPass(pWindow);
     CreateFramebuffers(pWindow);    
@@ -1297,16 +1332,27 @@ namespace vk
     s_oGlobalData.m_pUsingWindow = _pWindow;
   }
 
+  void OnWindowResize(APIWindow* _pWindow)
+  {
+    _pWindow->m_bResized = true;
+  }
+
+  uint32_t GetWindowWidth(APIWindow* _pWindow)
+  {
+    return _pWindow->m_oExtent.width;
+  }
+
+  uint32_t GetWindowHeight(APIWindow* _pWindow)
+  {
+    return _pWindow->m_oExtent.height;
+  }
+
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
 
     VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
 
     DestroySwapchain(_pWindow);
-
-    vkDestroyImage(_pWindow->m_hDevice, _pWindow->m_hDepthImage, NULL);
-    vkFreeMemory(_pWindow->m_hDevice, _pWindow->m_hDepthImageMemory, NULL);
-    vkDestroyImageView(_pWindow->m_hDevice, _pWindow->m_hDepthImageView, NULL);
 
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hImageAvailableSemaphore, NULL);
     vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hRenderFinishedSemaphore, NULL);
@@ -1557,7 +1603,7 @@ namespace vk
 
     SetBufferData(pWindow, _pData, uSize, hStagingBufferMemory);    
 
-    CreateImage(pWindow, _uWidth, _uHeight, eVkFormat, _uMipLevels, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pTexture->m_hImage, pTexture->m_hMemory);
+    CreateImage(pWindow, _uWidth, _uHeight, eVkFormat, _uMipLevels, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pTexture->m_hImage, pTexture->m_hMemory);
 
     TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -1670,6 +1716,22 @@ namespace vk
   {
     APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
     vkCmdBindPipeline(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hGraphicsPipeline);
+
+    VkViewport oViewport{};
+    oViewport.x = 0.0f;
+    oViewport.y = 0.0f;
+    oViewport.width = (float)pWindow->m_oExtent.width;
+    oViewport.height = (float)pWindow->m_oExtent.height;
+    oViewport.minDepth = 0.0f;
+    oViewport.maxDepth = 1.0f;
+
+    vkCmdSetViewport(pWindow->m_hRenderCmdBuffer, 0, 1, &oViewport);
+
+    VkRect2D oScissor{};
+    oScissor.offset = { 0, 0 };
+    oScissor.extent = pWindow->m_oExtent;
+
+    vkCmdSetScissor(pWindow->m_hRenderCmdBuffer, 0, 1, &oScissor);
 
     uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
     vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::MATERIAL), 1, &_pAPIRenderState->m_pDescSets[uImageIdx], 0, NULL);    
@@ -1814,12 +1876,17 @@ namespace vk
 
     VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
 
-    VkResult hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &_pWindow->m_uCurrSwapchainImageIdx);
+    VkResult hResult = VK_SUCCESS; 
+    
+    if (!_pWindow->m_bResized)
+    {
+      hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &_pWindow->m_uCurrSwapchainImageIdx);
+    }
 
     if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
     {
-      _pWindow->m_bResized = false;
-      RecreateSwapchain(_pWindow);
+      _pWindow->m_bResized = false;      
+      RecreateSwapchain(_pWindow);      
       return 1;
     }
     else if (hResult != VK_SUCCESS)
@@ -1838,9 +1905,10 @@ namespace vk
 
     VK_CHECK(vkBeginCommandBuffer(_pWindow->m_hRenderCmdBuffer, &oCommandBufferBeginInfo))
 
-    VkClearValue aClearColors[2];
+    VkClearValue aClearColors[3];
     aClearColors[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
     aClearColors[1].depthStencil = { 1.0f, 0 };
+    aClearColors[2].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
 
     VkRenderPassBeginInfo oRenderPassBeginInfo {};
     oRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1848,7 +1916,7 @@ namespace vk
     oRenderPassBeginInfo.framebuffer = _pWindow->m_pFramebuffers[_pWindow->m_uCurrSwapchainImageIdx];
     oRenderPassBeginInfo.renderArea.extent = _pWindow->m_oExtent;
     oRenderPassBeginInfo.renderArea.offset = { 0,0 };    
-    oRenderPassBeginInfo.clearValueCount = 2u;
+    oRenderPassBeginInfo.clearValueCount = 3u;
     oRenderPassBeginInfo.pClearValues = aClearColors;    
 
     vkCmdBeginRenderPass(_pWindow->m_hRenderCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);    

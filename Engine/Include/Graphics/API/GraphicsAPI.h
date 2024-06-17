@@ -41,6 +41,8 @@ namespace api
   APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow);
   void SetUsingAPIWindow(APIWindow* _pWindow);
   void OnWindowResize(APIWindow* _pWindow);
+  uint32_t GetWindowWidth(APIWindow* _pWindow);
+  uint32_t GetWindowHeight(APIWindow* _pWindow);
   void DestroyAPIWindow(APIWindow* _pWindow);
 
   // Camera
