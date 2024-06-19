@@ -1,7 +1,11 @@
 #include "Graphics/API/GraphicsAPI.h"
 
-#if RENDER_API == vk
+#if RENDER_API == 0
 #include "Graphics/API/Vulkan/VulkanAPI.h"
+#elif RENDER_API == 1
+#include "Graphics/API/DX11/DX11API.h"
+#else
+#error "Unknown RENDER_API specified"
 #endif
 
 namespace api
@@ -11,208 +15,208 @@ namespace api
 
   void InitializeAPI()
   {
-    RENDER_API::InitializeAPI();
+    API::InitializeAPI();
   }
 
   void ShutDownAPI()
   {
-    RENDER_API::ShutDownAPI();
+    API::ShutDownAPI();
   } 
 
   // Window
 
   APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
   {    
-    return RENDER_API::CreateAPIWindow(_pGlfwWindow);
+    return API::CreateAPIWindow(_pGlfwWindow);
   }
 
   void SetUsingAPIWindow(APIWindow* _pWindow)
   {
-    RENDER_API::SetUsingAPIWindow(_pWindow);
+    API::SetUsingAPIWindow(_pWindow);
   }
 
   void OnWindowResize(APIWindow* _pWindow)
   {
-    RENDER_API::OnWindowResize(_pWindow);
+    API::OnWindowResize(_pWindow);
   }
 
   uint32_t GetWindowWidth(APIWindow* _pWindow)
   {
-    return RENDER_API::GetWindowWidth(_pWindow);
+    return API::GetWindowWidth(_pWindow);
   }
 
   uint32_t GetWindowHeight(APIWindow* _pWindow)
   {
-    return RENDER_API::GetWindowHeight(_pWindow);
+    return API::GetWindowHeight(_pWindow);
   }
 
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
-    RENDER_API::DestroyAPIWindow(_pWindow);
+    API::DestroyAPIWindow(_pWindow);
   }
 
   // Camera
 
   APICamera* CreateAPICamera()
   {
-    return RENDER_API::CreateAPICamera();
+    return API::CreateAPICamera();
   }
 
   void BeginCameraSubStateSetup(APICamera* _pCamera)
   {
-    RENDER_API::BeginCameraSubStateSetup(_pCamera);
+    API::BeginCameraSubStateSetup(_pCamera);
   }
 
   void EndCameraSubstateSetup(APICamera* _pCamera)
   {
-    RENDER_API::EndCameraSubstateSetup(_pCamera);
+    API::EndCameraSubstateSetup(_pCamera);
   }
 
   void BindAPICamera(APICamera* _pCamera)
   {
-    RENDER_API::BindAPICamera(_pCamera);
+    API::BindAPICamera(_pCamera);
   }
 
   void DestroyAPICamera(APICamera* _pCamera)
   {
-    RENDER_API::DestroyAPICamera(_pCamera);
+    API::DestroyAPICamera(_pCamera);
   }
 
   // Mesh
 
   APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize)
   {
-    return RENDER_API::CreateAPIMesh(_pVertexData, _uVertexDataSize, _pIndexData, _uIndexDataSize);
+    return API::CreateAPIMesh(_pVertexData, _uVertexDataSize, _pIndexData, _uIndexDataSize);
   }
 
   void DestroyAPIMesh(APIMesh* _pMesh)
   {
-    RENDER_API::DestroyAPIMesh(_pMesh);
+    API::DestroyAPIMesh(_pMesh);
   }
 
   // ConstantBuffer
 
   APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
   {
-    return RENDER_API::CreateAPIConstantBuffer(_uSize);
+    return API::CreateAPIConstantBuffer(_uSize);
   }
 
   void UpdateAPIConstantBuffer(APIConstantBuffer* _pCbuffer, const void* _pData, size_t _uSize)
   {
-    RENDER_API::UpdateAPIConstanBuffer(_pCbuffer, _pData, _uSize);
+    API::UpdateAPIConstanBuffer(_pCbuffer, _pData, _uSize);
   }
 
   void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
   {
-    RENDER_API::BindAPIConstantBuffer(_pCbuffer);
+    API::BindAPIConstantBuffer(_pCbuffer);
   }
 
   void DestroyAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
   {
-    RENDER_API::DestroyAPIConstanBuffer(_pCbuffer);
+    API::DestroyAPIConstanBuffer(_pCbuffer);
   }
 
   // Texture
 
   APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels)
   {
-    return RENDER_API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels);
+    return API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels);
   }
 
   void BindAPITexture(APITexture* _pTexture)
   {
-    RENDER_API::BindAPITexture(_pTexture);
+    API::BindAPITexture(_pTexture);
   }
   
   void DestroyAPITexture(APITexture* _pTexture)
   {
-    RENDER_API::DestroyAPITexture(_pTexture);
+    API::DestroyAPITexture(_pTexture);
   }
 
   // Render state
 
   APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo)
   {
-    return RENDER_API::CreateAPIRenderState(_oInfo);
+    return API::CreateAPIRenderState(_oInfo);
   }
 
   void BeginRenderStateSetup(APIRenderState* _pAPIRenderState)
   {
-    RENDER_API::BeginRenderStateSetup(_pAPIRenderState);
+    API::BeginRenderStateSetup(_pAPIRenderState);
   }
 
   void EndRenderStateSetup()
   {
-    RENDER_API::EndRenderStateSetup();
+    API::EndRenderStateSetup();
   }
 
   void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState)
   {
-    RENDER_API::SetUsingAPIRenderState(_pAPIRenderState);
+    API::SetUsingAPIRenderState(_pAPIRenderState);
   }
 
   void BindAPIRenderState(APIRenderState* _pAPIRenderState)
   {
-    RENDER_API::BindAPIRenderState(_pAPIRenderState);
+    API::BindAPIRenderState(_pAPIRenderState);
   }
 
   void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)
   {
-    RENDER_API::DestroyAPIRenderState(_pAPIRenderState);
+    API::DestroyAPIRenderState(_pAPIRenderState);
   }
 
   // Render sub state
 
   APIRenderSubState* CreateAPIRenderSubState()
   {
-    return RENDER_API::CreateAPIRenderSubState();
+    return API::CreateAPIRenderSubState();
   }
 
   void BeginSubStateSetup(APIRenderSubState* _pAPIRenderSubState)
   {
-    RENDER_API::BeginSubStateSetup(_pAPIRenderSubState);
+    API::BeginSubStateSetup(_pAPIRenderSubState);
   }
 
   void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo)
   {
-    RENDER_API::SubStateSetupConstantBuffer(_pCBuffer, size, _oBindInfo);
+    API::SubStateSetupConstantBuffer(_pCBuffer, size, _oBindInfo);
   }
 
   void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
   {
-    RENDER_API::SubStateSetupTexture(_pTexture, _oBindInfo);
+    API::SubStateSetupTexture(_pTexture, _oBindInfo);
   }
 
   void EndSubStateSetup()
   {
-    RENDER_API::EndSubStateSetup();
+    API::EndSubStateSetup();
   }
 
   void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState)
   {
-    RENDER_API::BindAPIRenderSubState(_pAPIRenderSubState);
+    API::BindAPIRenderSubState(_pAPIRenderSubState);
   }
 
   void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState)
   {
-    RENDER_API::DestroyRenderSubState(_pAPIRenderSubState);
+    API::DestroyRenderSubState(_pAPIRenderSubState);
   }
 
   // Drawing
 
   int BeginDraw(APIWindow* _pWindow)
   {
-    return RENDER_API::BeginDraw(_pWindow);
+    return API::BeginDraw(_pWindow);
   }
 
   void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, void* _pConstantData, uint32_t _uConstantSize)
   {
-    RENDER_API::DrawMesh(_pMesh, _uVertexCount, _pConstantData, _uConstantSize);
+    API::DrawMesh(_pMesh, _uVertexCount, _pConstantData, _uConstantSize);
   }
 
   void EndDraw(APIWindow* _pWindow)
   {
-    RENDER_API::EndDraw(_pWindow);
+    API::EndDraw(_pWindow);
   }    
 
 }

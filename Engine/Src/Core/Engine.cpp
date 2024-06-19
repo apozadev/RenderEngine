@@ -126,7 +126,7 @@ int Engine::ScheduleShutDown()
 
 bool Engine::ShouldShutDown()
 {
-  return m_lstScenes.size() == 0;
+  return m_lstWindows.size() == 0;
 }
 
 void Engine::ShutDown()

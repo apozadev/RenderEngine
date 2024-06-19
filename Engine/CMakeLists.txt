@@ -69,7 +69,24 @@ add_library(${PROJECT_NAME}
 	"Src/Graphics/API/Vulkan/VulkanShaderReflection.cpp"
 	"3rd/spirv-reflect/spirv_reflect.h"
 	"3rd/spirv-reflect/spirv_reflect.cpp"
-	"3rd/spirv-reflect/include/spirv/unified1/spirv.h" "Include/Graphics/MaterialLibrary.h" "Include/Components/CameraComponent.h" "Src/Components/CameraComponent.cpp"  "Include/Graphics/API/Vulkan/APICamera.h" "Include/Graphics/Camera.h" "Src/Graphics/Camera.cpp" "Include/Util/KeyboardUtil.h" "Src/Util/KeyboardUtil.cpp" "Include/Graphics/RenderStateInfo.h" )
+	"3rd/spirv-reflect/include/spirv/unified1/spirv.h" 
+	"Include/Graphics/MaterialLibrary.h"
+	"Include/Components/CameraComponent.h" 
+	"Src/Components/CameraComponent.cpp" 
+	"Include/Graphics/API/Vulkan/APICamera.h"
+	"Include/Graphics/Camera.h"
+	"Src/Graphics/Camera.cpp" 
+	"Include/Util/KeyboardUtil.h" 
+	"Src/Util/KeyboardUtil.cpp" 
+	"Include/Graphics/RenderStateInfo.h"
+	"Include/Graphics/API/DX11/DX11API.h"
+	"Src/Graphics/API/DX11/DX11API.cpp" 
+	"Include/Graphics/API/DX11/APIWindow.h" 
+	"Include/Graphics/API/DX11/DX11Exception.h"
+	"Src/Graphics/API/DX11/DX11Exception.cpp" 
+	"Include/Graphics/API/DX11/DX11Macros.h"
+	"3rd/dxerr/dxerr.h"
+	"3rd/dxerr/dxerr.cpp")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -85,6 +102,9 @@ target_include_directories(${PROJECT_NAME}
  set_target_properties(${PROJECT_NAME} PROPERTIES  
     CXX_STANDARD 17)
 
+set(RENDER_API_VULKAN 0)
+set(RENDER_API_DX11 1)
+
  target_compile_definitions(${PROJECT_NAME} PRIVATE 
- RENDER_API=vk
+ RENDER_API=${RENDER_API_DX11}
  CURR_WORKING_DIR=${CMAKE_SOURCE_DIR})

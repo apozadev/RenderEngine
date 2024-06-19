@@ -6,12 +6,20 @@
 #include "Graphics/ResourceBindInfo.h"
 #include "Graphics/RenderStateInfo.h"
 
+#if RENDER_API == 0
+#define API vk
+#elif RENDER_API == 1
+#define API dx11
+#else
+#error "Unknown RENDER_API specified"
+#endif
+
 struct GLFWwindow;
 
 namespace api 
 { 
 
-  namespace RENDER_API 
+  namespace API 
   { 
     struct APIWindow; 
     struct APICamera;
@@ -22,13 +30,13 @@ namespace api
     struct APITexture;
   } 
 
-  typedef struct RENDER_API::APIWindow APIWindow;
-  typedef struct RENDER_API::APICamera APICamera;
-  typedef struct RENDER_API::APIMesh APIMesh;
-  typedef struct RENDER_API::APIConstantBuffer APIConstantBuffer;
-  typedef struct RENDER_API::APIRenderState APIRenderState;
-  typedef struct RENDER_API::APIRenderSubState APIRenderSubState;
-  typedef struct RENDER_API::APITexture APITexture;
+  typedef struct API::APIWindow APIWindow;
+  typedef struct API::APICamera APICamera;
+  typedef struct API::APIMesh APIMesh;
+  typedef struct API::APIConstantBuffer APIConstantBuffer;
+  typedef struct API::APIRenderState APIRenderState;
+  typedef struct API::APIRenderSubState APIRenderSubState;
+  typedef struct API::APITexture APITexture;
 
   // Global
 
