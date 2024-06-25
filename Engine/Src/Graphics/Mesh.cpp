@@ -60,7 +60,7 @@ uint64_t Mesh::GetKey() const
 void Mesh::UpdateTransform(const Transform& _oParentTransform)
 {    
   glm::mat4 mParentMat = _oParentTransform.GetMatrix();  
-  m_pImpl->m_oConstant.m_mModel = mParentMat * m_pImpl->m_mLocalTransform;
+  m_pImpl->m_oConstant.m_mModel = glm::transpose(mParentMat * m_pImpl->m_mLocalTransform);
   m_pImpl->m_oConstant.m_mNormal = glm::transpose(glm::inverse(m_pImpl->m_oConstant.m_mModel));
 }
 

@@ -65,7 +65,8 @@ add_library(${PROJECT_NAME}
 	"Src/Util/ModelLoader.cpp" 
 	"Include/Graphics/ResourceBindInfo.h" 
 	"Include/Graphics/API/Vulkan/APIRenderSubState.h" 
-	"Include/Graphics/ResourceFrequency.h"	"Include/Graphics/API/Vulkan/VulkanShaderReflection.h"
+	"Include/Graphics/ResourceFrequency.h"	
+	"Include/Graphics/API/Vulkan/VulkanShaderReflection.h"
 	"Src/Graphics/API/Vulkan/VulkanShaderReflection.cpp"
 	"3rd/spirv-reflect/spirv_reflect.h"
 	"3rd/spirv-reflect/spirv_reflect.cpp"
@@ -86,7 +87,12 @@ add_library(${PROJECT_NAME}
 	"Src/Graphics/API/DX11/DX11Exception.cpp" 
 	"Include/Graphics/API/DX11/DX11Macros.h"
 	"3rd/dxerr/dxerr.h"
-	"3rd/dxerr/dxerr.cpp")
+	"3rd/dxerr/dxerr.cpp" 
+	"Include/Graphics/API/DX11/APIConstantBuffer.h" 
+	"Include/Graphics/API/DX11/DX11Data.h"
+	"Include/Graphics/API/DX11/APIRenderState.h" 
+	"Include/Util/WideStringUtil.h"
+	"Include/Graphics/API/DX11/APIMesh.h" "Include/Graphics/API/DX11/APICamera.h" "Include/Graphics/API/DX11/DX11BindSlotOffset.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

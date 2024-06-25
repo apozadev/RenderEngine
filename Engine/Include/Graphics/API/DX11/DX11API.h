@@ -98,7 +98,7 @@ namespace api
 
 		void BeginSubStateSetup(APIRenderSubState* _pAPIRenderState);
 
-		void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo);
+		void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo);
 
 		void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);
 

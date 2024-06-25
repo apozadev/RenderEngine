@@ -29,9 +29,9 @@ void CameraComponent::Start()
   m_fPitch = vRot.x;
   m_fYaw = vRot.y;
 
-  glm::vec3 vRotLocal = glm::eulerAngles(m_pEntity->GetGlobalTransform().GetRot());
+  /*glm::vec3 vRotLocal = glm::eulerAngles(m_pEntity->GetGlobalTransform().GetRot());
   vRotLocal.z = _PI;
-  m_pEntity->GetMutableLocalTransform().SetRot(glm::quat(vRotLocal));
+  m_pEntity->GetMutableLocalTransform().SetRot(glm::quat(vRotLocal));*/
 }
 
 void CameraComponent::PreTransformUpdate(float _fTimeStep)
@@ -89,7 +89,8 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
     m_fYaw += fRotSpeed * fDeltaY * _fTimeStep;    
     m_fPitch -= fRotSpeed * fDeltaX * _fTimeStep;    
 
-    rTr.SetRot(glm::quat(glm::vec3(m_fYaw, m_fPitch, _PI)));
+    //rTr.SetRot(glm::quat(glm::vec3(m_fYaw, m_fPitch, _PI)));
+    rTr.SetRot(glm::quat(glm::vec3(m_fYaw, m_fPitch, 0.f)));
   }  
 
   m_fLastMousePosX = static_cast<float>(dMousePosX);

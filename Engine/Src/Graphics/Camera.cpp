@@ -65,7 +65,7 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
   GlobalBufferData oData{};
 
   glm::mat4x4 mView = glm::inverse(_oParentTransform.GetMatrix());
-  oData.m_mViewProj = glm::perspective(45.f, (float)m_pImpl->m_pWindow->GetWidth() / m_pImpl->m_pWindow->GetHeight(), 0.1f, 100.0f) * mView;
+  oData.m_mViewProj = glm::transpose(glm::perspective(45.f, (float)m_pImpl->m_pWindow->GetWidth() / m_pImpl->m_pWindow->GetHeight(), 0.1f, 100.0f) * mView);
   
   m_pImpl->m_pCBuffer->SetData(&oData);
 
@@ -75,6 +75,7 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
 void Camera::Bind()
 {
   api::BindAPICamera(m_pImpl->m_pAPICamera);
+  m_pImpl->m_pCBuffer->Bind();
 }
 
 Window* Camera::GetWindow() const

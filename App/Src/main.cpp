@@ -21,12 +21,13 @@ int main(){
   Engine::GetInstance()->Initialize();
   Window* pWindow = Engine::GetInstance()->CreateNewWindow(1080, 920, "App");  
 
-  /*Scene* pScene = Engine::GetInstance()->CreateScene(pWindow);
+  Scene* pScene = Engine::GetInstance()->CreateScene(pWindow);
 
   Entity* pCameraEntity = pScene->AddEntity();
 
   pCameraEntity->AddComponent<CameraComponent>(pWindow);
 
+  /*
   Entity* pModelEntity1 = pScene->AddEntity();
   Entity* pModelEntity2 = pScene->AddEntity();
 
@@ -36,8 +37,13 @@ int main(){
   pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
   pModelEntity2->GetMutableLocalTransform().SetPos({ 5.f,0.f, -10.f });
   pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f});
+  */
 
-  pScene->Build();*/
+  Entity* pModelEntity1 = pScene->AddEntity();
+  pModelEntity1->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
+  pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
+
+  pScene->Build();
 
   Engine::GetInstance()->Run();
 

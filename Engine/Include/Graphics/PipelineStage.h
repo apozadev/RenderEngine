@@ -2,6 +2,7 @@
 
 enum class PipelineStage
 {
-  VERTEX,
-  PIXEL
+  NONE    = 0,
+  VERTEX  = 1,
+  PIXEL   = 2
 };

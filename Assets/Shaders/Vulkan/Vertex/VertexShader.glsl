@@ -11,7 +11,7 @@ layout(set = 0, binding = 0) uniform GlobalBuffer {
     mat4 viewproj;
 };
 
-layout( push_constant ) uniform constants
+layout( push_constant ) uniform constants  
 {	
 	mat4 model;
 	mat4 normal;
