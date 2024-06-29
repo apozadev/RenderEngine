@@ -1,4 +1,4 @@
-
+#pragma pack_matrix( column_major )
 
 struct VSin
 {
@@ -30,9 +30,9 @@ VSout main(VSin input)
 {
 	VSout vso;
 
-	float4 worldPos = mul(float4(input.p, 1.0), model);
-	vso.pos = mul(worldPos, viewproj);	
-	vso.normal = normalize(mul(float4(input.n, 0.0), normal)).xyz;		
+	float4 worldPos = mul(model, float4(input.p, 1.0));
+	vso.pos = mul(viewproj, worldPos);
+	vso.normal = normalize(mul(normal, float4(input.n, 0.0))).xyz;
 	vso.uv = input.uv;
 	return vso;
 }

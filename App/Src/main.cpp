@@ -27,7 +27,6 @@ int main(){
 
   pCameraEntity->AddComponent<CameraComponent>(pWindow);
 
-  /*
   Entity* pModelEntity1 = pScene->AddEntity();
   Entity* pModelEntity2 = pScene->AddEntity();
 
@@ -36,12 +35,11 @@ int main(){
 
   pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
   pModelEntity2->GetMutableLocalTransform().SetPos({ 5.f,0.f, -10.f });
-  pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f});
-  */
+  pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f});  
 
-  Entity* pModelEntity1 = pScene->AddEntity();
-  pModelEntity1->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
-  pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
+  //Entity* pModelEntity1 = pScene->AddEntity();
+  //pModelEntity1->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
+  //pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });º
 
   pScene->Build();
 

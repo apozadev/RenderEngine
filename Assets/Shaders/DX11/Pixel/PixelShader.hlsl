@@ -1,3 +1,4 @@
+#pragma pack_matrix( column_major )
 
 struct VSout
 {

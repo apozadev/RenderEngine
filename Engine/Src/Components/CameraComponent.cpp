@@ -71,12 +71,12 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
 
   if (rWindow.IsKeyPressed('q'))
   {
-    vTranslation += rTr.GetUp() * fMoveSpeed * _fTimeStep;
+    vTranslation -= rTr.GetUp() * fMoveSpeed * _fTimeStep;
   }
 
   if (rWindow.IsKeyPressed('e'))
   {
-    vTranslation -= rTr.GetUp() * fMoveSpeed * _fTimeStep;
+    vTranslation += rTr.GetUp() * fMoveSpeed * _fTimeStep;
   }
 
   rTr.SetPos(rTr.GetPos() + vTranslation);
@@ -86,7 +86,7 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
     float fDeltaX = dMousePosX - static_cast<float>(m_fLastMousePosX);
     float fDeltaY = dMousePosY - static_cast<float>(m_fLastMousePosY);            
 
-    m_fYaw += fRotSpeed * fDeltaY * _fTimeStep;    
+    m_fYaw -= fRotSpeed * fDeltaY * _fTimeStep;    
     m_fPitch -= fRotSpeed * fDeltaX * _fTimeStep;    
 
     //rTr.SetRot(glm::quat(glm::vec3(m_fYaw, m_fPitch, _PI)));

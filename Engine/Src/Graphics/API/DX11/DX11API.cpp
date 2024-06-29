@@ -535,7 +535,7 @@ namespace api
         _pWindow->m_bResize = false;
       }
 
-      float aClearColor[] = { 1.f,1.f,1.f,1.f };
+      float aClearColor[] = { 0.f,0.f,0.f,1.f };
       unsigned int uClearFlags = D3D11_CLEAR_DEPTH;
 
       _pWindow->m_pContext->ClearRenderTargetView(_pWindow->m_pBackBufferRTV.Get(), aClearColor);
