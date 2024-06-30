@@ -23,6 +23,7 @@
 #include "Graphics/API/DX11/APIRenderState.h"
 #include "Graphics/API/DX11/APIConstantBuffer.h"
 #include "Graphics/API/DX11/APIMesh.h"
+#include "Graphics/API/DX11/APITexture.h"
 #include "Graphics/API/DX11/DX11BindSlotOffset.h"
 
 namespace wrl = Microsoft::WRL;
@@ -45,6 +46,21 @@ namespace api
 
       _pWindow->m_uWidth = rect.right - rect.left;
       _pWindow->m_uHeight = rect.bottom - rect.top;
+    }
+
+    DXGI_FORMAT GetDXGIFormat(ImageFormat _eFormat)
+    {
+      switch (_eFormat)
+      {
+      case ImageFormat::R8G8B8: 
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+        break;
+      case ImageFormat::R8G8B8A8:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+        break;
+      default:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+      }
     }
 
     void CreateDeviceAndSwapChain(APIWindow* _pWindow)
@@ -351,15 +367,85 @@ namespace api
 
     APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels)
     {
-      return nullptr;
+      APITexture* pTexture = new APITexture();
+
+      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
+
+      pTexture->m_pOwnerWindow = pWindow;
+
+      uint32_t uPixelSize = GetImageFormatSize(_eFormat);
+
+      DXGI_FORMAT eDXGIFormat = GetDXGIFormat(_eFormat);
+
+      D3D11_SUBRESOURCE_DATA data = {};
+      data.pSysMem = _pData;
+      data.SysMemPitch = uPixelSize * _uWidth;
+
+      D3D11_TEXTURE2D_DESC desc = {};
+      desc.ArraySize = 1;
+      desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+      desc.CPUAccessFlags = 0;
+      desc.Format = eDXGIFormat;
+      desc.SampleDesc.Count = 1;
+      desc.SampleDesc.Quality = 0;
+      desc.Usage = D3D11_USAGE_IMMUTABLE;
+      desc.MipLevels = 1;
+      desc.Width = _uWidth;
+      desc.Height = _uHeight;
+
+      /*if (m_mipLevels != 1)
+      {
+        desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+      }*/
+
+      //if (m_mipLevels == 1)
+      {
+        DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&desc, &data, pTexture->m_pTexture.GetAddressOf()));
+      }
+      /*else
+      {
+        GFX_THROW_INFO(GetDevice()->CreateTexture2D(&desc, NULL, m_texture.GetAddressOf()));
+      }*/
+
+      D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+      srvDesc.Format = eDXGIFormat;
+      srvDesc.Texture2D.MipLevels = 1u;
+      srvDesc.Texture2D.MostDetailedMip = 0u;
+      srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+      DX11_CHECK(pWindow->m_pDevice->CreateShaderResourceView(pTexture->m_pTexture.Get(), &srvDesc, pTexture->m_pSRV.GetAddressOf()));
+
+      /*if (m_mipLevels != 1)
+      {
+        GetContext()->UpdateSubresource(pTexture->m_pTexture.Get(), 0u, NULL, _pData, image.getMemPitch(), 0u);
+        GetContext()->GenerateMips(m_srv.Get());
+      }*/
+
+      pTexture->m_eFormat = eDXGIFormat;
+      pTexture->m_iWidth = _uWidth;
+      pTexture->m_iHeight = _uHeight;
+
+      return pTexture;
     }
 
     void BindAPITexture(APITexture* _pTexture)
     {
+      APIWindow* pWindow = _pTexture->m_pOwnerWindow;
+
+      uint32_t uStageMsk = static_cast<uint32_t>(_pTexture->m_eStage);
+
+      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::VERTEX)) != 0u)
+      {
+        pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+      }
+      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::PIXEL)) != 0u)
+      {
+        pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+      }
     }
 
     void DestroyAPITexture(APITexture* _pTexture)
     {
+      delete _pTexture;
     }
 
     // Render state
@@ -510,6 +596,8 @@ namespace api
 
     void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
     {
+      _pTexture->m_uSlot = _oBindInfo.m_iBinding;
+      _pTexture->m_eStage = _oBindInfo.m_eStage;
     }
 
     void EndSubStateSetup()

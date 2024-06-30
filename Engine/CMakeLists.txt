@@ -94,7 +94,7 @@ add_library(${PROJECT_NAME}
 	"Include/Util/WideStringUtil.h"
 	"Include/Graphics/API/DX11/APIMesh.h" 
 	"Include/Graphics/API/DX11/APICamera.h" 
-	"Include/Graphics/API/DX11/DX11BindSlotOffset.h")
+	"Include/Graphics/API/DX11/DX11BindSlotOffset.h" "Include/Graphics/API/DX11/APITexture.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -114,5 +114,5 @@ set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
  target_compile_definitions(${PROJECT_NAME} PRIVATE 
- RENDER_API=${RENDER_API_VULKAN}
+ RENDER_API=${RENDER_API_DX11}
  CURR_WORKING_DIR=${CMAKE_SOURCE_DIR})
