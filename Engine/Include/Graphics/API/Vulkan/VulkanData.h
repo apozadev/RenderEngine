@@ -65,6 +65,9 @@ namespace vk
 
     DescriptorSetUpdater m_oDescSetUpdater;
 
+    uint32_t m_uAPIMinorVersion;
+    uint32_t m_uAPIMayorVersion;
+
   };
 }
 }

@@ -57,7 +57,7 @@ foreach(FILE ${VK_SHADER_FILES})
   get_filename_component(FILE_NAME ${FILE} NAME_WE)
   get_filename_component(FILE_PATH ${FILE} PATH)  
   set(SPIRV "${FILE_PATH}/${FILE_NAME}.spv") 
-
+   
   add_custom_command(
     OUTPUT ${SPIRV}
     # COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_PATH}
@@ -97,7 +97,7 @@ endforeach(FILE)
 
 add_custom_target(
     Shaders 
-    ALL DEPENDS ${CSO_BINARY_FILES})
+    ALL DEPENDS ${CSO_BINARY_FILES} ${SPIRV_BINARY_FILES}) 
 
 add_dependencies(${PROJECT_NAME} Shaders)
 

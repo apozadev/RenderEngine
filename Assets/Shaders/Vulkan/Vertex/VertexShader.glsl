@@ -22,7 +22,11 @@ layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;
 
 void main() {
-    gl_Position = viewproj * PushConstants.model * vec4(inPosition, 1.0);
+
+    gl_Position = viewproj * PushConstants.model * vec4(inPosition, 1.0);   
+
+    //gl_Position.y = -gl_Position.y;
+    //gl_Position.x = -gl_Position.x;
 
     //gl_Position = viewproj * vec4(inPosition, 1.0);
 

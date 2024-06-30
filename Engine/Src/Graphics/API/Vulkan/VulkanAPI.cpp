@@ -1,12 +1,14 @@
 #include "Graphics/API/Vulkan/VulkanAPI.h"
 
 #include <vector>
+#include <string>
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
 #include "GLFW/glfw3.h"
-#include "GLFW/glfw3native.h"
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 #include "Core/Exception.h"
 
@@ -54,10 +56,16 @@ namespace vk
     uint32_t uLayerCount = 0u;
 #endif
 
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
-
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    std::vector<const char*> lstExtensions;
+    {
+      uint32_t uGlfwExtensionCount = 0u;
+      const char** pGlfwExtensions;
+      pGlfwExtensions = glfwGetRequiredInstanceExtensions(&uGlfwExtensionCount);
+      for (int i = 0; i < uGlfwExtensionCount; i++)
+      {
+        lstExtensions.push_back(pGlfwExtensions[i]);
+      }
+    }    
 
     VkInstanceCreateInfo oInstanceCreateInfo = {};
     oInstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -65,12 +73,12 @@ namespace vk
     oInstanceCreateInfo.flags = 0u;
     oInstanceCreateInfo.enabledLayerCount = uLayerCount;
     oInstanceCreateInfo.ppEnabledLayerNames = pDebugLayers;
-    oInstanceCreateInfo.enabledExtensionCount = glfwExtensionCount;
-    oInstanceCreateInfo.ppEnabledExtensionNames = glfwExtensions;
+    oInstanceCreateInfo.enabledExtensionCount = lstExtensions.size();
+    oInstanceCreateInfo.ppEnabledExtensionNames = lstExtensions.data();
 
     VkApplicationInfo oApplicationInfo = {};
     oApplicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    oApplicationInfo.apiVersion = VK_API_VERSION_1_0;
+    oApplicationInfo.apiVersion = VK_API_VERSION_1_3;
     oApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     oApplicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     oApplicationInfo.pApplicationName = "App";
@@ -112,10 +120,13 @@ namespace vk
     constexpr uint32_t uMaxUint = 0xFFFFFFFFu;
 
     for (int i = 0; i < uPhysicalDeviceCount; i++)
-    {
+    {     
       VkPhysicalDevice hPhysicalDevice = pPhysicalDevices[i];
       VkPhysicalDeviceProperties oDeviceProperties;
       vkGetPhysicalDeviceProperties(hPhysicalDevice, &oDeviceProperties);
+
+      s_oGlobalData.m_uAPIMayorVersion = VK_API_VERSION_MAJOR(oDeviceProperties.apiVersion);
+      s_oGlobalData.m_uAPIMinorVersion = VK_API_VERSION_MINOR(oDeviceProperties.apiVersion);
 
       bool bCurrentDeviceDiscrete = oDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 
@@ -266,7 +277,7 @@ namespace vk
     oRasterizer.rasterizerDiscardEnable = VK_FALSE;
     oRasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     oRasterizer.lineWidth = 1.0f;
-    oRasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    oRasterizer.cullMode = VK_CULL_MODE_NONE;
     oRasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     oRasterizer.depthBiasEnable = VK_FALSE;
     oRasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -1719,9 +1730,9 @@ namespace vk
 
     VkViewport oViewport{};
     oViewport.x = 0.0f;
-    oViewport.y = 0.0f;
+    oViewport.y = (float)pWindow->m_oExtent.height;
     oViewport.width = (float)pWindow->m_oExtent.width;
-    oViewport.height = (float)pWindow->m_oExtent.height;
+    oViewport.height = -(float)pWindow->m_oExtent.height;
     oViewport.minDepth = 0.0f;
     oViewport.maxDepth = 1.0f;
 
