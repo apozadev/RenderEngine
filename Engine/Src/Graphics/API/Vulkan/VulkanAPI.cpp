@@ -1991,6 +1991,8 @@ namespace vk
     oPresentInfo.pResults = NULL;
 
     VK_CHECK(vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo))
+
+    _pWindow->m_uCurrSwapchainImageIdx = (_pWindow->m_uCurrSwapchainImageIdx + 1u) % _pWindow->m_uSwapchainImageCount;
   }
 
 }
