@@ -8,6 +8,7 @@ namespace api
   namespace dx11
   {
 
+    struct APIRenderTarget;
 
     struct APIWindow
     {
@@ -18,11 +19,13 @@ namespace api
       Microsoft::WRL::ComPtr<IDXGISwapChain> m_pSwapchain;  
       
       Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_pBackBufferRTV;
-      Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;      
+      //Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;      
+
+      APIRenderTarget* m_pMsaaRenderTarget;
 
       unsigned int m_uWidth, m_uHeight;
 
-      unsigned int m_uNumSwapchainImages;
+      unsigned int m_uNumSwapchainImages;      
 
       DXGI_FORMAT m_eSwapchainFormat;
 

@@ -21,6 +21,7 @@ namespace api
 		struct APIRenderState;
 		struct APIRenderSubState;
 		struct APITexture;
+		struct APIRenderTarget;
 
 		// General
 
@@ -77,6 +78,16 @@ namespace api
 		void BindAPITexture(APITexture* _pTexture);
 
 		void DestroyAPITexture(APITexture* _pTexture);
+
+		// RenderTarget
+
+		APIRenderTarget* CreateAPIRenderTarget(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, bool _bMultisampled);
+
+		void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
+		void CopyRenderTarget(APIRenderTarget* _pSrc, APIRenderTarget* _pDst);
+
+		void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
 		// Render state
 

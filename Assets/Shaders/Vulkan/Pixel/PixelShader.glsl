@@ -12,7 +12,7 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
 
-    vec3 lightDir = vec3(1, 0, 0);
+    vec3 lightDir = vec3(0, 0, 1);
 
     //outColor = vec4(fragColor, 1.0);
     //outColor = texture(texSampler, fragTexCoord);    

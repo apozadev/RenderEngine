@@ -94,7 +94,7 @@ add_library(${PROJECT_NAME}
 	"Include/Util/WideStringUtil.h"
 	"Include/Graphics/API/DX11/APIMesh.h" 
 	"Include/Graphics/API/DX11/APICamera.h" 
-	"Include/Graphics/API/DX11/DX11BindSlotOffset.h" "Include/Graphics/API/DX11/APITexture.h")
+	"Include/Graphics/API/DX11/DX11BindSlotOffset.h" "Include/Graphics/API/DX11/APITexture.h" "Include/Graphics/API/DX11/APIRenderTarget.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
