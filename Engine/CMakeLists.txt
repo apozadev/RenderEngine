@@ -94,7 +94,9 @@ add_library(${PROJECT_NAME}
 	"Include/Util/WideStringUtil.h"
 	"Include/Graphics/API/DX11/APIMesh.h" 
 	"Include/Graphics/API/DX11/APICamera.h" 
-	"Include/Graphics/API/DX11/DX11BindSlotOffset.h" "Include/Graphics/API/DX11/APITexture.h" "Include/Graphics/API/DX11/APIRenderTarget.h")
+	"Include/Graphics/API/DX11/DX11BindSlotOffset.h" 
+	"Include/Graphics/API/DX11/APITexture.h" 
+	"Include/Graphics/API/DX11/APIRenderTarget.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -107,12 +109,56 @@ target_include_directories(${PROJECT_NAME}
 	"${CMAKE_SOURCE_DIR}/assimp/include"	
  )
 
- set_target_properties(${PROJECT_NAME} PROPERTIES  
-    CXX_STANDARD 17)
-
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
- target_compile_definitions(${PROJECT_NAME} PRIVATE 
- RENDER_API=${RENDER_API_DX11}
- CURR_WORKING_DIR=${CMAKE_SOURCE_DIR})
+set(TARGET_RENDER_API ${RENDER_API_VULKAN})
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE 
+	RENDER_API=${TARGET_RENDER_API}
+	CURR_WORKING_DIR=${CMAKE_SOURCE_DIR})
+
+ # Shader stuff
+
+file(GLOB_RECURSE V_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Vertex/*.hlsl")
+file(GLOB_RECURSE P_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Pixel/*.hlsl") 
+
+set(SHADER_BINARY_FILES)
+
+function(CompileHLSL FILE TYPE_ARG)
+  get_filename_component(FILE_NAME ${FILE} NAME_WE)
+  get_filename_component(FILE_PATH ${FILE} PATH)  
+  set(CSO "${FILE_PATH}/${FILE_NAME}.cso")  
+  set(API_ARG)
+  if(${TARGET_RENDER_API} MATCHES ${RENDER_API_DX11})
+    set(API_ARG dx11)
+  else()
+    set(API_ARG vk)
+  endif()
+
+  add_custom_command(OUTPUT ${CSO} 
+                     COMMAND python3 ${CMAKE_SOURCE_DIR}/Tools/ShaderCompiler/ShaderCompiler.py ${TYPE_ARG} ${API_ARG} ${FILE}
+                     DEPENDS ${FILE}
+                     VERBATIM)  
+  
+  list(APPEND SHADER_BINARY_FILES ${CSO})
+  set(SHADER_BINARY_FILES ${SHADER_BINARY_FILES} PARENT_SCOPE)  
+endfunction()
+
+foreach(FILE ${V_SHADER_FILES})  
+CompileHLSL(${FILE} "v")
+endforeach(FILE)
+
+foreach(FILE ${P_SHADER_FILES})  
+CompileHLSL(${FILE} "p")
+endforeach(FILE)
+
+
+add_custom_target(
+    Shaders 
+    ALL DEPENDS ${SHADER_BINARY_FILES}) 
+
+add_dependencies(${PROJECT_NAME} Shaders)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES  
+    CXX_STANDARD 17)

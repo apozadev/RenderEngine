@@ -1,5 +1,3 @@
-#version 450
-
 #pragma shader_stage(vertex)
 
 layout(location = 0) in vec3 inPosition;
@@ -21,17 +19,21 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;
 
-void main() {
+#define VERTEX_MAIN_BEGIN \
+    void main() {
 
-    gl_Position = viewproj * PushConstants.model * vec4(inPosition, 1.0);   
+#define VERTEX_MAIN_END \
+	}
 
-    //gl_Position.y = -gl_Position.y;
-    //gl_Position.x = -gl_Position.x;
+#define viewProj	viewproj
+#define modelMat	PushConstants.model
+#define normalMat   PushConstants.normal
 
-    //gl_Position = viewproj * vec4(inPosition, 1.0);
+#define inPos	    inPosition
+#define inNormal	inNormal
+#define inColor		inColor
 
-    fragNormal = normalize(vec3(PushConstants.normal * vec4(inNormal, 1.0)));
-
-    fragColor = inColor;
-    fragTexCoord = inUv;
-}
+#define outPos		gl_Position
+#define outNormal   fragNormal
+#define outColor   	fragColor
+#define outUv		fragTexCoord

@@ -1660,8 +1660,8 @@ namespace vk
     pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;  
     uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;
 
-    file::File oVSFile("Assets/Shaders/Vulkan/Vertex/VertexShader.spv");
-    file::File oPSFile("Assets/Shaders/Vulkan/Pixel/PixelShader.spv");    
+    file::File oVSFile("Assets/Shaders/Vertex/VertexShader.spv");
+    file::File oPSFile("Assets/Shaders/Pixel/PixelShader.spv");    
 
     ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);
     ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);

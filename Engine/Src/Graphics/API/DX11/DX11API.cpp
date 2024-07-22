@@ -597,8 +597,8 @@ namespace api
       //std::string sPsFilename(file::GetWorkingDirectory() + "Assets/Shaders/DX11/Pixel/PixelShader.cso");
 
       //DX11_CHECK(D3DReadFileToBlob(CharToLPWSTR(sVsFilename.c_str()).c_str(), pRenderState->m_pBytecodeBlob.ReleaseAndGetAddressOf()));      
-      file::File oVsFile("Assets/Shaders/DX11/Vertex/VertexShader.cso");
-      file::File oPsFile("Assets/Shaders/DX11/Pixel/PixelShader.cso");
+      file::File oVsFile("Assets/Shaders/Vertex/VertexShader.cso");
+      file::File oPsFile("Assets/Shaders/Pixel/PixelShader.cso");
       
       DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));
 

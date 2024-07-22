@@ -29,7 +29,7 @@ void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilde
    
   const SpvReflectEntryPoint* pEntryPoint = spvReflectGetEntryPoint(&oModule, "main");
 
-  CHECK_REFLECT(pEntryPoint != nullptr, "[API] Error: Unable to load reflection from shader: ")
+  CHECK_REFLECT(pEntryPoint != nullptr, "[API] Error: Unable to find shader entry point: ")
   
   uint32_t uDescSetCount = 0;
   eResult = spvReflectEnumerateEntryPointDescriptorSets( &oModule, "main", &uDescSetCount, NULL);
