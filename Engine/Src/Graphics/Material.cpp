@@ -1,15 +1,9 @@
 #include "Graphics/Material.h"
-
 #include "Graphics/Resource.h"
-
 #include "Graphics/API/GraphicsAPI.h"
-
 #include "Graphics/Window.h"
-
 #include "Graphics/Mesh.h"
-
 #include "Graphics/RenderStateInfo.h"
-
 #include "Core/Exception.h"
 
 class Material::Impl
@@ -18,7 +12,20 @@ public:
   api::APIRenderState* m_pAPIRenderState;
   std::vector<Resource*> m_lstResources;
 
-  Impl(Window* _pWindow, const std::string& _sVSFilename, const std::string& _sPSFilename)
+  /*bool m_bBlendEnabled;
+  BlendOp m_eBlendOp;
+  BlendFactor m_eSrcBlendFactor;
+  BlendFactor m_eDstBlendFactor; */
+
+  Impl(Window* _pWindow
+    , const std::string& _sVSFilename
+    , const std::string& _sPSFilename
+    , bool _bBlendEnabled
+    , BlendOp _eBlendOp
+    , BlendFactor _eSrcBlendFactor
+    , BlendFactor _eDstBlendFactor
+    , bool _bDepthWrite
+    , bool _bDepthRead)
   {
     _pWindow->SetUsing();
 
@@ -26,6 +33,12 @@ public:
     oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
     oInfo.m_sVSFilename = _sVSFilename;
     oInfo.m_sPSFilename = _sPSFilename;    
+    oInfo.m_bBlendEnabled = _bBlendEnabled;
+    oInfo.m_eBlendOp = _eBlendOp;
+    oInfo.m_eSrcBlendFactor = _eSrcBlendFactor;
+    oInfo.m_eDstBlendFactor = _eDstBlendFactor;
+    oInfo.m_bDepthWrite = _bDepthWrite;
+    oInfo.m_bDepthRead = _bDepthRead;
 
     m_pAPIRenderState = api::CreateAPIRenderState(oInfo);
   }
@@ -41,9 +54,17 @@ public:
   }
 };
 
-Material::Material(Window* _pWindow, const std::string& _sVSFilename, const std::string& _sPSFilename)
+Material::Material(Window* _pWindow
+  , const std::string& _sVSFilename
+  , const std::string& _sPSFilename
+  , bool _bBlendEnabled
+  , BlendOp _eBlendOp
+  , BlendFactor _eSrcBlendFactor
+  , BlendFactor _eDstBlendFactor
+  , bool _bDepthWrite
+  , bool _bDepthRead)
 {
-  m_pImpl = std::make_unique<Impl>(_pWindow, _sVSFilename,_sPSFilename);    
+  m_pImpl = std::make_unique<Impl>(_pWindow, _sVSFilename, _sPSFilename, _bBlendEnabled, _eBlendOp, _eSrcBlendFactor, _eDstBlendFactor, _bDepthWrite, _bDepthRead);    
 }
 
 Material::Material(Material&& rMaterial)

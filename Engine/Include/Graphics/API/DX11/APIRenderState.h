@@ -21,6 +21,10 @@ namespace dx11
 
     Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_pRasterizer;
 
+    Microsoft::WRL::ComPtr<ID3D11BlendState> m_pBlendState;
+
+    Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_pDSState;
+
     APIWindow* m_pOwnerWindow;
 
   };

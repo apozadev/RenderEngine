@@ -8,6 +8,7 @@
 #include "Graphics/Material.h"
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Texture2D.h"
+#include "Graphics/BlendEnums.h"
 #include "Components/ModelComponent.h"
 #include "Components/CameraComponent.h"
 #include "Graphics/MaterialLibrary.h"
@@ -31,7 +32,16 @@ int main(){
   Entity* pModelEntity1 = pScene->AddEntity();
   Entity* pModelEntity2 = pScene->AddEntity();
 
-  Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(pWindow, "Assets/Shaders/Vertex/VertexShader.hlsl", "Assets/Shaders/Pixel/PixelShader");
+  Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(pWindow
+    , "Assets/Shaders/Vertex/VertexShader.hlsl"
+    , "Assets/Shaders/Pixel/PixelShader"
+    , true
+    , BlendOp::BLEND_OP_ADD
+    , BlendFactor::BLEND_SRC_ALPHA
+    , BlendFactor::BLEND_INV_SRC_ALPHA
+    , false
+    , true);
+
   pMaterial->Setup();
 
   pModelEntity1->AddComponent<ModelComponent>("Assets/Models/cyborg/cyborg.obj", pMaterial, pWindow);    

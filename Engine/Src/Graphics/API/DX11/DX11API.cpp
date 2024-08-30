@@ -17,6 +17,7 @@
 #include "Util/WideStringUtil.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Vertex.h"
+#include "Graphics/BlendEnums.h"
 #include "Graphics/API/DX11/DX11Macros.h"
 #include "Graphics/API/DX11/DX11Data.h"
 #include "Graphics/API/DX11/APIWindow.h"
@@ -62,6 +63,71 @@ namespace api
         break;
       default:
         return DXGI_FORMAT_R8G8B8A8_UNORM;
+      }
+    }
+
+    D3D11_BLEND_OP GetD3D11BlendOp(BlendOp _eBlendOp)
+    {
+      switch (_eBlendOp)
+      {
+      case BLEND_OP_ADD:
+        return D3D11_BLEND_OP_ADD;
+        break;
+      case BLEND_OP_SUBTRACT:
+        return D3D11_BLEND_OP_SUBTRACT;
+        break;
+      case BLEND_OP_REV_SUBTRACT:
+        return D3D11_BLEND_OP_REV_SUBTRACT;
+        break;
+      case BLEND_OP_MIN:
+        return D3D11_BLEND_OP_REV_SUBTRACT;
+        break;
+      case BLEND_OP_MAX:
+        return D3D11_BLEND_OP_REV_SUBTRACT;
+        break;
+      default:
+        return D3D11_BLEND_OP_ADD;
+      }
+    }
+
+    D3D11_BLEND GetD3D11Blend(BlendFactor _eBlendFactor)
+    {
+      switch (_eBlendFactor)
+      {
+      case BLEND_ZERO:
+        return D3D11_BLEND_ZERO;
+      case BLEND_ONE:
+        return D3D11_BLEND_ONE;
+      case BLEND_SRC_COLOR:
+        return D3D11_BLEND_SRC_COLOR;
+      case BLEND_INV_SRC_COLOR:
+        return D3D11_BLEND_INV_SRC_COLOR;
+      case BLEND_SRC_ALPHA:
+        return D3D11_BLEND_SRC_ALPHA;
+      case BLEND_INV_SRC_ALPHA:
+        return D3D11_BLEND_INV_SRC_ALPHA;
+      case BLEND_DEST_ALPHA:
+        return D3D11_BLEND_DEST_ALPHA;
+      case BLEND_INV_DEST_ALPHA:
+        return D3D11_BLEND_INV_DEST_ALPHA;
+      case BLEND_DEST_COLOR:
+        return D3D11_BLEND_DEST_COLOR;
+      case BLEND_INV_DEST_COLOR:
+        return D3D11_BLEND_INV_DEST_COLOR;
+      case BLEND_SRC_ALPHA_SAT:
+        return D3D11_BLEND_SRC_ALPHA_SAT;
+      case BLEND_BLEND_FACTOR:
+        return D3D11_BLEND_BLEND_FACTOR;
+      case BLEND_INV_BLEND_FACTOR:
+        return D3D11_BLEND_INV_BLEND_FACTOR;
+      case BLEND_SRC1_COLOR:
+        return D3D11_BLEND_SRC1_COLOR;
+      case BLEND_INV_SRC1_COLOR:
+        return D3D11_BLEND_INV_SRC1_COLOR;
+      case BLEND_SRC1_ALPHA:
+        return D3D11_BLEND_SRC1_ALPHA;
+      case BLEND_INV_SRC1_ALPHA:
+        return D3D11_BLEND_INV_SRC1_ALPHA;
       }
     }
 
@@ -560,7 +626,7 @@ namespace api
       pWindow->m_pContext->ClearRenderTargetView(_pRenderTarget->m_pRtv.Get(), aClearColor);
       pWindow->m_pContext->ClearDepthStencilView(_pRenderTarget->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
 
-      pWindow->m_pContext->OMSetRenderTargets(1u, _pRenderTarget->m_pRtv.GetAddressOf(), _pRenderTarget->m_pDsv.Get());      
+      pWindow->m_pContext->OMSetRenderTargets(1u, _pRenderTarget->m_pRtv.GetAddressOf(), _pRenderTarget->m_pDsv.Get());        
     }
 
     void CopyRenderTarget(APIRenderTarget* _pSrc, APIRenderTarget* _pDst)
@@ -614,7 +680,7 @@ namespace api
 
       D3D11_RASTERIZER_DESC oRasterizerDesc = {};
       oRasterizerDesc.FillMode = D3D11_FILL_SOLID;
-      oRasterizerDesc.CullMode = D3D11_CULL_NONE;
+      oRasterizerDesc.CullMode = D3D11_CULL_FRONT;
       oRasterizerDesc.FrontCounterClockwise = false;
       oRasterizerDesc.DepthBias = 0;// DEPTH_BIAS_D32_FLOAT(-0.00001);
       oRasterizerDesc.DepthBiasClamp = 0;//-0.001;
@@ -624,6 +690,35 @@ namespace api
       oRasterizerDesc.AntialiasedLineEnable = true;      
 
       DX11_CHECK(pWindow->m_pDevice->CreateRasterizerState(&oRasterizerDesc, pRenderState->m_pRasterizer.GetAddressOf()))
+
+      //BlendState.RenderTarget[0].SrcBlend = (D3D11_BLEND)m_srcBlendFactor;
+      //BlendState.RenderTarget[0].DestBlend = (D3D11_BLEND)m_dstBlendFactor;
+      //BlendState.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+      //BlendState.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+      //BlendState.RenderTarget[0].BlendOp = (D3D11_BLEND_OP)m_blendOp;
+      //BlendState.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+      //BlendState.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+      D3D11_BLEND_DESC oBlendDesc = {};
+      oBlendDesc.AlphaToCoverageEnable = false;
+      oBlendDesc.IndependentBlendEnable = false;
+      oBlendDesc.RenderTarget[0].BlendEnable = _oInfo.m_bBlendEnabled;
+      oBlendDesc.RenderTarget[0].BlendOp = GetD3D11BlendOp( _oInfo.m_eBlendOp);      
+      oBlendDesc.RenderTarget[0].DestBlend = GetD3D11Blend(_oInfo.m_eDstBlendFactor);
+      oBlendDesc.RenderTarget[0].SrcBlend = GetD3D11Blend(_oInfo.m_eSrcBlendFactor);
+      oBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+      oBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+      oBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+      oBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;            
+
+      DX11_CHECK(pWindow->m_pDevice->CreateBlendState(&oBlendDesc, pRenderState->m_pBlendState.GetAddressOf()));
+
+      D3D11_DEPTH_STENCIL_DESC oDSDesc = {};
+      oDSDesc.DepthEnable = _oInfo.m_bDepthWrite || _oInfo.m_bDepthRead;      
+      oDSDesc.DepthWriteMask = _oInfo.m_bDepthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;            
+      oDSDesc.DepthFunc = _oInfo.m_bDepthRead ? D3D11_COMPARISON_LESS : D3D11_COMPARISON_ALWAYS;      
+
+      DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilState(&oDSDesc, pRenderState->m_pDSState.GetAddressOf()));
 
       return pRenderState;
     }
@@ -648,6 +743,8 @@ namespace api
       pWindow->m_pContext->PSSetShader(_pAPIRenderState->m_pPixelShader.Get(), nullptr, 0u);
       pWindow->m_pContext->IASetInputLayout(_pAPIRenderState->m_pInputLayout.Get());
       pWindow->m_pContext->RSSetState(_pAPIRenderState->m_pRasterizer.Get());
+      pWindow->m_pContext->OMSetBlendState(_pAPIRenderState->m_pBlendState.Get(), nullptr, 0xffffffff);
+      pWindow->m_pContext->OMSetDepthStencilState(_pAPIRenderState->m_pDSState.Get(), 0);
     }
 
     void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Graphics/Window.h"
+#include "Graphics/BlendEnums.h"
 
 class Resource;
 
@@ -11,7 +12,16 @@ class Material
 {
 public:
 
-  Material(Window* _pWindow, const std::string& _sPSFilename, const std::string& _sVSFilename);
+  Material(Window* _pWindow
+    , const std::string& _sVSFilename
+    , const std::string& _sPSFilename
+    , bool _bBlendEnabled
+    , BlendOp _eBlendOp
+    , BlendFactor _eSrcBlendFactor
+    , BlendFactor _eDstBlendFactor
+    , bool _bDepthWrite
+    , bool _bDepthRead);
+
   Material(Material&& rMaterial);
   ~Material();
 
