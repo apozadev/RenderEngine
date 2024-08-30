@@ -21,7 +21,7 @@ void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, Window* _pW
 void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, Window* _pWindow, ModelComponent* pModelComp_);
 void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, Window* _pWindow, ModelComponent* pModelComp_);
 
-void ModelLoader::LoadModel(const char* _sFilename, Window* _pWindow, ModelComponent* pModelComp_)
+void ModelLoader::LoadModel(const char* _sFilename, Material* _pMaterial, Window* _pWindow, ModelComponent* pModelComp_)
 {
   Assimp::Importer oImporter;
 
@@ -36,13 +36,9 @@ void ModelLoader::LoadModel(const char* _sFilename, Window* _pWindow, ModelCompo
       return;
   }
   
-  std::string sDirectory = sFullFilename.substr(0, sFullFilename.find_last_of('/') + 1);
+  std::string sDirectory = sFullFilename.substr(0, sFullFilename.find_last_of('/') + 1);  
 
-  Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(_pWindow);
-
-  pMaterial->Setup();
-
-  ProcessMaterials(oScene, pMaterial, sDirectory, _pWindow, pModelComp_);
+  ProcessMaterials(oScene, _pMaterial, sDirectory, _pWindow, pModelComp_);
 
   ProcessNode(oScene->mRootNode, oScene, _pWindow, pModelComp_);
 

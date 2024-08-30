@@ -10,6 +10,7 @@
 #include "Graphics/Texture2D.h"
 #include "Components/ModelComponent.h"
 #include "Components/CameraComponent.h"
+#include "Graphics/MaterialLibrary.h"
 
 #include <string>
 
@@ -30,16 +31,15 @@ int main(){
   Entity* pModelEntity1 = pScene->AddEntity();
   Entity* pModelEntity2 = pScene->AddEntity();
 
-  pModelEntity1->AddComponent<ModelComponent>("Assets/Models/cyborg/cyborg.obj", pWindow);    
-  pModelEntity2->AddComponent<ModelComponent>("Assets/Models/demon.fbx", pWindow);    
+  Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(pWindow, "Assets/Shaders/Vertex/VertexShader.hlsl", "Assets/Shaders/Pixel/PixelShader");
+  pMaterial->Setup();
+
+  pModelEntity1->AddComponent<ModelComponent>("Assets/Models/cyborg/cyborg.obj", pMaterial, pWindow);    
+  pModelEntity2->AddComponent<ModelComponent>("Assets/Models/demon.fbx", pMaterial, pWindow);    
 
   pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
   pModelEntity2->GetMutableLocalTransform().SetPos({ 5.f,0.f, -10.f });
-  pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f});  
-
-  //Entity* pModelEntity1 = pScene->AddEntity();
-  //pModelEntity1->AddComponent<ModelComponent>("Assets/Models/teapot.obj", pWindow);
-  //pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });º
+  pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f});    
 
   pScene->Build();
 

@@ -18,12 +18,14 @@ public:
   api::APIRenderState* m_pAPIRenderState;
   std::vector<Resource*> m_lstResources;
 
-  Impl(Window* _pWindow)
+  Impl(Window* _pWindow, const std::string& _sVSFilename, const std::string& _sPSFilename)
   {
     _pWindow->SetUsing();
 
     RenderStateInfo oInfo{};
     oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
+    oInfo.m_sVSFilename = _sVSFilename;
+    oInfo.m_sPSFilename = _sPSFilename;    
 
     m_pAPIRenderState = api::CreateAPIRenderState(oInfo);
   }
@@ -39,9 +41,9 @@ public:
   }
 };
 
-Material::Material(Window* _pWindow)
+Material::Material(Window* _pWindow, const std::string& _sVSFilename, const std::string& _sPSFilename)
 {
-  m_pImpl = std::make_unique<Impl>(_pWindow);    
+  m_pImpl = std::make_unique<Impl>(_pWindow, _sVSFilename,_sPSFilename);    
 }
 
 Material::Material(Material&& rMaterial)

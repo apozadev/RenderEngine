@@ -1658,10 +1658,13 @@ namespace vk
   {
     APIRenderState* pRenderState = new APIRenderState();
     pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;  
-    uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;
+    uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;    
 
-    file::File oVSFile("Assets/Shaders/Vertex/VertexShader.spv");
-    file::File oPSFile("Assets/Shaders/Pixel/PixelShader.spv");    
+    std::string sVSFilename = _oInfo.m_sVSFilename.substr(0, _oInfo.m_sVSFilename.find_last_of('.')) + ".spv";
+    std::string sPSFilename = _oInfo.m_sPSFilename.substr(0, _oInfo.m_sPSFilename.find_last_of('.')) + ".spv";    
+
+    file::File oVSFile(sVSFilename.c_str());
+    file::File oPSFile(sPSFilename.c_str());
 
     ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);
     ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);

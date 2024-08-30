@@ -7,6 +7,7 @@
 #include <vector>
 #include "Core/Component.h"
 
+class Material;
 
 class ModelComponent : public Component
 {
@@ -20,7 +21,7 @@ public:
   };
 
 public:
-  ModelComponent(const char* _sFilename, Window* _pWindow);
+  ModelComponent(const char* _sFilename, Material* _pMaterial, Window* _pWindow);
   //~ModelComponent() {};
 
   void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx, Window* _pWindow);

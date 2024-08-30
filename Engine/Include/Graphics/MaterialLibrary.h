@@ -19,9 +19,9 @@ class MaterialLibrary : public Singleton<MaterialLibrary>
 
 public:
 
-  Material* CreateMaterial(Window* _pWindow) 
+  Material* CreateMaterial(Window* _pWindow, const std::string& _sVSFilename, const std::string& _sPSFilename)
   {    
-    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::make_unique<Material>(_pWindow) });
+    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::make_unique<Material>(_pWindow, _sVSFilename, _sPSFilename) });
     return m_lstMaterials.back().m_pMaterial.get();
   }
 

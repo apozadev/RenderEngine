@@ -593,17 +593,13 @@ namespace api
 
       APIWindow* pWindow = pRenderState->m_pOwnerWindow;
 
-      //std::string sVsFilename(file::GetWorkingDirectory() + "Assets/Shaders/DX11/Vertex/VertexShader.cso");
-      //std::string sPsFilename(file::GetWorkingDirectory() + "Assets/Shaders/DX11/Pixel/PixelShader.cso");
+      std::string sPSFilename = _oInfo.m_sPSFilename.substr(0, _oInfo.m_sPSFilename.find_last_of('.')) + ".cso";
+      std::string sVSFilename = _oInfo.m_sVSFilename.substr(0, _oInfo.m_sVSFilename.find_last_of('.')) + ".cso";
 
-      //DX11_CHECK(D3DReadFileToBlob(CharToLPWSTR(sVsFilename.c_str()).c_str(), pRenderState->m_pBytecodeBlob.ReleaseAndGetAddressOf()));      
-      file::File oVsFile("Assets/Shaders/Vertex/VertexShader.cso");
-      file::File oPsFile("Assets/Shaders/Pixel/PixelShader.cso");
+      file::File oVsFile(sVSFilename.c_str());
+      file::File oPsFile(sPSFilename.c_str());      
       
-      DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));
-
-      //Microsoft::WRL::ComPtr<ID3DBlob> pPsBlob;
-      //DX11_CHECK(D3DReadFileToBlob(CharToLPWSTR(sPsFilename.c_str()).c_str(), pPsBlob.ReleaseAndGetAddressOf()));
+      DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));      
       DX11_CHECK(pWindow->m_pDevice->CreatePixelShader(oPsFile.GetData(), oPsFile.GetSize(), nullptr, pRenderState->m_pPixelShader.ReleaseAndGetAddressOf()));
 
       const D3D11_INPUT_ELEMENT_DESC oInputDesc[] =

@@ -11,7 +11,7 @@ class Material
 {
 public:
 
-  Material(Window* _pWindow);
+  Material(Window* _pWindow, const std::string& _sPSFilename, const std::string& _sVSFilename);
   Material(Material&& rMaterial);
   ~Material();
 

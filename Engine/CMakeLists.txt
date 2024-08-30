@@ -112,7 +112,7 @@ target_include_directories(${PROJECT_NAME}
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
-set(TARGET_RENDER_API ${RENDER_API_VULKAN})
+set(TARGET_RENDER_API ${RENDER_API_DX11})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
 	RENDER_API=${TARGET_RENDER_API}
@@ -121,7 +121,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
  # Shader stuff
 
 file(GLOB_RECURSE V_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Vertex/*.hlsl")
-file(GLOB_RECURSE P_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Pixel/*.hlsl") 
+file(GLOB_RECURSE P_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Pixel/*.hlsl")  
 
 set(SHADER_BINARY_FILES)
 
