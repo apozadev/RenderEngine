@@ -13,6 +13,7 @@
 #include "Core/Exception.h"
 
 #include "Graphics/Window.h"
+#include "Graphics/BlendEnums.h"
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
@@ -43,6 +44,94 @@ namespace vk
   ///----------------------------------------------------------------------------------
   //                                Helper functions
   ///----------------------------------------------------------------------------------
+
+  VkFormat GetVKFormat(ImageFormat _eFormat)
+  {
+    switch (_eFormat)
+    {
+    case ImageFormat::R8G8B8:
+      return VK_FORMAT_R8G8B8_SRGB;
+    case ImageFormat::R8G8B8A8:
+      return VK_FORMAT_R8G8B8A8_SRGB;
+    default:
+      break;
+    }
+    return VK_FORMAT_MAX_ENUM;
+  }
+
+  VkShaderStageFlagBits GetVkStageFlag(PipelineStage _eStage)
+  {
+    switch (_eStage)
+    {
+    case PipelineStage::VERTEX:
+      return VK_SHADER_STAGE_VERTEX_BIT;
+      break;
+    case PipelineStage::PIXEL:
+      return VK_SHADER_STAGE_FRAGMENT_BIT;
+      break;
+    default:
+      break;
+    }
+    return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+  }
+
+  VkBlendOp GetVkBlendOp(BlendOp _eBlendOp)
+  {
+    switch (_eBlendOp)
+    {
+    case BLEND_OP_ADD:
+      return VK_BLEND_OP_ADD;
+    case BLEND_OP_SUBTRACT:
+      return VK_BLEND_OP_SUBTRACT;
+    case BLEND_OP_REV_SUBTRACT:
+      return VK_BLEND_OP_REVERSE_SUBTRACT;
+    case BLEND_OP_MIN:
+      return VK_BLEND_OP_MIN;
+    case BLEND_OP_MAX:
+      return VK_BLEND_OP_MAX;
+    default:
+      return VK_BLEND_OP_ADD;
+    }
+  }
+
+  VkBlendFactor GetVkBlendFactor(BlendFactor _eBlendFactor)
+  {
+    switch (_eBlendFactor)
+    {
+    case BLEND_ZERO:
+      return VK_BLEND_FACTOR_ZERO;
+    case BLEND_ONE:
+      return VK_BLEND_FACTOR_ONE;
+    case BLEND_SRC_COLOR:
+      return VK_BLEND_FACTOR_SRC_COLOR;
+    case BLEND_INV_SRC_COLOR:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+    case BLEND_DEST_COLOR:
+      return VK_BLEND_FACTOR_DST_COLOR;
+    case BLEND_INV_DEST_COLOR:
+      return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+    case BLEND_SRC_ALPHA:
+      return VK_BLEND_FACTOR_SRC_ALPHA;
+    case BLEND_INV_SRC_ALPHA:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    case BLEND_DEST_ALPHA:
+      return VK_BLEND_FACTOR_DST_ALPHA;
+    case BLEND_INV_DEST_ALPHA:
+      return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+    case BLEND_SRC_ALPHA_SAT:
+      return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+    case BLEND_SRC1_COLOR:
+      return VK_BLEND_FACTOR_SRC1_COLOR;
+    case BLEND_INV_SRC1_COLOR:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+    case BLEND_SRC1_ALPHA:
+      return VK_BLEND_FACTOR_SRC1_ALPHA;
+    case BLEND_INV_SRC1_ALPHA:
+      return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+    default:
+      return VK_BLEND_FACTOR_ZERO;
+    }
+  }
 
   void CreateInstance()
   {
@@ -277,7 +366,7 @@ namespace vk
     oRasterizer.rasterizerDiscardEnable = VK_FALSE;
     oRasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     oRasterizer.lineWidth = 1.0f;
-    oRasterizer.cullMode = VK_CULL_MODE_NONE;
+    oRasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
     oRasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     oRasterizer.depthBiasEnable = VK_FALSE;
     oRasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -299,22 +388,22 @@ namespace vk
 
     VkPipelineDepthStencilStateCreateInfo oDepthStencil {};
     oDepthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    oDepthStencil.depthTestEnable = VK_TRUE;
-    oDepthStencil.depthWriteEnable = VK_TRUE;
+    oDepthStencil.depthTestEnable = _oInfo.m_bDepthRead;
+    oDepthStencil.depthWriteEnable = _oInfo.m_bDepthWrite;
     oDepthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     oDepthStencil.depthBoundsTestEnable = VK_FALSE;
     oDepthStencil.stencilTestEnable = VK_FALSE;
     oDepthStencil.minDepthBounds = 0.f;
     oDepthStencil.maxDepthBounds = 1.f;
 
-    // Blending (disabled)
+    // Blending
 
     VkPipelineColorBlendAttachmentState oBlendAttachment {};
     oBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    oBlendAttachment.blendEnable = VK_FALSE;
-    oBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    oBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    oBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    oBlendAttachment.blendEnable = _oInfo.m_bBlendEnabled ? VK_TRUE : VK_FALSE;
+    oBlendAttachment.srcColorBlendFactor = GetVkBlendFactor(_oInfo.m_eSrcBlendFactor);
+    oBlendAttachment.dstColorBlendFactor = GetVkBlendFactor(_oInfo.m_eDstBlendFactor);    
+    oBlendAttachment.colorBlendOp = GetVkBlendOp(_oInfo.m_eBlendOp);
     oBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
     oBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     oBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
@@ -1261,37 +1350,7 @@ namespace vk
       1, &oBarrier);
 
     EndTempCmdBuffer(_pWindow, hCmdBuffer);
-  }
-
-  VkFormat GetVKFormat(ImageFormat _eFormat)
-  {
-    switch (_eFormat)
-    {
-    case ImageFormat::R8G8B8:
-      return VK_FORMAT_R8G8B8_SRGB;
-    case ImageFormat::R8G8B8A8:
-      return VK_FORMAT_R8G8B8A8_SRGB;
-    default:
-      break;
-    }
-    return VK_FORMAT_MAX_ENUM;
-  }
-  
-  VkShaderStageFlagBits GetVkStageFlag(PipelineStage _eStage)
-  {
-    switch (_eStage)
-    {
-    case PipelineStage::VERTEX:
-      return VK_SHADER_STAGE_VERTEX_BIT;
-      break;
-    case PipelineStage::PIXEL:
-      return VK_SHADER_STAGE_FRAGMENT_BIT;
-      break;
-    default:
-      break;
-    }
-    return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
-  }
+  }  
 
   ///----------------------------------------------------------------------------------
   //                                    API functions
