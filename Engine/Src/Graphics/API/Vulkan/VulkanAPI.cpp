@@ -373,7 +373,7 @@ namespace vk
     oRasterizer.depthBiasClamp = 0.0f; // Optional
     oRasterizer.depthBiasSlopeFactor = 0.0f; // Optional
 
-    // Multisampling (disabled)
+    // Multisampling
 
     VkPipelineMultisampleStateCreateInfo oMultisampling{};
     oMultisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -661,6 +661,7 @@ namespace vk
     // Choose present mode for swapchain
 
     VkPresentModeKHR ePresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    /*
     {
       uint32_t uPresentModeCount = 0;
       VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(s_oGlobalData.m_hPhysicalDevice, _pWindow->m_hSurface, &uPresentModeCount, NULL))
@@ -677,7 +678,7 @@ namespace vk
         }
 
       delete[] pPresentModes;
-    }
+    }*/
 
 
     // Create swapchain
@@ -860,78 +861,49 @@ namespace vk
   }
     
   void CreateCommandBuffers(APIWindow* _pWindow)
-  {     
-    {
-      VkCommandPoolCreateInfo oCmdPoolCreateInfo = {};
-      oCmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-      oCmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-      oCmdPoolCreateInfo.queueFamilyIndex = s_oGlobalData.m_uRenderQueueFamilyIdx;
-      oCmdPoolCreateInfo.pNext = NULL;
-      VK_CHECK(vkCreateCommandPool(_pWindow->m_hDevice, &oCmdPoolCreateInfo, NULL, &_pWindow->m_hRenderCmdPool))
-    }
-    // If render and present queue families are the same, share command pool
-    if (s_oGlobalData.m_uRenderQueueFamilyIdx == s_oGlobalData.m_uPresentQueueFamilyIdx)
-    {
-      _pWindow->m_hPresentCmdPool = _pWindow->m_hRenderCmdPool;
-    }
-    else
-    {
-      VkCommandPoolCreateInfo oCmdPoolCreateInfo = {};
-      oCmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-      oCmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-      oCmdPoolCreateInfo.queueFamilyIndex = s_oGlobalData.m_uPresentQueueFamilyIdx;
-      oCmdPoolCreateInfo.pNext = NULL;
-      VK_CHECK(vkCreateCommandPool(_pWindow->m_hDevice, &oCmdPoolCreateInfo, NULL, &_pWindow->m_hPresentCmdPool))
-    }
+  {         
+    VkCommandPoolCreateInfo oCmdPoolCreateInfo = {};
+    oCmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    oCmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    oCmdPoolCreateInfo.queueFamilyIndex = s_oGlobalData.m_uRenderQueueFamilyIdx;
+    oCmdPoolCreateInfo.pNext = NULL;
+    VK_CHECK(vkCreateCommandPool(_pWindow->m_hDevice, &oCmdPoolCreateInfo, NULL, &_pWindow->m_hCmdPool))
+
+    _pWindow->m_pCmdBuffers = new VkCommandBuffer[_pWindow->m_uSwapchainImageCount];
 
     // Create render command buffer
     {      
       VkCommandBufferAllocateInfo oCmdBufferAllocInfo = {};
       oCmdBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-      oCmdBufferAllocInfo.commandPool = _pWindow->m_hRenderCmdPool;
+      oCmdBufferAllocInfo.commandPool = _pWindow->m_hCmdPool;
       oCmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-      oCmdBufferAllocInfo.commandBufferCount = 1u;
-      VK_CHECK(vkAllocateCommandBuffers(_pWindow->m_hDevice, &oCmdBufferAllocInfo, &_pWindow->m_hRenderCmdBuffer))
-    }
-
-    // Create present command buffer
-    /*{
-      VkCommandBufferAllocateInfo oCmdBufferAllocInfo = {};
-      oCmdBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-      oCmdBufferAllocInfo.commandPool = _pWindow->m_hRenderCmdPool;
-      oCmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-      oCmdBufferAllocInfo.commandBufferCount = 1u;
-      VK_CHECK(vkAllocateCommandBuffers(_pWindow->m_hDevice, &oCmdBufferAllocInfo, &_pWindow->m_hRenderCmdBuffer))
-    }*/
-
-    // Create fences for command buffers
-    //{
-    //  _pWindow->m_uFenceCount = _pWindow->m_uCmdBufferCount - 1u;
-    //  _pWindow->m_pFences = new VkFence[pWindow->m_uFenceCount];
-    //  for (int i = 0; i < pWindow->m_uFenceCount; ++i)
-    //  {
-    //    VkFenceCreateInfo fenceCreateInfo = {};
-    //    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    //    // We need this so we can wait for them on the first try
-    //    fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    //    VK_CHECK(vkCreateFence(pWindow->m_hDevice, &fenceCreateInfo, NULL, &pWindow->m_pFences[i]))
-    //  }
-    //}
+      oCmdBufferAllocInfo.commandBufferCount = _pWindow->m_uSwapchainImageCount;
+      VK_CHECK(vkAllocateCommandBuffers(_pWindow->m_hDevice, &oCmdBufferAllocInfo, _pWindow->m_pCmdBuffers))
+    }    
   }  
 
   void CreateSyncObjects(APIWindow* _pWindow)
   {
+
+    const uint32_t uNumImages = _pWindow->m_uSwapchainImageCount;
+
+    _pWindow->m_pImageAvailableSemaphores = new VkSemaphore[uNumImages];
+    _pWindow->m_pRenderFinishedSemaphores = new VkSemaphore[uNumImages];
+    _pWindow->m_pInFlightFences = new VkFence[uNumImages];
+
     VkSemaphoreCreateInfo oSemaphoreInfo{};
     oSemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    VK_CHECK(vkCreateSemaphore(_pWindow->m_hDevice, &oSemaphoreInfo, NULL, &_pWindow->m_hImageAvailableSemaphore))
-    VK_CHECK(vkCreateSemaphore(_pWindow->m_hDevice, &oSemaphoreInfo, NULL, &_pWindow->m_hRenderFinishedSemaphore))
-
     VkFenceCreateInfo oFenceInfo{};
     oFenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    oFenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    oFenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;    
 
-    VK_CHECK(vkCreateFence(_pWindow->m_hDevice, &oFenceInfo, NULL, &_pWindow->m_hInFlightFence))
+    for (int i = 0; i < uNumImages; i++)
+    {
+      VK_CHECK(vkCreateSemaphore(_pWindow->m_hDevice, &oSemaphoreInfo, NULL, &_pWindow->m_pImageAvailableSemaphores[i]))
+      VK_CHECK(vkCreateSemaphore(_pWindow->m_hDevice, &oSemaphoreInfo, NULL, &_pWindow->m_pRenderFinishedSemaphores[i]))
+      VK_CHECK(vkCreateFence(_pWindow->m_hDevice, &oFenceInfo, NULL, &_pWindow->m_pInFlightFences[i]))
+    }    
   }
 
   void CreateDescriptorPool(APIWindow* _pWindow)
@@ -1149,15 +1121,13 @@ namespace vk
     VkCommandBufferAllocateInfo oAllocInfo{};
     oAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     oAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    oAllocInfo.commandPool = _pWindow->m_hRenderCmdPool;
+    oAllocInfo.commandPool = _pWindow->m_hCmdPool;
     oAllocInfo.commandBufferCount = 1;
 
     VkCommandBuffer hCommandBuffer;
     VK_CHECK(vkAllocateCommandBuffers(_pWindow->m_hDevice, &oAllocInfo, &hCommandBuffer))
 
-    VkCommandBufferBeginInfo oBeginInfo
-    {
-    };
+    VkCommandBufferBeginInfo oBeginInfo{};
     oBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     oBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
@@ -1180,7 +1150,7 @@ namespace vk
     VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, VK_NULL_HANDLE))
     VK_CHECK(vkQueueWaitIdle(_pWindow->m_hRenderQueue))
 
-    vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, 1u, &_hCmdBuffer);
+    vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hCmdPool, 1u, &_hCmdBuffer);
   }
 
   void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize)
@@ -1393,6 +1363,8 @@ namespace vk
       s_oGlobalData.m_pUsingWindow = pWindow;
     }
 
+    pWindow->m_uCurrFrameIdx = 0u;
+
     return pWindow;
 
   }  
@@ -1420,27 +1392,30 @@ namespace vk
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
 
-    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+    const uint32_t uNumImages = _pWindow->m_uSwapchainImageCount;
+
+    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, uNumImages, _pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
 
     DestroySwapchain(_pWindow);
 
-    vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hImageAvailableSemaphore, NULL);
-    vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_hRenderFinishedSemaphore, NULL);
-
-    vkDestroyFence(_pWindow->m_hDevice, _pWindow->m_hInFlightFence, NULL);
-        
-
-    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hGlobalDescSetLayout, NULL);    
-
-    vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hRenderCmdPool, NULL);
-    if (_pWindow->m_hRenderCmdPool != _pWindow->m_hPresentCmdPool)
+    for (int i = 0; i < uNumImages; i++)
     {
-      vkDestroyCommandPool(_pWindow->m_hDevice, _pWindow->m_hPresentCmdPool, NULL);
+      vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_pImageAvailableSemaphores[i], NULL);
+      vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_pRenderFinishedSemaphores[i], NULL);
+      vkDestroyFence(_pWindow->m_hDevice, _pWindow->m_pInFlightFences[i], NULL);
     }
+
+    delete[] _pWindow->m_pImageAvailableSemaphores;
+    delete[] _pWindow->m_pRenderFinishedSemaphores;
+    delete[] _pWindow->m_pInFlightFences;
+        
+    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hGlobalDescSetLayout, NULL);    
 
     vkDestroyRenderPass(_pWindow->m_hDevice, _pWindow->m_hRenderPass, NULL);     
 
     vkDestroyDescriptorPool(_pWindow->m_hDevice, _pWindow->m_hDescPool, NULL);    
+
+    delete[] _pWindow->m_pCmdBuffers;
 
     vkDestroySurfaceKHR(s_oGlobalData.m_hInstance, _pWindow->m_hSurface, NULL);    
 
@@ -1497,9 +1472,9 @@ namespace vk
   void BindAPICamera(APICamera* _pCamera)
   {    
     APIRenderState* pRenderState = s_oGlobalData.m_pUsingRenderState;
-    APIWindow* pWindow = _pCamera->m_pOwnerWindow;
-    uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
-    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::GLOBAL), 1, &_pCamera->m_pDescSets[uImageIdx], 0, NULL);
+    APIWindow* pWindow = _pCamera->m_pOwnerWindow;    
+    const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
+    vkCmdBindDescriptorSets(pWindow->m_pCmdBuffers[uFrameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, pRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::GLOBAL), 1, &_pCamera->m_pDescSets[uFrameIdx], 0, NULL);
   }
 
   void DestroyAPICamera(APICamera* _pCamera)
@@ -1570,7 +1545,9 @@ namespace vk
 
     APIWindow* pWindow = _pMesh->m_pOwnerWindow;
 
-    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, uNumImages, pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
 
     DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hVertexBuffer, _pMesh->m_hVertexBufferMemory);
     DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hIndexBuffer, _pMesh->m_hIndexBufferMemory);
@@ -1612,11 +1589,9 @@ namespace vk
 
   void UpdateAPIConstanBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize)
   {
-    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;
+    APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;    
 
-    uint32_t uCurrImageIdx = pWindow->m_uCurrSwapchainImageIdx;
-
-    memcpy(_pCBuffer->m_pUniformBuffersMapped[uCurrImageIdx], _pData, _uSize);
+    memcpy(_pCBuffer->m_pUniformBuffersMapped[pWindow->m_uCurrFrameIdx], _pData, _uSize);
   }
 
   void BindAPIConstantBuffer(APIConstantBuffer* /*_pCbuffer*/)
@@ -1629,9 +1604,9 @@ namespace vk
 
     APIWindow* pWindow = _pCBuffer->m_pOwnerWindow;    
 
-    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
-
     const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, uNumImages, pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
 
     VkDevice& hDevice = pWindow->m_hDevice;
 
@@ -1701,7 +1676,9 @@ namespace vk
   {
     APIWindow* pWindow = _pTexture->m_pOwnerWindow;
 
-    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, uNumImages, pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
 
     vkDestroySampler(pWindow->m_hDevice, _pTexture->m_hSampler, NULL);
     vkDestroyImageView(pWindow->m_hDevice, _pTexture->m_hImageView, NULL);
@@ -1772,7 +1749,7 @@ namespace vk
     APIRenderState* pRenderState = s_oGlobalData.m_pUsingRenderState;
     APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
     s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pRenderState->m_pDescSets, uNumImages, pRenderState->m_oMaterialLayoutBuilder);
     s_oGlobalData.m_oDescSetUpdater.Clear();
@@ -1788,7 +1765,10 @@ namespace vk
   void BindAPIRenderState(APIRenderState* _pAPIRenderState)
   {
     APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
-    vkCmdBindPipeline(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hGraphicsPipeline);
+
+    const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
+
+    vkCmdBindPipeline(pWindow->m_pCmdBuffers[uFrameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hGraphicsPipeline);
 
     VkViewport oViewport{};
     oViewport.x = 0.0f;
@@ -1798,16 +1778,15 @@ namespace vk
     oViewport.minDepth = 0.0f;
     oViewport.maxDepth = 1.0f;
 
-    vkCmdSetViewport(pWindow->m_hRenderCmdBuffer, 0, 1, &oViewport);
+    vkCmdSetViewport(pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oViewport);
 
     VkRect2D oScissor{};
     oScissor.offset = { 0, 0 };
     oScissor.extent = pWindow->m_oExtent;
 
-    vkCmdSetScissor(pWindow->m_hRenderCmdBuffer, 0, 1, &oScissor);
+    vkCmdSetScissor(pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oScissor);
 
-    uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
-    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::MATERIAL), 1, &_pAPIRenderState->m_pDescSets[uImageIdx], 0, NULL);    
+    vkCmdBindDescriptorSets(pWindow->m_pCmdBuffers[uFrameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::MATERIAL), 1, &_pAPIRenderState->m_pDescSets[uFrameIdx], 0, NULL);
 
     s_oGlobalData.m_pUsingRenderState = _pAPIRenderState;
   }
@@ -1816,7 +1795,9 @@ namespace vk
   {
     APIWindow* pWindow = _pAPIRenderState->m_pOwnerWindow;
 
-    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, uNumImages, pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
 
     delete[] _pAPIRenderState->m_pDescSets;    
 
@@ -1923,9 +1904,9 @@ namespace vk
   void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState)
   {
     APIRenderState* pRenderState = _pAPIRenderSubState->m_pRenderState;
-    APIWindow* pWindow = pRenderState->m_pOwnerWindow;
-    uint32_t uImageIdx = pWindow->m_uCurrSwapchainImageIdx;
-    vkCmdBindDescriptorSets(pWindow->m_hRenderCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::MATERIAL_INSTANCE), 1, &_pAPIRenderSubState->m_pDescSets[uImageIdx], 0, NULL);
+    APIWindow* pWindow = pRenderState->m_pOwnerWindow;    
+    const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
+    vkCmdBindDescriptorSets(pWindow->m_pCmdBuffers[uFrameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, pRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::MATERIAL_INSTANCE), 1, &_pAPIRenderSubState->m_pDescSets[uFrameIdx], 0, NULL);
 
     s_oGlobalData.m_pUsingSubState = _pAPIRenderSubState;
   }
@@ -1947,13 +1928,15 @@ namespace vk
   int BeginDraw(APIWindow* _pWindow)
   {
 
-    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+    const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
+
+    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1, &_pWindow->m_pInFlightFences[uFrameIdx], VK_TRUE, UINT64_MAX))
 
     VkResult hResult = VK_SUCCESS; 
     
     if (!_pWindow->m_bResized)
     {
-      hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_hImageAvailableSemaphore, VK_NULL_HANDLE, &_pWindow->m_uCurrSwapchainImageIdx);
+      hResult = vkAcquireNextImageKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, UINT64_MAX, _pWindow->m_pImageAvailableSemaphores[uFrameIdx], VK_NULL_HANDLE, &_pWindow->m_uCurrSwapchainImageIdx);
     }
 
     if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
@@ -1967,16 +1950,16 @@ namespace vk
       VK_CHECK(hResult)
     }
 
-    VK_CHECK(vkResetFences(_pWindow->m_hDevice, 1, &_pWindow->m_hInFlightFence))
+    VK_CHECK(vkResetFences(_pWindow->m_hDevice, 1, &_pWindow->m_pInFlightFences[uFrameIdx]))
 
-    VK_CHECK(vkResetCommandBuffer(_pWindow->m_hRenderCmdBuffer, 0))
+    VK_CHECK(vkResetCommandBuffer(_pWindow->m_pCmdBuffers[uFrameIdx], 0))
 
     VkCommandBufferBeginInfo oCommandBufferBeginInfo {};
     oCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     oCommandBufferBeginInfo.flags = 0u;
     oCommandBufferBeginInfo.pInheritanceInfo = NULL;
 
-    VK_CHECK(vkBeginCommandBuffer(_pWindow->m_hRenderCmdBuffer, &oCommandBufferBeginInfo))
+    VK_CHECK(vkBeginCommandBuffer(_pWindow->m_pCmdBuffers[uFrameIdx], &oCommandBufferBeginInfo))
 
     VkClearValue aClearColors[3];
     aClearColors[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
@@ -1992,7 +1975,7 @@ namespace vk
     oRenderPassBeginInfo.clearValueCount = 3u;
     oRenderPassBeginInfo.pClearValues = aClearColors;    
 
-    vkCmdBeginRenderPass(_pWindow->m_hRenderCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);    
+    vkCmdBeginRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     s_oGlobalData.m_pUsingWindow = _pWindow;
 
@@ -2002,7 +1985,9 @@ namespace vk
   void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, void* _pConstantData, uint32_t _uConstantSize)
   {
 
-    VkCommandBuffer& hCmdBuffer = _pMesh->m_pOwnerWindow->m_hRenderCmdBuffer;
+    APIWindow* pWindow = _pMesh->m_pOwnerWindow;
+
+    VkCommandBuffer& hCmdBuffer = pWindow->m_pCmdBuffers[pWindow->m_uCurrFrameIdx];
 
     APIRenderState* pRenderState = s_oGlobalData.m_pUsingRenderState;
 
@@ -2021,13 +2006,15 @@ namespace vk
   void EndDraw(APIWindow* _pWindow)
   {    
 
-    vkCmdEndRenderPass(_pWindow->m_hRenderCmdBuffer);
+    const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
 
-    VK_CHECK(vkEndCommandBuffer(_pWindow->m_hRenderCmdBuffer))
+    vkCmdEndRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx]);
 
-    VkSemaphore aWaitSemaphores[] = { _pWindow->m_hImageAvailableSemaphore };
+    VK_CHECK(vkEndCommandBuffer(_pWindow->m_pCmdBuffers[uFrameIdx]))
+
+    VkSemaphore aWaitSemaphores[] = { _pWindow->m_pImageAvailableSemaphores[uFrameIdx] };
     VkPipelineStageFlags aWaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    VkSemaphore aSignalSemaphores[] = { _pWindow->m_hRenderFinishedSemaphore };
+    VkSemaphore aSignalSemaphores[] = { _pWindow->m_pRenderFinishedSemaphores[uFrameIdx] };
 
     VkSubmitInfo oSubmitInfo{};
     oSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -2035,11 +2022,11 @@ namespace vk
     oSubmitInfo.pWaitSemaphores = aWaitSemaphores;
     oSubmitInfo.pWaitDstStageMask = aWaitStages;
     oSubmitInfo.commandBufferCount = 1u;
-    oSubmitInfo.pCommandBuffers = &_pWindow->m_hRenderCmdBuffer;
+    oSubmitInfo.pCommandBuffers = &_pWindow->m_pCmdBuffers[uFrameIdx];
     oSubmitInfo.signalSemaphoreCount = 1u;
     oSubmitInfo.pSignalSemaphores = aSignalSemaphores;
 
-    VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, _pWindow->m_hInFlightFence))
+    VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, _pWindow->m_pInFlightFences[uFrameIdx]))
 
     VkSwapchainKHR swapChains[] = { _pWindow->m_hSwapchain };
 
@@ -2054,7 +2041,9 @@ namespace vk
 
     VK_CHECK(vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo))
 
-    _pWindow->m_uCurrSwapchainImageIdx = (_pWindow->m_uCurrSwapchainImageIdx + 1u) % _pWindow->m_uSwapchainImageCount;
+    //_pWindow->m_uCurrSwapchainImageIdx = (_pWindow->m_uCurrSwapchainImageIdx + 1u) % _pWindow->m_uSwapchainImageCount;
+
+    _pWindow->m_uCurrFrameIdx = (_pWindow->m_uCurrFrameIdx + 1u) % _pWindow->m_uSwapchainImageCount;
   }
 
 }

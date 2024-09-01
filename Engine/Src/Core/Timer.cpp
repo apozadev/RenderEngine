@@ -14,5 +14,6 @@ long long Timer::Mark()
 
 long long Timer::Peek()
 {
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last).count();
+	const auto now = std::chrono::steady_clock::now();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
 }

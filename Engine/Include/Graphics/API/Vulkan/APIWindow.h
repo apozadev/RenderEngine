@@ -11,11 +11,9 @@ namespace vk
   {  
     VkDevice m_hDevice;
 
-    VkCommandPool m_hRenderCmdPool;
-    VkCommandPool m_hPresentCmdPool;
+    VkCommandPool m_hCmdPool;
 
-    VkCommandBuffer m_hRenderCmdBuffer;
-    VkCommandBuffer m_hPresentCmdBuffer;
+    VkCommandBuffer* m_pCmdBuffers;
 
     VkQueue m_hRenderQueue;
     VkQueue m_hPresentQueue;
@@ -42,14 +40,16 @@ namespace vk
 
     VkRenderPass m_hRenderPass;
 
-    VkSemaphore m_hImageAvailableSemaphore;
-    VkSemaphore m_hRenderFinishedSemaphore;
+    VkSemaphore* m_pImageAvailableSemaphores;
+    VkSemaphore* m_pRenderFinishedSemaphores;
 
-    VkFence m_hInFlightFence;
+    VkFence* m_pInFlightFences;
 
     uint32_t m_uSwapchainImageCount;
 
     uint32_t m_uCurrSwapchainImageIdx;    
+
+    uint32_t m_uCurrFrameIdx;    
 
     VkDescriptorPool m_hDescPool;
 

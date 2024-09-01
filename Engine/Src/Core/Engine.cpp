@@ -15,7 +15,7 @@
 
 int Engine::Initialize()
 {    
-  m_fTargetFPS = 60.f;
+  m_fTargetFPS = 120.f;
 
   // Init subsystems
   Renderer::GetInstance()->Initialize();
@@ -79,7 +79,7 @@ int Engine::Run()
 
     m_bRunning = true;
 
-    long long ullMinFrameTime = (long long)(1000.f / m_fTargetFPS);
+    long long llMinFrameTime = (long long)(1000.f / m_fTargetFPS);
     Timer oTimer;
 
     while (m_bRunning)
@@ -89,27 +89,28 @@ int Engine::Run()
         ScheduleShutDown();
       }
       else
-      {
-        InputManager::GetInstance()->PollEvents();          
+      {  
+        long long llElapsed = oTimer.Peek() - llMinFrameTime;
 
-        for (Scene& rScene : m_lstScenes)
+        if (llElapsed > llMinFrameTime)
         {
-          rScene.Update(m_fDt);
+          oTimer.Mark();
+
+          m_fDt = (float)llElapsed * 0.001f;
+          m_fGameTime += m_fDt;
+
+          InputManager::GetInstance()->PollEvents();
+
+          for (Scene& rScene : m_lstScenes)
+          {
+            rScene.Update(m_fDt);
+          }
+
+          Renderer::GetInstance()->Draw();
+
+          UpdateWindows();
         }
-
-        Renderer::GetInstance()->Draw();
-
-        UpdateWindows();
-      }
-
-      long long ullElapsed = oTimer.Peek();
-      long long ullToSleep = ullMinFrameTime - ullElapsed;
-      ullToSleep = ullToSleep < 0 ? 0 : ullToSleep;
-      std::this_thread::sleep_for(std::chrono::milliseconds(ullToSleep));
-      oTimer.Mark();
-
-      m_fDt = (float)(ullElapsed + ullToSleep) * 0.001f;
-      m_fGameTime += m_fDt;
+      }      
     }    
 
     ShutDown();
