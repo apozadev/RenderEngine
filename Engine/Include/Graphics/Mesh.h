@@ -32,8 +32,7 @@ public:
 private: 
 
   void Draw();
-  Window* GetWindow() const;
-  uint64_t GetKey() const;
+  Window* GetWindow() const;  
 
   class Impl;
   std::unique_ptr<Impl> m_pImpl;

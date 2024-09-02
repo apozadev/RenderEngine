@@ -23,11 +23,12 @@ public:
 
   std::unique_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
 
-  Window* m_pWindow;
+  Window* m_pWindow;  
 
   Impl(Window* _pWindow)
     : m_pWindow(_pWindow)
-  {
+  {    
+
     _pWindow->SetUsing();
     m_pAPICamera = api::CreateAPICamera();
 
@@ -65,7 +66,7 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
   GlobalBufferData oData{};
 
   glm::mat4x4 mView = glm::inverse(_oParentTransform.GetMatrix());
-  oData.m_mViewProj = glm::perspective(45.f, (float)m_pImpl->m_pWindow->GetWidth() / m_pImpl->m_pWindow->GetHeight(), 0.1f, 100.0f) * mView;
+  oData.m_mViewProj = glm::perspective(45.f, (float)m_pImpl->m_pWindow->GetWidth() / m_pImpl->m_pWindow->GetHeight(), m_fNear, m_fFar) * mView;
   
   m_pImpl->m_pCBuffer->SetData(&oData);
 

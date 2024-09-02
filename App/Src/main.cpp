@@ -35,11 +35,11 @@ int main(){
   Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(pWindow
     , "Assets/Shaders/Vertex/VertexShader.hlsl"
     , "Assets/Shaders/Pixel/PixelShader"
-    , false
+    , true
     , BlendOp::BLEND_OP_ADD
     , BlendFactor::BLEND_SRC_ALPHA
     , BlendFactor::BLEND_INV_SRC_ALPHA
-    , true
+    , false
     , true);
 
   pMaterial->Setup();

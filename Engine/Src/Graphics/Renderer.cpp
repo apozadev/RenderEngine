@@ -13,18 +13,56 @@
 
 #include <algorithm>
 
+#define KEYPOS_LAST 64
+
+#define GEN_KEY(value, size, pos) static_cast<uint64_t>(value) << (KEYPOS_LAST - size - pos)
+
 struct Renderer::Job
 {
   Mesh* m_pMesh;
   const MaterialInstance* m_pMaterial;
   const Window* m_pWindow;
-  const Transform* m_pTransform;
+  const Transform* m_pMeshTransform;
   uint64_t m_uKey;
 
   static bool Compare(const Job& j1, const Job& j2)
   {
     return j1.m_uKey < j2.m_uKey;
   }
+
+  void UpdateRenderKey(Camera* _pCamera, const Transform* _pCamTransform)
+  {    
+    const RenderStateInfo& rRSInfo = m_pMaterial->GetMaterial()->GetRenderStateInfo();
+    bool bTranslucent = rRSInfo.m_bBlendEnabled;
+
+    m_uKey = 0u;    
+
+    // Window id
+    m_uKey |= GEN_KEY(m_pWindow->GetId(), 8, KEYPOS_LAST);
+
+    // Translucent? 
+    m_uKey |= GEN_KEY(bTranslucent,       1, KEYPOS_LAST - 8);
+
+    // Distance from camera
+
+    float fDist = glm::distance(_pCamTransform->GetPos(), m_pMeshTransform->GetPos());
+    float fNormDist = fmax(fmin((fDist - _pCamera->m_fNear) / _pCamera->m_fFar, 1.f), 0.f);
+
+    if (bTranslucent)
+    {      
+      fNormDist = 1.f - fNormDist;
+    }
+
+    uint32_t uDist = static_cast<uint32_t>(4294967295.0f * fNormDist);
+
+    m_uKey |= GEN_KEY(uDist, 32, KEYPOS_LAST - 9);
+  }
+};
+
+struct Renderer::CamView
+{
+  Camera* m_pCamera;
+  const Transform* m_pTransform;
 };
 
 class Renderer::Impl
@@ -36,7 +74,7 @@ public:
   ~Impl() {}
 
   std::vector<Job> m_lstJobs;   
-  std::vector<Camera*> m_lstCameras;
+  std::vector<CamView> m_lstCamViews;
 };
 
 Renderer::Renderer() : m_pImpl(std::make_unique<Impl>())
@@ -64,20 +102,18 @@ void Renderer::ShutDown()
   api::ShutDownAPI();
 }
 
-void Renderer::SubmitCamera(Camera* _pCamera)
+void Renderer::SubmitCamera(Camera* _pCamera, const Transform* _pTransform)
 {
-  m_pImpl->m_lstCameras.push_back(_pCamera);
+  m_pImpl->m_lstCamViews.push_back({ _pCamera, _pTransform });
 }
 
 void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
-{
-  m_pImpl->m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, _pMesh->GetKey()});
+{    
+  m_pImpl->m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, 0u });
 }
 
 void Renderer::Draw()
 {  
-
-  std::sort(m_pImpl->m_lstJobs.begin(), m_pImpl->m_lstJobs.end(), Job::Compare);
 
   const Window* pCurrWindow = nullptr;
 
@@ -85,9 +121,21 @@ void Renderer::Draw()
 
   bool bSkipCurrWindow = false;
 
-  for (Camera* pCamera : m_pImpl->m_lstCameras)
+  for (CamView& rCamView : m_pImpl->m_lstCamViews)
   {    
 
+    Camera* pCamera = rCamView.m_pCamera;
+
+    // Update key for current camera
+    for (Job& rJob : m_pImpl->m_lstJobs)
+    {
+      rJob.UpdateRenderKey(pCamera, rCamView.m_pTransform);      
+    }
+
+    // Sort jobs
+    std::sort(m_pImpl->m_lstJobs.begin(), m_pImpl->m_lstJobs.end(), Job::Compare);
+
+    // Perform jobs
     for (Job& rJob : m_pImpl->m_lstJobs)
     {
 
@@ -119,7 +167,7 @@ void Renderer::Draw()
           pCurrMaterial = pMaterial;
         }
 
-        rJob.m_pMesh->UpdateTransform(*rJob.m_pTransform);
+        rJob.m_pMesh->UpdateTransform(*rJob.m_pMeshTransform);
 
         pMatInstance->Bind();
 
@@ -134,5 +182,5 @@ void Renderer::Draw()
   }
 
   m_pImpl->m_lstJobs.clear();
-  m_pImpl->m_lstCameras.clear();
+  m_pImpl->m_lstCamViews.clear();
 }

@@ -52,10 +52,10 @@ Window* Mesh::GetWindow() const
   return m_pImpl->m_pWindow;
 }
 
-uint64_t Mesh::GetKey() const
-{
-  return static_cast<uint64_t>(m_pImpl->m_pWindow->GetId()) << (sizeof(uint64_t) - sizeof(uint8_t));
-}
+//uint64_t Mesh::GetKey() const
+//{
+//  return static_cast<uint64_t>(m_pImpl->m_pWindow->GetId()) << (sizeof(uint64_t) - sizeof(uint8_t));
+//}
 
 void Mesh::UpdateTransform(const Transform& _oParentTransform)
 {    

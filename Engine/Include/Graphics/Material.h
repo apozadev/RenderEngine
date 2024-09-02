@@ -5,6 +5,7 @@
 
 #include "Graphics/Window.h"
 #include "Graphics/BlendEnums.h"
+#include "Graphics/RenderStateInfo.h"
 
 class Resource;
 
@@ -40,6 +41,8 @@ public:
 
   void SetUsing() const;
 
+  const RenderStateInfo& GetRenderStateInfo() { return m_oInfo; }
+
   Material& operator=(Material&& _rMaterial);
 
 private:      
@@ -50,4 +53,6 @@ private:
 
   class Impl;
   std::unique_ptr<Impl> m_pImpl;  
+
+  RenderStateInfo m_oInfo;
 };

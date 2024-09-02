@@ -30,7 +30,7 @@ public:
 
   void Setup();
 
-  void Bind() const;  
+  void Bind() const;    
 
 private:
 

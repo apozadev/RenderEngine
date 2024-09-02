@@ -3,44 +3,25 @@
 #include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/Window.h"
 #include "Graphics/Mesh.h"
-#include "Graphics/RenderStateInfo.h"
 #include "Core/Exception.h"
 
 class Material::Impl
 {
 public:
   api::APIRenderState* m_pAPIRenderState;
-  std::vector<Resource*> m_lstResources;
+  std::vector<Resource*> m_lstResources;  
 
-  /*bool m_bBlendEnabled;
-  BlendOp m_eBlendOp;
-  BlendFactor m_eSrcBlendFactor;
-  BlendFactor m_eDstBlendFactor; */
-
-  Impl(Window* _pWindow
-    , const std::string& _sVSFilename
-    , const std::string& _sPSFilename
-    , bool _bBlendEnabled
-    , BlendOp _eBlendOp
-    , BlendFactor _eSrcBlendFactor
-    , BlendFactor _eDstBlendFactor
-    , bool _bDepthWrite
-    , bool _bDepthRead)
+  Impl(Window* _pWindow, const RenderStateInfo& _rInfo)
   {
     _pWindow->SetUsing();
 
-    RenderStateInfo oInfo{};
-    oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
-    oInfo.m_sVSFilename = _sVSFilename;
-    oInfo.m_sPSFilename = _sPSFilename;    
-    oInfo.m_bBlendEnabled = _bBlendEnabled;
-    oInfo.m_eBlendOp = _eBlendOp;
-    oInfo.m_eSrcBlendFactor = _eSrcBlendFactor;
-    oInfo.m_eDstBlendFactor = _eDstBlendFactor;
-    oInfo.m_bDepthWrite = _bDepthWrite;
-    oInfo.m_bDepthRead = _bDepthRead;
+    m_pAPIRenderState = api::CreateAPIRenderState(_rInfo);
 
-    m_pAPIRenderState = api::CreateAPIRenderState(oInfo);
+    // 63       | 55            | 54        | 22
+    // -------------------------------------------------
+    // 8 window | 1 translucent | 32 depth
+
+    // m_uRenderKey = static_cast<uint64_t>(_bBlendEnabled ? 1 : 0) << (55);    
   }
 
   ~Impl()
@@ -64,7 +45,19 @@ Material::Material(Window* _pWindow
   , bool _bDepthWrite
   , bool _bDepthRead)
 {
-  m_pImpl = std::make_unique<Impl>(_pWindow, _sVSFilename, _sPSFilename, _bBlendEnabled, _eBlendOp, _eSrcBlendFactor, _eDstBlendFactor, _bDepthWrite, _bDepthRead);    
+
+  m_oInfo = {};
+  m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
+  m_oInfo.m_sVSFilename = _sVSFilename;
+  m_oInfo.m_sPSFilename = _sPSFilename;
+  m_oInfo.m_bBlendEnabled = _bBlendEnabled;
+  m_oInfo.m_eBlendOp = _eBlendOp;
+  m_oInfo.m_eSrcBlendFactor = _eSrcBlendFactor;
+  m_oInfo.m_eDstBlendFactor = _eDstBlendFactor;
+  m_oInfo.m_bDepthWrite = _bDepthWrite;
+  m_oInfo.m_bDepthRead = _bDepthRead;
+  
+  m_pImpl = std::make_unique<Impl>(_pWindow, m_oInfo);    
 }
 
 Material::Material(Material&& rMaterial)

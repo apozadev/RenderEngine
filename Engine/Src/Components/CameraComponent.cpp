@@ -101,5 +101,5 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
 void CameraComponent::Update(float _fTimeStep) 
 {  
   m_oCamera.UpdateTransform(m_pEntity->GetGlobalTransform());
-  Renderer::GetInstance()->SubmitCamera(&m_oCamera);
+  Renderer::GetInstance()->SubmitCamera(&m_oCamera, &m_pEntity->GetGlobalTransform());
 }

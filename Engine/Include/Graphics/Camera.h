@@ -26,8 +26,11 @@ public:
 
   uint64_t GetKey() const;
 
+  float m_fNear = 0.1f;
+  float m_fFar = 100.f;
+
 private:
 
   class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+  std::unique_ptr<Impl> m_pImpl;  
 };
