@@ -9,6 +9,6 @@ PIXEL_MAIN_BEGIN
   vec4 color = sampleTex(albedoTex, inUv);  
 
   outColor = color * (max(0, dot(lightDir, normalize(inNormal))) + ambientFactor);
-  outColor.a = 0.7f;
+  outColor.a = 0.7f; 
  
 PIXEL_MAIN_END

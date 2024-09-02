@@ -1,6 +1,7 @@
 
 import sys
 import os
+import shutil
 
 sDx11CommonFile = "/ShaderInclude/DX11/Common.hlsli"
 sDx11VertexCommonFile = "/ShaderInclude/DX11/VertexCommon.hlsli"
@@ -65,7 +66,7 @@ def main():
 			os.system("fxc -E main -T " + sCompilerTypeFlag + " -Fo " + sCompilerOutputFilename + " " + sOutFilename)
 		else:
 			os.system(os.environ["VULKAN_SDK"] + "/Bin/glslc.exe " + sOutFilename + " -o " + sCompilerOutputFilename)
-		os.remove(sOutFilename)
+		shutil.rmtree(sOutDir)		
 
 if __name__=="__main__": 
 	main() 

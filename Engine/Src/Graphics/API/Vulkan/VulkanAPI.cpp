@@ -660,8 +660,7 @@ namespace vk
 
     // Choose present mode for swapchain
 
-    VkPresentModeKHR ePresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    /*
+    VkPresentModeKHR ePresentMode = VK_PRESENT_MODE_FIFO_KHR;    
     {
       uint32_t uPresentModeCount = 0;
       VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(s_oGlobalData.m_hPhysicalDevice, _pWindow->m_hSurface, &uPresentModeCount, NULL))
@@ -678,7 +677,7 @@ namespace vk
         }
 
       delete[] pPresentModes;
-    }*/
+    }
 
 
     // Create swapchain
