@@ -8,6 +8,7 @@ namespace api
   {
 
     struct APIRenderState;    
+    struct APIWindow;    
 
     struct APIRenderSubState
     {
@@ -15,7 +16,9 @@ namespace api
       
       VkDescriptorSet* m_pDescSets;
 
-      APIRenderState* m_pRenderState;
+      VkDescriptorSetLayout m_hDecSetLayout;
+
+      APIWindow* m_pOwnerWindow;
     };
 
   }

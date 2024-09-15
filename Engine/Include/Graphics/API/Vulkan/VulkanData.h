@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "Graphics/API/Vulkan/DescriptorUtils.h"
+#include "Graphics/API/Vulkan/RenderTargetBuilder.h"
 
 namespace api
 {
@@ -10,7 +11,9 @@ namespace vk
 {
 
   struct APIWindow;
+  struct APIRenderState;
   struct APIRenderSubState;
+  struct APIRenderTarget;  
 
   struct VulkanData
   {
@@ -60,10 +63,11 @@ namespace vk
 
     APIRenderState* m_pUsingRenderState = nullptr;
     APIRenderSubState* m_pUsingSubState = nullptr;
-       
-    DescriptorSetLayoutBuilder m_oGlobalLayoutBuilder;
+    APIRenderTarget* m_pUsingRenderTarget = nullptr;          
 
     DescriptorSetUpdater m_oDescSetUpdater;
+
+    RenderTargetBuilder m_oRenderTargetBuilder;
 
     uint32_t m_uAPIMinorVersion;
     uint32_t m_uAPIMayorVersion;

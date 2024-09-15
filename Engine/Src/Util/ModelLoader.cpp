@@ -23,6 +23,9 @@ void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, Window* _pW
 
 void ModelLoader::LoadModel(const char* _sFilename, Material* _pMaterial, Window* _pWindow, ModelComponent* pModelComp_)
 {
+
+  _pWindow->SetUsing();
+
   Assimp::Importer oImporter;
 
   std::string sFullFilename(_sFilename);

@@ -115,7 +115,7 @@ namespace api
 
 		void EndSubStateSetup();
 
-		void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState);
+		void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency);
 
 		void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState);
 

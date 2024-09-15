@@ -3,13 +3,27 @@
 #include "Core/Entity.h"
 #include "Graphics/Window.h"
 #include "Graphics/Renderer.h"
+#include "Graphics/RenderPipelineConfig.h"
 #include "Components/CameraComponent.h"
 #include "Math/Utils.h"
 
-CameraComponent::CameraComponent(Window* _pWindow)
-  : m_oCamera(_pWindow)
+CameraComponent::CameraComponent(Window* _pWindow)  
 {
 
+  /*RenderTargetConfig oRT = {};
+  oRT.m_bHasDepthStencil */
+
+  RenderStepConfig oStep = {};
+  oStep.m_sRenderTargetId = "DEFAULT";
+
+  RenderPipelineConfig oConfig = {};
+  oConfig.m_lstSteps.push_back(std::move(oStep));
+
+  m_pCamera = std::make_unique<Camera>(_pWindow, &oConfig);
+}
+
+CameraComponent::~CameraComponent()
+{
 }
 
 void CameraComponent::Start() 
@@ -18,7 +32,7 @@ void CameraComponent::Start()
   m_fNear = 0.1F;
   m_fFar = 100.f;
 
-  Window& rWindow = *m_oCamera.GetWindow();
+  Window& rWindow = *m_pCamera->GetWindow();
 
   double dPosX, dPosY;
   rWindow.GetMousePos(dPosX, dPosY);
@@ -39,7 +53,7 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
   constexpr float fMoveSpeed = 10.f;
   constexpr float fRotSpeed = 0.3f;  
 
-  Window& rWindow = *m_oCamera.GetWindow();
+  Window& rWindow = *m_pCamera->GetWindow();
 
   Transform& rTr = m_pEntity->GetMutableLocalTransform();  
 
@@ -100,6 +114,6 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
 
 void CameraComponent::Update(float _fTimeStep) 
 {  
-  m_oCamera.UpdateTransform(m_pEntity->GetGlobalTransform());
-  Renderer::GetInstance()->SubmitCamera(&m_oCamera, &m_pEntity->GetGlobalTransform());
+  m_pCamera->UpdateTransform(m_pEntity->GetGlobalTransform());
+  Renderer::GetInstance()->SubmitCamera(m_pCamera.get(), &m_pEntity->GetGlobalTransform());
 }

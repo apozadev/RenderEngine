@@ -116,6 +116,11 @@ int Window::GetHeight() const
   return api::GetWindowHeight(m_pImpl->m_pAPIWindow);
 }
 
+void Window::BindDefaultRenderTarget() const
+{
+  api::BindDefaultRenderTarget(m_pImpl->m_pAPIWindow);
+}
+
 bool Window::ShouldClose() const 
 {
   return glfwWindowShouldClose(m_pImpl->m_pGlfwWindow);

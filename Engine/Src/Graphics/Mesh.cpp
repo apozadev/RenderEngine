@@ -25,7 +25,6 @@ public:
     
     m_pAPIMesh = api::CreateAPIMesh(_lstVertices.data(), m_uVertexCount * sizeof(Vertex), _lstIndices.data(), m_uIndexCount * sizeof(uint16_t));
 
-    api::SetUsingAPIWindow(nullptr);
   }
 
   ~Impl()

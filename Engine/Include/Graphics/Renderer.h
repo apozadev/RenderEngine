@@ -13,9 +13,6 @@ class Camera;
 class Renderer : public Singleton<Renderer>
 {
 
-  struct Job;
-  struct CamView;
-
 public:  
 
   Renderer();

@@ -6,6 +6,8 @@
 #include "Graphics/Window.h"
 #include "Graphics/Camera.h"
 #include "Graphics/ConstantBuffer.h"
+#include "Graphics/Job.h"
+#include "Graphics/RenderPipeline.h"
 
 #include "Math/Transform.h"
 
@@ -13,53 +15,9 @@
 
 #include <algorithm>
 
-#define KEYPOS_LAST 64
+#include "Graphics/RenderPipeline.h"
 
-#define GEN_KEY(value, size, pos) static_cast<uint64_t>(value) << (KEYPOS_LAST - size - pos)
-
-struct Renderer::Job
-{
-  Mesh* m_pMesh;
-  const MaterialInstance* m_pMaterial;
-  const Window* m_pWindow;
-  const Transform* m_pMeshTransform;
-  uint64_t m_uKey;
-
-  static bool Compare(const Job& j1, const Job& j2)
-  {
-    return j1.m_uKey < j2.m_uKey;
-  }
-
-  void UpdateRenderKey(Camera* _pCamera, const Transform* _pCamTransform)
-  {    
-    const RenderStateInfo& rRSInfo = m_pMaterial->GetMaterial()->GetRenderStateInfo();
-    bool bTranslucent = rRSInfo.m_bBlendEnabled;
-
-    m_uKey = 0u;    
-
-    // Window id
-    m_uKey |= GEN_KEY(m_pWindow->GetId(), 8, KEYPOS_LAST);
-
-    // Translucent? 
-    m_uKey |= GEN_KEY(bTranslucent,       1, KEYPOS_LAST - 8);
-
-    // Distance from camera
-
-    float fDist = glm::distance(_pCamTransform->GetPos(), m_pMeshTransform->GetPos());
-    float fNormDist = fmax(fmin((fDist - _pCamera->m_fNear) / _pCamera->m_fFar, 1.f), 0.f);
-
-    if (bTranslucent)
-    {      
-      fNormDist = 1.f - fNormDist;
-    }
-
-    uint32_t uDist = static_cast<uint32_t>(4294967295.0f * fNormDist);
-
-    m_uKey |= GEN_KEY(uDist, 32, KEYPOS_LAST - 9);
-  }
-};
-
-struct Renderer::CamView
+struct CamView
 {
   Camera* m_pCamera;
   const Transform* m_pTransform;
@@ -115,11 +73,9 @@ void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, cons
 void Renderer::Draw()
 {  
 
-  const Window* pCurrWindow = nullptr;
+  Window* pLastWindow = nullptr;
 
-  const Material* pCurrMaterial = nullptr;
-
-  bool bSkipCurrWindow = false;
+  bool bSkipWindow = false;
 
   for (CamView& rCamView : m_pImpl->m_lstCamViews)
   {    
@@ -130,55 +86,40 @@ void Renderer::Draw()
     for (Job& rJob : m_pImpl->m_lstJobs)
     {
       rJob.UpdateRenderKey(pCamera, rCamView.m_pTransform);      
+    }    
+
+    Window* pCurrWindow = pCamera->GetWindow();
+
+    // Bind new window?
+    if (pLastWindow != pCurrWindow)
+    {
+      if (pLastWindow != nullptr)
+      {
+        pLastWindow->EndDraw();
+      }
+      bSkipWindow = pCurrWindow->BeginDraw() != 0;
+      pLastWindow = pCurrWindow;
+    }
+    
+    if (bSkipWindow)
+    {
+      break;
     }
 
     // Sort jobs
     std::sort(m_pImpl->m_lstJobs.begin(), m_pImpl->m_lstJobs.end(), Job::Compare);
 
-    // Perform jobs
-    for (Job& rJob : m_pImpl->m_lstJobs)
-    {
+    // Execute pipeline    
 
-      if (rJob.m_pWindow != pCamera->GetWindow())
-      {
-        continue;
-      }
+    pCamera->Bind();
 
-      if (pCurrWindow != rJob.m_pWindow)
-      {
-        if (pCurrWindow != nullptr && !bSkipCurrWindow)
-        {
-          pCurrWindow->EndDraw();
-        }
-        bSkipCurrWindow = rJob.m_pWindow->BeginDraw() != 0;        
-        pCurrWindow = rJob.m_pWindow;
-      }
+    pCamera->GetRenderPipeline()->Execute(m_pImpl->m_lstJobs, pCamera);
 
-      if (!bSkipCurrWindow)
-      {
-        const MaterialInstance* pMatInstance = rJob.m_pMaterial;
+  }
 
-        const Material* pMaterial = pMatInstance->GetMaterial();
-
-        if (pMaterial != pCurrMaterial)
-        {
-          pMaterial->Bind();
-          pCamera->Bind();
-          pCurrMaterial = pMaterial;
-        }
-
-        rJob.m_pMesh->UpdateTransform(*rJob.m_pMeshTransform);
-
-        pMatInstance->Bind();
-
-        rJob.m_pMesh->Draw();
-      }
-    }
-
-    if (pCurrWindow != nullptr && !bSkipCurrWindow)
-    {
-      pCurrWindow->EndDraw();
-    }
+  if (!bSkipWindow && pLastWindow)
+  {
+    pLastWindow->EndDraw();
   }
 
   m_pImpl->m_lstJobs.clear();

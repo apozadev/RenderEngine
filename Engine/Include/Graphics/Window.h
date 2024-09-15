@@ -32,6 +32,8 @@ public:
   int GetWidth() const;
   int GetHeight() const;
 
+  void BindDefaultRenderTarget() const;
+
   bool IsKeyPressed(char _cKeyCode) const;
   bool IsMousePressed(int _iButton) const;
   void GetMousePos(double& iX_, double& iY_) const;

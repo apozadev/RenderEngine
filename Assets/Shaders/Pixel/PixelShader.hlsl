@@ -1,5 +1,5 @@
 
-Texture(albedoTex, 2, 0)
+Texture(albedoTex, 3, 0)
 
 PIXEL_MAIN_BEGIN
 

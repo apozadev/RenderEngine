@@ -13,7 +13,7 @@ public:
     : m_pMaterial(_pMaterial)
   {    
     m_pMaterial->SetUsing();
-    m_pSubState = api::CreateAPIRenderSubState();
+    m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
     api::SetUsingAPIRenderState(nullptr);
   }
 
@@ -47,14 +47,16 @@ MaterialInstance::~MaterialInstance()
 void MaterialInstance::Setup()
 {  
 
+  m_pImpl->m_pMaterial->SetUsing();
+
   api::BeginSubStateSetup(m_pImpl->m_pSubState);
 
   for (const Resource* pResource : m_lstResources)
   {        
-    pResource->Setup(ResourceFrequency::MATERIAL_INSTANCE);
+    pResource->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
   }
 
-  api::EndSubStateSetup();
+  api::EndSubStateSetup(ResourceFrequency::MATERIAL_INSTANCE);
   
   m_bSetup = true;
 }
@@ -71,7 +73,7 @@ void MaterialInstance::Bind() const
     THROW_GENERIC_EXCEPTION("Material Instance was not set up")
   }  
 
-  api::BindAPIRenderSubState(m_pImpl->m_pSubState);
+  api::BindAPIRenderSubState(m_pImpl->m_pSubState, ResourceFrequency::MATERIAL_INSTANCE);
 
   for (const Resource* pResource : m_lstResources)
   {

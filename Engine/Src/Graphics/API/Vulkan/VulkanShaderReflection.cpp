@@ -1,6 +1,8 @@
 #include "Graphics/API/Vulkan/VulkanShaderReflection.h"
 #include "Graphics/API/Vulkan/DescriptorUtils.h"
 
+#include "Graphics/ResourceFrequency.h"
+
 #include "Core/Exception.h"
 
 //#include "spirv-reflect/spirv_reflect.h"
@@ -47,11 +49,11 @@ void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilde
 
     DescriptorSetLayoutBuilder* pLayoutBuilder = nullptr;
     
-    if (pDescSet->set == 1u)
+    if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
     {
       pLayoutBuilder = &oMatLayoutBuilder_;
     }
-    else if (pDescSet->set == 2u)
+    else if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL_INSTANCE))
     {
       pLayoutBuilder = &oInstLayoutBuilder_;
     }

@@ -97,7 +97,17 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/API/DX11/DX11BindSlotOffset.h" 
 	"Include/Graphics/API/DX11/APITexture.h" 
 	"Include/Graphics/API/DX11/APIRenderTarget.h" 
-	"Include/Graphics/BlendEnums.h" )
+	"Include/Graphics/BlendEnums.h"  
+	"Include/Graphics/RenderTarget.h" 
+	"Include/Graphics/API/Vulkan/APIRenderTarget.h"
+	"Include/Graphics/RenderPipeline.h" 
+	"Src/Graphics/RenderTarget.cpp"
+	"Include/Graphics/API/Vulkan/APIInternal.h"
+	"Src/Graphics/API/Vulkan/APIInternal.cpp"
+	"Include/Graphics/API/Vulkan/RenderTargetBuilder.h"
+	"Src/Graphics/API/Vulkan/RenderTargetBuilder.cpp"
+	"Include/Graphics/RenderStep.h"
+	"Src/Graphics/RenderStep.cpp" "Src/Graphics/RenderPipeline.cpp" "Include/Graphics/RenderPipelineConfig.h" "Include/Graphics/Job.h" "Src/Graphics/Job.cpp")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -113,7 +123,7 @@ target_include_directories(${PROJECT_NAME}
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
-set(TARGET_RENDER_API ${RENDER_API_DX11})
+set(TARGET_RENDER_API ${RENDER_API_VULKAN})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
 	RENDER_API=${TARGET_RENDER_API}

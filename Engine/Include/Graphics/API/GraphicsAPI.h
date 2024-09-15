@@ -28,6 +28,7 @@ namespace api
     struct APIRenderState;
     struct APIRenderSubState;
     struct APITexture;
+    struct APIRenderTarget;
   } 
 
   typedef struct API::APIWindow APIWindow;
@@ -37,6 +38,7 @@ namespace api
   typedef struct API::APIRenderState APIRenderState;
   typedef struct API::APIRenderSubState APIRenderSubState;
   typedef struct API::APITexture APITexture;
+  typedef struct API::APIRenderTarget APIRenderTarget;
 
   // Global
 
@@ -51,13 +53,12 @@ namespace api
   void OnWindowResize(APIWindow* _pWindow);
   uint32_t GetWindowWidth(APIWindow* _pWindow);
   uint32_t GetWindowHeight(APIWindow* _pWindow);
+  void BindDefaultRenderTarget(APIWindow* _pWindow);
   void DestroyAPIWindow(APIWindow* _pWindow);
 
   // Camera
 
   APICamera* CreateAPICamera();
-  void BeginCameraSubStateSetup(APICamera* _pCamera);
-  void EndCameraSubstateSetup(APICamera* _pCamera);
   void BindAPICamera(APICamera* _pCamera);
   void DestroyAPICamera(APICamera* _pCamera);
 
@@ -84,19 +85,30 @@ namespace api
 
   // Render substate
 
-  APIRenderSubState* CreateAPIRenderSubState();
+  APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency);
   void BeginSubStateSetup(APIRenderSubState* _pAPIRenderSubState);
   void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo);
   void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);
-  void EndSubStateSetup();
-  void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState);
+  void EndSubStateSetup(ResourceFrequency _eFrequency);
+  void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency);
   void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState);
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels);
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples);
   void BindAPITexture(APITexture* _pTexture);
-  void DestroyAPITexture(APITexture* _pTexture);
+  void DestroyAPITexture(APITexture* _pTexture);  
+
+  // RenderTarget
+
+  APIRenderTarget* CreateAPIRenderTarget();
+  void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget);
+  void RenderTargetAddColorTexture(APITexture* _pTexture);
+  void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
+  void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
+  void EndRenderTargetSetup();
+  void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
   // Drawing
 

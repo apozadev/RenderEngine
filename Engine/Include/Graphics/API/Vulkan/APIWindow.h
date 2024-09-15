@@ -54,6 +54,10 @@ namespace vk
     VkDescriptorPool m_hDescPool;
 
     VkDescriptorSetLayout m_hGlobalDescSetLayout;    
+    VkDescriptorSetLayout m_hPassDescSetLayout;    
+
+    DescriptorSetLayoutBuilder m_oGlobalLayoutBuilder;
+    DescriptorSetLayoutBuilder m_oPassLayoutBuilder;
 
     bool m_bResized = false;
   };

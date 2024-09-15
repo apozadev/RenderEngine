@@ -823,7 +823,7 @@ namespace api
 
     void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
     {
-      _pTexture->m_uSlot = _oBindInfo.m_iBinding;
+      _pTexture->m_uSlot = static_cast<unsigned int>(_oBindInfo.m_iBinding + static_cast<int>(_oBindInfo.m_eLevel) * 16);
       _pTexture->m_eStage = _oBindInfo.m_eStage;
     }
 
@@ -831,7 +831,7 @@ namespace api
     {
     }
 
-    void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState)
+    void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency)
     {
     }
 

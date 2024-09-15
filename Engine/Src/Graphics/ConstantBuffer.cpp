@@ -34,7 +34,7 @@ void ConstantBufferBase::Update(const void* _pData, size_t _uSize) const
   api::UpdateAPIConstantBuffer(m_pImpl->m_pAPICbuffer, _pData, _uSize);  
 }
 
-void ConstantBufferBase::Setup(size_t _uSize, ResourceFrequency _eFrequency) const
+void ConstantBufferBase::SetupRenderSubState(size_t _uSize, ResourceFrequency _eFrequency) const
 {  
   ResourceBindInfo oBindInfo{};
   oBindInfo.m_eLevel = _eFrequency;

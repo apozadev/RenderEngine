@@ -56,11 +56,27 @@ def main():
 		if not os.path.exists(sOutDir):
 			os.makedirs(sOutDir)
 		sOutFilename = sOutDir  + "\\" + sName + sShaderExt		
+
 		with open(sFilename) as oShaderFile:
-			sShader = sCommon + oShaderFile.read()			
+			sShader = oShaderFile.read()	
+
+			if sAPI == "dx11":				
+				sNewShader = ""
+				for line in sShader.split("\n"):
+					if "Texture(" in line:
+						iCommaIdx = line.rfind(',')
+						iBind = int(line[iCommaIdx+1 : iCommaIdx+2])						
+						iSet = int(line[iCommaIdx-1 : iCommaIdx])
+						line = line[:iCommaIdx+1] + str(iBind + iSet*16) + line[iCommaIdx+2:]
+					sNewShader += line + '\n'
+				sShader = sNewShader
+			sShader = sCommon + sShader
+
 			with open(sOutFilename, mode='w', encoding='utf-8') as oOutFile:
-				oOutFile.write(sShader)			
+				oOutFile.write(sShader)		
+
 		sCompilerOutputFilename = os.path.splitext(sFilename)[0] + sBinExt		
+		
 		if sAPI == "dx11":
 			sCompilerTypeFlag = "vs_5_0" if sType == "v" else "ps_5_0"
 			os.system("fxc -E main -T " + sCompilerTypeFlag + " -Fo " + sCompilerOutputFilename + " " + sOutFilename)

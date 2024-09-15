@@ -72,7 +72,7 @@ namespace vk
     void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx);
     void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx);
 
-    void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, const DescriptorSetLayoutBuilder& _oLayoutBuilder);
+    void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, DescriptorSetLayoutBuilder* _pLayoutBuilder);
 
     void Clear() 
     { 

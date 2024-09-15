@@ -50,6 +50,11 @@ namespace api
     return API::GetWindowHeight(_pWindow);
   }
 
+  void BindDefaultRenderTarget(APIWindow* _pWindow)
+  {
+    API::BindDefaultRenderTarget(_pWindow);
+  }
+
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
     API::DestroyAPIWindow(_pWindow);
@@ -60,16 +65,6 @@ namespace api
   APICamera* CreateAPICamera()
   {
     return API::CreateAPICamera();
-  }
-
-  void BeginCameraSubStateSetup(APICamera* _pCamera)
-  {
-    API::BeginCameraSubStateSetup(_pCamera);
-  }
-
-  void EndCameraSubstateSetup(APICamera* _pCamera)
-  {
-    API::EndCameraSubstateSetup(_pCamera);
   }
 
   void BindAPICamera(APICamera* _pCamera)
@@ -118,9 +113,9 @@ namespace api
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels)
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples)
   {
-    return API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels);
+    return API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples);
   }
 
   void BindAPITexture(APITexture* _pTexture)
@@ -132,6 +127,49 @@ namespace api
   {
     API::DestroyAPITexture(_pTexture);
   }
+
+  // RenderTarget
+
+  APIRenderTarget* CreateAPIRenderTarget()
+  {
+    return API::CreateAPIRenderTarget();
+  }
+
+  void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  {
+    API::BindAPIRenderTarget(_pRenderTarget);
+  }
+
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget)
+  {
+    API::BeginRenderTargetSetup(_pRenderTarget);
+  }
+
+  void RenderTargetAddColorTexture(APITexture* _pTexture)
+  {
+    API::RenderTargetAddColorTexture(_pTexture);
+  }
+
+  void RenderTargetSetDepthStencilTexture(APITexture* _pTexture)
+  {
+    API::RenderTargetSetDepthStencilTexture(_pTexture);
+  }
+
+  void RenderTargetAddColorResolveTexture(APITexture* _pTexture)
+  {
+    API::RenderTargetAddColorResolveTexture(_pTexture);
+  }
+
+  void EndRenderTargetSetup()
+  {
+    API::EndRenderTargetSetup();
+  }
+
+  void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  {
+    API::DestroyAPIRenderTarget(_pRenderTarget);
+  }
+
 
   // Render state
 
@@ -167,9 +205,9 @@ namespace api
 
   // Render sub state
 
-  APIRenderSubState* CreateAPIRenderSubState()
+  APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)
   {
-    return API::CreateAPIRenderSubState();
+    return API::CreateAPIRenderSubState(_eFrequency);
   }
 
   void BeginSubStateSetup(APIRenderSubState* _pAPIRenderSubState)
@@ -187,14 +225,14 @@ namespace api
     API::SubStateSetupTexture(_pTexture, _oBindInfo);
   }
 
-  void EndSubStateSetup()
+  void EndSubStateSetup(ResourceFrequency _eFrequency)
   {
-    API::EndSubStateSetup();
+    API::EndSubStateSetup(_eFrequency);
   }
 
-  void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState)
+  void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency)
   {
-    API::BindAPIRenderSubState(_pAPIRenderSubState);
+    API::BindAPIRenderSubState(_pAPIRenderSubState, _eFrequency);
   }
 
   void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState)

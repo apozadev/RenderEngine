@@ -11,8 +11,6 @@ namespace api
 
     struct APICamera
     {      
-      VkDescriptorSet* m_pDescSets;
-
       APIWindow* m_pOwnerWindow;
     };
 

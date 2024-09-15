@@ -15,7 +15,7 @@ public:
 
   virtual void Bind() const = 0;
 
-  virtual void Setup(ResourceFrequency _eFrequency) const = 0;
+  virtual void SetupRenderSubState(ResourceFrequency _eFrequency) const = 0;
   
 
   int m_iBinding;

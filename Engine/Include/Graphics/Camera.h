@@ -4,8 +4,9 @@
 #include <memory>
 
 class Window;
-
 class Transform;
+class RenderPipeline;
+struct RenderPipelineConfig;
 
 class Camera
 {
@@ -14,17 +15,19 @@ class Camera
 
 public:
 
-  Camera(Window* _pWindow);
+  Camera(Window* _pWindow, const RenderPipelineConfig* _pPipelineConfig);
   Camera(Camera&& _rCamera);
-  ~Camera();
+  ~Camera();  
 
   void UpdateTransform(const Transform& _oParentTransform);
 
-  void Bind();
+  void Bind() const;
 
   Window* GetWindow() const;
 
   uint64_t GetKey() const;
+
+  const RenderPipeline* GetRenderPipeline() const;
 
   float m_fNear = 0.1f;
   float m_fFar = 100.f;

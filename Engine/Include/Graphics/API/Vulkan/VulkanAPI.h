@@ -3,7 +3,6 @@
 #include <inttypes.h>
 
 #include "Graphics/ImageFormat.h"
-
 #include "Graphics/ResourceBindInfo.h"
 #include "Graphics/RenderStateInfo.h"
 
@@ -21,6 +20,7 @@ namespace vk
 	struct APIRenderState;
 	struct APIRenderSubState;
 	struct APITexture;	
+	struct APIRenderTarget;	
 
 	// General
 
@@ -40,15 +40,13 @@ namespace vk
 
 	uint32_t GetWindowHeight(APIWindow* _pWindow);
 
+	void BindDefaultRenderTarget(APIWindow* _pWindow);
+
 	void DestroyAPIWindow(APIWindow* _pAPIWindow);
 
 	// Camera
 
 	APICamera* CreateAPICamera();
-
-	void BeginCameraSubStateSetup(APICamera* _pCamera);
-
-	void EndCameraSubstateSetup(APICamera* _pCamera);
 
 	void BindAPICamera(APICamera* _pCamera);
 
@@ -72,11 +70,29 @@ namespace vk
 
 	// Texture
 
-	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels);
+	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples);
 
 	void BindAPITexture(APITexture* _pTexture);
 
 	void DestroyAPITexture(APITexture* _pTexture);
+
+	// RenderTarget
+
+	APIRenderTarget* CreateAPIRenderTarget();
+
+	void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget);
+
+	void RenderTargetAddColorTexture(APITexture* _pTexture);
+
+	void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
+
+	void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
+
+	void EndRenderTargetSetup();
+
+	void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
+	void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);	
 
 	// Render state
 
@@ -94,17 +110,17 @@ namespace vk
 
 	// Render substate
 
-	APIRenderSubState* CreateAPIRenderSubState();
+	APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency);
 
 	void BeginSubStateSetup(APIRenderSubState* _pAPIRenderState);
 
 	void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo);
 
-	void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);
+	void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);	
 
-	void EndSubStateSetup();
+	void EndSubStateSetup(ResourceFrequency _eFrequency);
 
-	void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState);
+	void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency);
 
 	void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState);
 

@@ -19,7 +19,7 @@ struct MeshConstant
 class Mesh
 {
 
-  friend class Renderer;
+  friend class RenderPipeline;
 
 public:    
 
@@ -29,10 +29,11 @@ public:
 
   void UpdateTransform(const Transform& _oParentTransform);
 
+  Window* GetWindow() const;
+
 private: 
 
-  void Draw();
-  Window* GetWindow() const;  
+  void Draw();  
 
   class Impl;
   std::unique_ptr<Impl> m_pImpl;

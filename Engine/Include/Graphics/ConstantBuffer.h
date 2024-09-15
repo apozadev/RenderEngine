@@ -13,7 +13,7 @@ protected:
 
   void Update(const void* _pData, size_t _uSize) const;
 
-  void Setup(size_t _uSize, ResourceFrequency _eFrequency) const;
+  void SetupRenderSubState(size_t _uSize, ResourceFrequency _eFrequency) const;
 
 public:
 
@@ -43,9 +43,9 @@ public:
     m_oData = *_pData;
   }  
 
-  void Setup(ResourceFrequency _eFrequency) const override
+  void SetupRenderSubState(ResourceFrequency _eFrequency) const override
   { 
-    ConstantBufferBase::Setup(sizeof(T), _eFrequency);
+    ConstantBufferBase::SetupRenderSubState(sizeof(T), _eFrequency);
   }
 
   void Update() const

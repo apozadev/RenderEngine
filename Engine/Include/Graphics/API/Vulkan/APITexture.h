@@ -5,9 +5,7 @@
 namespace api
 {
 namespace vk
-{
-
-  struct APIRenderState;
+{  
 
   struct APITexture
   {
@@ -15,6 +13,7 @@ namespace vk
     VkDeviceMemory m_hMemory;
     VkImageView m_hImageView;
     VkSampler m_hSampler;
+    VkFormat m_eFormat;
 
     APIWindow* m_pOwnerWindow;
   };

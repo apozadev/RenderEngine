@@ -4,8 +4,6 @@
 
 #include <algorithm>
 
-#include <Windows.h>
-
 #include "Core/Engine.h"
 #include "Core/Timer.h"
 #include "Core/Exception.h"
@@ -96,7 +94,7 @@ int Engine::Run()
         {
           oTimer.Mark();
 
-          m_fDt = (float)llElapsed * 0.001f;
+          m_fDt = (float)llMinFrameTime * 0.001f;//(float)llElapsed * 0.001f;
           m_fGameTime += m_fDt;
 
           InputManager::GetInstance()->PollEvents();

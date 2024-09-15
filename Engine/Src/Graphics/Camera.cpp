@@ -2,10 +2,13 @@
 
 #include "Graphics/Camera.h"
 
-#include "Graphics/API/GraphicsAPI.h"
+#include <memory>
 
+#include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/Window.h"
 #include "Graphics/ConstantBuffer.h"
+#include "Graphics/RenderPipeline.h"
+#include "Graphics/RenderPipelineConfig.h"
 
 #include "Math/Transform.h"
 
@@ -21,12 +24,16 @@ public:
 
   api::APICamera* m_pAPICamera;
 
+  api::APIRenderSubState* m_pSubState;
+
   std::unique_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
 
   Window* m_pWindow;  
 
-  Impl(Window* _pWindow)
-    : m_pWindow(_pWindow)
+  std::unique_ptr<RenderPipeline> m_pRenderPipeline;
+
+  Impl(Window* _pWindow, const RenderPipelineConfig* _pPipelineConfig)
+    : m_pWindow(_pWindow)    
   {    
 
     _pWindow->SetUsing();
@@ -34,9 +41,13 @@ public:
 
     m_pCBuffer = std::make_unique<ConstantBuffer<GlobalBufferData>>(0, PipelineStage::VERTEX);
 
-    api::BeginCameraSubStateSetup(m_pAPICamera);
-    m_pCBuffer->Setup(ResourceFrequency::GLOBAL);
-    api::EndCameraSubstateSetup(m_pAPICamera);
+    m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::GLOBAL);
+
+    api::BeginSubStateSetup(m_pSubState);
+    m_pCBuffer->SetupRenderSubState(ResourceFrequency::GLOBAL);
+    api::EndSubStateSetup(ResourceFrequency::GLOBAL);
+
+    m_pRenderPipeline = std::make_unique<RenderPipeline>(_pWindow, _pPipelineConfig);
   }
   ~Impl()
   {
@@ -44,8 +55,8 @@ public:
   }
 };
 
-Camera::Camera(Window* _pWindow)
-  : m_pImpl(std::make_unique<Impl>(_pWindow))
+Camera::Camera(Window* _pWindow, const RenderPipelineConfig* _pPipelineConfig)
+  : m_pImpl(std::make_unique<Impl>(_pWindow, _pPipelineConfig))
 {
 
 }
@@ -73,10 +84,11 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
   m_pImpl->m_pCBuffer->Update();
 }
 
-void Camera::Bind()
+void Camera::Bind() const
 {
   api::BindAPICamera(m_pImpl->m_pAPICamera);
-  m_pImpl->m_pCBuffer->Bind();
+  api::BindAPIRenderSubState(m_pImpl->m_pSubState, ResourceFrequency::GLOBAL);
+  m_pImpl->m_pCBuffer->Bind();  
 }
 
 Window* Camera::GetWindow() const
@@ -87,4 +99,9 @@ Window* Camera::GetWindow() const
 uint64_t Camera::GetKey() const
 {
   return 0u;
+}
+
+const RenderPipeline* Camera::GetRenderPipeline() const
+{
+  return m_pImpl->m_pRenderPipeline.get();
 }

@@ -54,7 +54,7 @@ bool DescriptorSetLayoutBuilder::Contains(VkDescriptorSetLayoutBinding _oBinding
   for (const VkDescriptorSetLayoutBinding& rBind : m_lstDescSetInfos)
   {
     if (rBind.binding == _oBinding.binding
-      && rBind.descriptorCount == _oBinding.descriptorCount
+      && rBind.descriptorCount >= _oBinding.descriptorCount
       && rBind.descriptorType == _oBinding.descriptorType
       && rBind.stageFlags == _oBinding.stageFlags)
     {
@@ -141,7 +141,7 @@ void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uin
   m_lstSetImageInfos.push_back(std::move(oInfoList));
 }
 
-void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, const DescriptorSetLayoutBuilder& _oLayoutBuilder)
+void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, DescriptorSetLayoutBuilder* _pLayoutBuilder)
 {  
 
   std::vector<VkWriteDescriptorSet> lstWriteDescSets;
@@ -153,7 +153,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.descriptorCount = lstSetBufferInfo.m_lstBufferInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    if (!_oLayoutBuilder.Contains(oBinding))
+    if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
     {
       continue;
     }
@@ -185,7 +185,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.descriptorCount = lstSetImageInfo.m_lstImgInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    if (!_oLayoutBuilder.Contains(oBinding))
+    if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
     {
       continue;
     }

@@ -75,7 +75,7 @@ void Material::Setup() const
 
   for (Resource* pResource : m_pImpl->m_lstResources)
   {
-    pResource->Setup(ResourceFrequency::MATERIAL);
+    pResource->SetupRenderSubState(ResourceFrequency::MATERIAL);
   }
 
   api::EndRenderStateSetup();

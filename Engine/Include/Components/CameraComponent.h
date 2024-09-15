@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core/Component.h"
-
 #include "Graphics/Camera.h"
 
 class Window;
@@ -11,6 +10,7 @@ class CameraComponent : public Component
 
 public:
   CameraComponent(Window* _pWindow);   
+  ~CameraComponent();
 
 protected:
 
@@ -20,7 +20,7 @@ protected:
 
 private:  
 
-  Camera m_oCamera;
+  std::unique_ptr<Camera> m_pCamera;
 
   float m_fFov;
   float m_fNear;
