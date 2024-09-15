@@ -7,57 +7,11 @@
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Mesh.h"
 
-RenderPipeline::RenderPipeline(const Window* _pWindow, const RenderPipelineConfig* _pConfig)
+RenderPipeline::RenderPipeline(const Window* _pWindow, RenderPipelineConfig&& _rConfig)
+  : m_pWindow(_pWindow)
+  , m_oConfig(std::move(_rConfig))
 {
-
-  static constexpr char* s_sDefaultRtId = "DEFAULT";
-
-  for (const RenderTargetConfig& rRtConfig : _pConfig->m_lstRenderTargets)
-  {
-    unsigned int uWidth = rRtConfig.m_iWidth < 0 ? _pWindow->GetWidth() : rRtConfig.m_iWidth;
-    unsigned int uHeight = rRtConfig.m_iHeight < 0 ? _pWindow->GetHeight() : rRtConfig.m_iHeight;
-    m_lstRenderTargets.push_back(new RenderTarget(
-      rRtConfig.m_uNumColorTextures
-      , uWidth
-      , uHeight
-      , rRtConfig.m_eFormat
-      , rRtConfig.m_bHasDepthStencil
-      , rRtConfig.m_uMipLevels
-      , rRtConfig.m_uMsaaSamples));
-  }
-
-  for (const RenderStepConfig& rStepConfig : _pConfig->m_lstSteps)
-  {
-    std::vector<RenderTarget*> lstInputs(rStepConfig.m_lstInputs.size());
-
-    for (const RenderStepInputConfig& rInputConfig : rStepConfig.m_lstInputs)
-    {
-      for (int i = 0; i < _pConfig->m_lstRenderTargets.size(); i++)
-      {
-        if (rInputConfig.m_sTargetId == _pConfig->m_lstRenderTargets[i].m_sId)
-        {
-          lstInputs.push_back(m_lstRenderTargets[i]);
-          break;
-        }
-      }
-    }
-
-    RenderTarget* pTarget = nullptr;
-    // If target Id is DEFAULT, target will stay null
-    if (rStepConfig.m_sRenderTargetId != s_sDefaultRtId)
-    {
-      for (int i = 0; i < _pConfig->m_lstRenderTargets.size(); i++)
-      {
-        if (rStepConfig.m_sRenderTargetId == _pConfig->m_lstRenderTargets[i].m_sId)
-        {
-          pTarget = m_lstRenderTargets[i];
-        }
-      }
-    }
-
-    m_lstRenderSteps.push_back(std::move(RenderStep(std::move(lstInputs), pTarget)));
-  }
-
+  GenerateFromConfig();
 }
 
 RenderPipeline::~RenderPipeline()
@@ -66,6 +20,19 @@ RenderPipeline::~RenderPipeline()
   {
     delete pRenderTarget;
   }
+}
+
+void RenderPipeline::OnWindowResize()
+{
+  for (RenderTarget* pRenderTarget : m_lstRenderTargets)
+  {
+    delete pRenderTarget;
+  }
+
+  m_lstRenderSteps.clear();
+
+  GenerateFromConfig();
+
 }
 
 void RenderPipeline::Execute(const std::vector<Job>& _lstJobs, const Camera* _pCamera) const
@@ -102,5 +69,56 @@ void RenderPipeline::Execute(const std::vector<Job>& _lstJobs, const Camera* _pC
       rJob.m_pMesh->Draw();
     }
 
+  }
+}
+
+void RenderPipeline::GenerateFromConfig()
+{
+  static constexpr char* s_sDefaultRtId = "DEFAULT";
+
+  for (const RenderTargetConfig& rRtConfig : m_oConfig.m_lstRenderTargets)
+  {
+    unsigned int uWidth = rRtConfig.m_iWidth < 0 ? m_pWindow->GetWidth() : rRtConfig.m_iWidth;
+    unsigned int uHeight = rRtConfig.m_iHeight < 0 ? m_pWindow->GetHeight() : rRtConfig.m_iHeight;
+    m_lstRenderTargets.push_back(new RenderTarget(
+      rRtConfig.m_uNumColorTextures
+      , uWidth
+      , uHeight
+      , rRtConfig.m_eFormat
+      , rRtConfig.m_bHasDepthStencil
+      , rRtConfig.m_uMipLevels
+      , rRtConfig.m_uMsaaSamples));
+  }
+
+  for (const RenderStepConfig& rStepConfig : m_oConfig.m_lstSteps)
+  {
+    std::vector<RenderTarget*> lstInputs(rStepConfig.m_lstInputs.size());
+
+    for (const RenderStepInputConfig& rInputConfig : rStepConfig.m_lstInputs)
+    {
+      for (int i = 0; i < m_oConfig.m_lstRenderTargets.size(); i++)
+      {
+        if (rInputConfig.m_sTargetId == m_oConfig.m_lstRenderTargets[i].m_sId)
+        {
+          lstInputs.push_back(m_lstRenderTargets[i]);
+          break;
+        }
+      }
+    }
+
+    RenderTarget* pTarget = nullptr;
+    // If target Id is DEFAULT, target will stay null
+    if (rStepConfig.m_sRenderTargetId != s_sDefaultRtId)
+    {
+      for (int i = 0; i < m_oConfig.m_lstRenderTargets.size(); i++)
+      {
+        if (rStepConfig.m_sRenderTargetId == m_oConfig.m_lstRenderTargets[i].m_sId)
+        {
+          pTarget = m_lstRenderTargets[i];
+        }
+      }
+    }
+
+    m_lstRenderSteps.push_back(std::move(RenderStep(std::move(lstInputs), pTarget)));
   }
 }

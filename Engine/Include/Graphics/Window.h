@@ -3,13 +3,13 @@
 #include <memory>
 
 #include <glm/mat4x4.hpp>
+
+struct GLFWwindow;
  
 class Window
 {
 
-  friend class Engine;
-
-  //struct ConstructKey {};
+  friend class Engine;  
 
 public:
   
@@ -19,7 +19,7 @@ public:
 
   uint8_t GetId() const;
 
-  int BeginDraw() const;
+  int BeginDraw();
   void EndDraw() const;  
 
   void PollEvents() const;
@@ -41,6 +41,8 @@ public:
 private:            
 
   Window& operator=(Window&& _rWindow) noexcept;  
+
+  friend void OnWindowResize(GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/);
 
   class Impl;
   std::unique_ptr<Impl> m_pImpl;

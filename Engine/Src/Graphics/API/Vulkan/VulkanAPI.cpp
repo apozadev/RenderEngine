@@ -122,6 +122,8 @@ namespace vk
 
     DestroySwapchain(_pWindow);
 
+    delete[] _pWindow->m_pFramebuffers;
+
     for (int i = 0; i < uNumImages; i++)
     {
       vkDestroySemaphore(_pWindow->m_hDevice, _pWindow->m_pImageAvailableSemaphores[i], NULL);
@@ -444,6 +446,10 @@ namespace vk
   {
     APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
 
+    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, uNumImages, pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
+
     vkDestroyFramebuffer(pWindow->m_hDevice, _pRenderTarget->m_hFrameBuffer, nullptr);
 
     vkDestroyRenderPass(pWindow->m_hDevice, _pRenderTarget->m_hRenderPass, nullptr);
@@ -719,6 +725,11 @@ namespace vk
 
   // Drawing
 
+  void WaitForEndFrame(APIWindow* _pWindow)
+  {
+    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, _pWindow->m_uSwapchainImageCount, _pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
+  }
+
   int BeginDraw(APIWindow* _pWindow)
   {
 
@@ -820,6 +831,8 @@ namespace vk
     VK_CHECK(vkQueuePresentKHR(_pWindow->m_hPresentQueue, &oPresentInfo))
 
     //_pWindow->m_uCurrSwapchainImageIdx = (_pWindow->m_uCurrSwapchainImageIdx + 1u) % _pWindow->m_uSwapchainImageCount;
+
+    s_oGlobalData.m_pUsingSubState = nullptr;
 
     _pWindow->m_uCurrFrameIdx = (_pWindow->m_uCurrFrameIdx + 1u) % _pWindow->m_uSwapchainImageCount;
   }

@@ -8,18 +8,9 @@
 #include "Math/Utils.h"
 
 CameraComponent::CameraComponent(Window* _pWindow)  
-{
+{  
 
-  /*RenderTargetConfig oRT = {};
-  oRT.m_bHasDepthStencil */
-
-  RenderStepConfig oStep = {};
-  oStep.m_sRenderTargetId = "DEFAULT";
-
-  RenderPipelineConfig oConfig = {};
-  oConfig.m_lstSteps.push_back(std::move(oStep));
-
-  m_pCamera = std::make_unique<Camera>(_pWindow, &oConfig);
+  m_pCamera = std::make_unique<Camera>(_pWindow, "TEST");
 }
 
 CameraComponent::~CameraComponent()

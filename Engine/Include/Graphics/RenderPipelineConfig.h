@@ -30,6 +30,7 @@ struct RenderStepConfig
 
 struct RenderPipelineConfig
 {
+  std::string m_sId;
   std::vector<RenderStepConfig> m_lstSteps;
   std::vector<RenderTargetConfig> m_lstRenderTargets;
 };

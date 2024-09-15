@@ -126,6 +126,8 @@ namespace vk
 
 	// Drawing
 
+	void WaitForEndFrame(APIWindow* _pWindow);
+
 	int BeginDraw(APIWindow* _pWindow);
 
 	void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, void* _pConstantData, uint32_t _uConstantSize);

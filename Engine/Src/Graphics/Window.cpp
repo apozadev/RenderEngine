@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Core/Exception.h"
+#include "Graphics/Renderer.h"
 #include "Graphics/Window.h"
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/API/GraphicsAPI.h"
@@ -16,7 +17,13 @@ public:
 
   GLFWwindow* m_pGlfwWindow;  
   api::APIWindow* m_pAPIWindow;
-  uint8_t m_uId;  
+  uint8_t m_uId;    
+
+  struct APIWindowPair
+  {
+    Window* m_pWindow;
+    api::APIWindow* m_pAPIWindow;
+  } m_oWindowPair;
 
   Impl(int _fWidth, int _fHeight, const char* _sTitle, Window* _pWindow)    
   {
@@ -38,20 +45,8 @@ public:
 
     m_pAPIWindow = api::CreateAPIWindow(m_pGlfwWindow);    
 
-    glfwSetWindowUserPointer(m_pGlfwWindow, static_cast<void*>(m_pAPIWindow));
-    glfwSetFramebufferSizeCallback(m_pGlfwWindow, [](GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
-    {
-      int width = 0, height = 0;
-      glfwGetFramebufferSize(_pGflwWindow, &width, &height);
-      while (width == 0 || height == 0)
-      {
-        glfwGetFramebufferSize(_pGflwWindow, &width, &height);
-        glfwWaitEvents();
-      }      
-
-      api::APIWindow* pAPIWindow = static_cast<api::APIWindow*>(glfwGetWindowUserPointer(_pGflwWindow));
-      api::OnWindowResize(pAPIWindow);
-    });
+    m_oWindowPair.m_pAPIWindow = m_pAPIWindow;
+    m_oWindowPair.m_pWindow = _pWindow;    
   }    
 
   ~Impl()
@@ -80,8 +75,12 @@ uint8_t Window::GetId() const
   return m_pImpl->m_uId;
 }
 
-int Window::BeginDraw() const
-{    
+int Window::BeginDraw() 
+{ 
+
+  glfwSetWindowUserPointer(m_pImpl->m_pGlfwWindow, static_cast<void*>(this));
+  glfwSetFramebufferSizeCallback(m_pImpl->m_pGlfwWindow, OnWindowResize);
+
   return api::BeginDraw(m_pImpl->m_pAPIWindow);
 }
 
@@ -145,4 +144,20 @@ Window& Window::operator=(Window&& _rWindow) noexcept
 {
   m_pImpl = std::move(_rWindow.m_pImpl);
   return *this;
+}
+
+void OnWindowResize(GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
+{
+  int width = 0, height = 0;
+  glfwGetFramebufferSize(_pGflwWindow, &width, &height);
+  while (width == 0 || height == 0)
+  {
+    glfwGetFramebufferSize(_pGflwWindow, &width, &height);
+    glfwWaitEvents();
+  }
+
+  Window* pWindow = static_cast<Window*>(glfwGetWindowUserPointer(_pGflwWindow));
+  api::OnWindowResize(pWindow->m_pImpl->m_pAPIWindow);
+
+  Renderer::GetInstance()->OnWindowResize(pWindow);
 }

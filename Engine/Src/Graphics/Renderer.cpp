@@ -8,14 +8,15 @@
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/Job.h"
 #include "Graphics/RenderPipeline.h"
+#include "Graphics/RenderPipelineConfig.h"
+
+#include "Core/Exception.h"
 
 #include "Math/Transform.h"
 
 #include "GLFW/glfw3.h"
 
 #include <algorithm>
-
-#include "Graphics/RenderPipeline.h"
 
 struct CamView
 {
@@ -33,6 +34,7 @@ public:
 
   std::vector<Job> m_lstJobs;   
   std::vector<CamView> m_lstCamViews;
+  std::unordered_map<std::string, RenderPipeline> m_mapRenderPipelines;
 };
 
 Renderer::Renderer() : m_pImpl(std::make_unique<Impl>())
@@ -60,6 +62,12 @@ void Renderer::ShutDown()
   api::ShutDownAPI();
 }
 
+void Renderer::AddRenderPipeline(const Window* _pWindow, RenderPipelineConfig&& _pPipelineCofig)
+{
+  std::string sId = _pPipelineCofig.m_sId;
+  m_pImpl->m_mapRenderPipelines.emplace(sId, RenderPipeline(_pWindow, std::move(_pPipelineCofig) ));
+}
+
 void Renderer::SubmitCamera(Camera* _pCamera, const Transform* _pTransform)
 {
   m_pImpl->m_lstCamViews.push_back({ _pCamera, _pTransform });
@@ -68,6 +76,18 @@ void Renderer::SubmitCamera(Camera* _pCamera, const Transform* _pTransform)
 void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
 {    
   m_pImpl->m_lstJobs.push_back({ _pMesh, _pMaterial, _pMesh->GetWindow(), _pTransform, 0u });
+}
+
+void Renderer::OnWindowResize(const Window* _pWindow)
+{
+  for (auto it = m_pImpl->m_mapRenderPipelines.begin(); it != m_pImpl->m_mapRenderPipelines.end(); it++)
+  {
+    RenderPipeline& rPipeline = it->second;
+    if (rPipeline.GetOwnerWindow() == _pWindow)
+    {
+      rPipeline.OnWindowResize();
+    }
+  }
 }
 
 void Renderer::Draw()
@@ -113,7 +133,15 @@ void Renderer::Draw()
 
     pCamera->Bind();
 
-    pCamera->GetRenderPipeline()->Execute(m_pImpl->m_lstJobs, pCamera);
+    auto pIt = m_pImpl->m_mapRenderPipelines.find(pCamera->GetRenderPipelineId());
+    if (pIt != m_pImpl->m_mapRenderPipelines.end())
+    {
+      pIt->second.Execute(m_pImpl->m_lstJobs, pCamera);
+    }
+    else
+    {
+      THROW_GENERIC_EXCEPTION("Camera RenderPipeline Id is not valid")
+    }
 
   }
 

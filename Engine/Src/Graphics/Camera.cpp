@@ -28,11 +28,11 @@ public:
 
   std::unique_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
 
+  std::string m_sRenderPipelineId;
+
   Window* m_pWindow;  
 
-  std::unique_ptr<RenderPipeline> m_pRenderPipeline;
-
-  Impl(Window* _pWindow, const RenderPipelineConfig* _pPipelineConfig)
+  Impl(Window* _pWindow, const std::string& _sRenderPipelineId)
     : m_pWindow(_pWindow)    
   {    
 
@@ -47,7 +47,7 @@ public:
     m_pCBuffer->SetupRenderSubState(ResourceFrequency::GLOBAL);
     api::EndSubStateSetup(ResourceFrequency::GLOBAL);
 
-    m_pRenderPipeline = std::make_unique<RenderPipeline>(_pWindow, _pPipelineConfig);
+    m_sRenderPipelineId = _sRenderPipelineId;
   }
   ~Impl()
   {
@@ -55,8 +55,8 @@ public:
   }
 };
 
-Camera::Camera(Window* _pWindow, const RenderPipelineConfig* _pPipelineConfig)
-  : m_pImpl(std::make_unique<Impl>(_pWindow, _pPipelineConfig))
+Camera::Camera(Window* _pWindow, const std::string&  _sRenderPipelineId)
+  : m_pImpl(std::make_unique<Impl>(_pWindow, _sRenderPipelineId))
 {
 
 }
@@ -101,7 +101,7 @@ uint64_t Camera::GetKey() const
   return 0u;
 }
 
-const RenderPipeline* Camera::GetRenderPipeline() const
+const std::string& Camera::GetRenderPipelineId() const
 {
-  return m_pImpl->m_pRenderPipeline.get();
+  return m_pImpl->m_sRenderPipelineId;
 }

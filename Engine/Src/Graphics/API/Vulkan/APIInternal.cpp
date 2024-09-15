@@ -1020,8 +1020,7 @@ void DestroySwapchain(APIWindow* _pWindow)
   }
 
   vkDestroySwapchainKHR(_pWindow->m_hDevice, _pWindow->m_hSwapchain, NULL);
-
-  delete[] _pWindow->m_pFramebuffers;
+  
   delete[] _pWindow->m_pSwapchainImages;
   delete[] _pWindow->m_pSwapChainImageViews;
 }
@@ -1033,6 +1032,11 @@ void RecreateSwapchain(APIWindow* _pWindow)
   CreateSwapchain(_pWindow);
   CreateColorBuffer(_pWindow);
   CreateDepthBuffer(_pWindow);
+
+  for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
+  {
+    CreateFramebuffer(_pWindow, _pWindow->m_hRenderPass, _pWindow->m_hColorImageView, _pWindow->m_hDepthImageView, _pWindow->m_pSwapChainImageViews[i], _pWindow->m_pFramebuffers[i]);
+  }
 }
 
 uint32_t FindMemoryType(uint32_t _uTypeFilter, VkMemoryPropertyFlags _uProperties)

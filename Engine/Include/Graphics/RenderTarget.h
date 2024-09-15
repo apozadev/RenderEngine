@@ -20,6 +20,8 @@ public:
 
   Texture2D* GetDepthStencilTexture();
 
+  void Resize();
+
 private:
 
   class Impl;

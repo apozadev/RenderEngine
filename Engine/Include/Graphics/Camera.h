@@ -6,7 +6,6 @@
 class Window;
 class Transform;
 class RenderPipeline;
-struct RenderPipelineConfig;
 
 class Camera
 {
@@ -15,7 +14,7 @@ class Camera
 
 public:
 
-  Camera(Window* _pWindow, const RenderPipelineConfig* _pPipelineConfig);
+  Camera(Window* _pWindow, const std::string& _sRenderPipelineId);
   Camera(Camera&& _rCamera);
   ~Camera();  
 
@@ -27,7 +26,7 @@ public:
 
   uint64_t GetKey() const;
 
-  const RenderPipeline* GetRenderPipeline() const;
+  const std::string& GetRenderPipelineId() const;
 
   float m_fNear = 0.1f;
   float m_fFar = 100.f;

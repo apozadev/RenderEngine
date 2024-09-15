@@ -242,6 +242,11 @@ namespace api
 
   // Drawing
 
+  void WaitForEndFrame(APIWindow* _pWindow)
+  {
+    API::WaitForEndFrame(_pWindow);
+  }
+
   int BeginDraw(APIWindow* _pWindow)
   {
     return API::BeginDraw(_pWindow);

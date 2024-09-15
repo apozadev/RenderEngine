@@ -4,6 +4,7 @@
 
 #include "Core/Engine.h"
 #include "Core/Exception.h"
+#include "Graphics/Renderer.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Material.h"
 #include "Graphics/MaterialInstance.h"
@@ -12,6 +13,7 @@
 #include "Components/ModelComponent.h"
 #include "Components/CameraComponent.h"
 #include "Graphics/MaterialLibrary.h"
+#include "Graphics/RenderPipelineConfig.h"
 
 #include <string>
 
@@ -24,6 +26,15 @@ int main(){
   Window* pWindow = Engine::GetInstance()->CreateNewWindow(1080, 920, "App");  
 
   Scene* pScene = Engine::GetInstance()->CreateScene(pWindow);
+
+  RenderStepConfig oStep = {};
+  oStep.m_sRenderTargetId = "DEFAULT";
+
+  RenderPipelineConfig oConfig = {};
+  oConfig.m_sId = "TEST";
+  oConfig.m_lstSteps.push_back(std::move(oStep));
+
+  Renderer::GetInstance()->AddRenderPipeline(pWindow, std::move(oConfig));
 
   Entity* pCameraEntity = pScene->AddEntity();
 
