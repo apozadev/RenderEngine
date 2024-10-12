@@ -41,8 +41,8 @@ int main(){
     oTarget.m_sId = "GBUFFER";
     oTarget.m_bHasDepthStencil = true;
     oTarget.m_eFormat = ImageFormat::R8G8B8A8;
-    oTarget.m_iWidth = pWindow->GetWidth();
-    oTarget.m_iHeight = pWindow->GetHeight();
+    oTarget.m_iWidth = -1;
+    oTarget.m_iHeight = -1;
     oTarget.m_uMipLevels = 1u;
     oTarget.m_uMsaaSamples = 1u;
     oTarget.m_uNumColorTextures = 1u;

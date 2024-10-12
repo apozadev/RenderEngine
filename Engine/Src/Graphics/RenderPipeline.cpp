@@ -31,6 +31,7 @@ void RenderPipeline::OnWindowResize()
   }
 
   m_lstRenderSteps.clear();
+  m_lstRenderTargets.clear();
 
   GenerateFromConfig();
 

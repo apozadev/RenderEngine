@@ -169,6 +169,7 @@ void Renderer::Draw()
     
     if (bSkipWindow)
     {
+      OnWindowResize(pCurrWindow);
       break;
     }    
 

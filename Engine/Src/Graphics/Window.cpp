@@ -162,7 +162,5 @@ void OnWindowResize(GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/)
   }
 
   Window* pWindow = static_cast<Window*>(glfwGetWindowUserPointer(_pGflwWindow));
-  api::OnWindowResize(pWindow->m_pImpl->m_pAPIWindow);
-
-  Renderer::GetInstance()->OnWindowResize(pWindow);
+  api::OnWindowResize(pWindow->m_pImpl->m_pAPIWindow);  
 }
