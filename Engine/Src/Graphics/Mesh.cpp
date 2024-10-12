@@ -63,7 +63,7 @@ void Mesh::UpdateTransform(const Transform& _oParentTransform)
   m_pImpl->m_oConstant.m_mNormal = glm::transpose(glm::inverse(m_pImpl->m_oConstant.m_mModel));
 }
 
-void Mesh::Draw()
+void Mesh::Draw() const
 {  
   api::DrawMesh(m_pImpl->m_pAPIMesh, m_pImpl->m_uIndexCount, &m_pImpl->m_oConstant, sizeof(MeshConstant));
 }

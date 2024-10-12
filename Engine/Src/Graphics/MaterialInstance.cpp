@@ -5,16 +5,19 @@
 #include "Graphics/API/GraphicsAPI.h"
 #include "Core/Exception.h"
 
+namespace matinstance_internal
+{
+  static uint16_t s_uNextId = 0u;
+}
+
 class MaterialInstance::Impl
 {
 public:
 
   Impl(Material* _pMaterial)
     : m_pMaterial(_pMaterial)
-  {    
-    m_pMaterial->SetUsing();
-    m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
-    api::SetUsingAPIRenderState(nullptr);
+  {        
+    m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);    
   }
 
   ~Impl()
@@ -29,10 +32,15 @@ public:
 
 MaterialInstance::MaterialInstance(Material* _pMaterial) : m_bSetup(false)
 {
+  m_uId = matinstance_internal::s_uNextId++;
   m_pImpl = std::make_unique<Impl>(_pMaterial);
 }
 
-MaterialInstance::MaterialInstance(MaterialInstance&& _rMatInstance) : m_pImpl(std::move(_rMatInstance.m_pImpl))
+MaterialInstance::MaterialInstance(MaterialInstance&& _rMatInstance) 
+  : m_pImpl(std::move(_rMatInstance.m_pImpl))
+  , m_lstResources(std::move(_rMatInstance.m_lstResources))
+  , m_bSetup(std::move(_rMatInstance.m_bSetup))
+  , m_uId(std::move(_rMatInstance.m_uId))
 {
 }
 
@@ -45,9 +53,7 @@ MaterialInstance::~MaterialInstance()
 }
 
 void MaterialInstance::Setup()
-{  
-
-  m_pImpl->m_pMaterial->SetUsing();
+{    
 
   api::BeginSubStateSetup(m_pImpl->m_pSubState);
 

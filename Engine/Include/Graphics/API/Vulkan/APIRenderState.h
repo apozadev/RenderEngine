@@ -19,13 +19,11 @@ public:
 
   VkDescriptorSet* m_pDescSets;
 
-  VkDescriptorSetLayout m_hDescSetLayout;
-  VkDescriptorSetLayout m_hSubDescSetLayout;
+  VkDescriptorSetLayout m_hDescSetLayout;  
 
   APIWindow* m_pOwnerWindow;
   
-  DescriptorSetLayoutBuilder m_oMaterialLayoutBuilder;
-  DescriptorSetLayoutBuilder m_oMatInstanceLayoutBuilder;
+  DescriptorSetLayoutBuilder m_oMaterialLayoutBuilder;  
 };
 
 }

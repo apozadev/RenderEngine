@@ -19,25 +19,9 @@ class MaterialLibrary : public Singleton<MaterialLibrary>
 
 public:
 
-  Material* CreateMaterial(Window* _pWindow
-    , const std::string& _sVSFilename
-    , const std::string& _sPSFilename
-    , bool _bBlendEnabled
-    , BlendOp _eBlendOp
-    , BlendFactor _eSrcBlendFactor
-    , BlendFactor _eDstBlendFactor
-    , bool _bDepthWrite
-    , bool _bDepthRead)
+  Material* CreateMaterial(Window* _pWindow, std::vector<Pass>&& _lstPasses)
   {    
-    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::make_unique<Material>(_pWindow
-      , _sVSFilename
-      , _sPSFilename
-      , _bBlendEnabled
-      , _eBlendOp
-      , _eSrcBlendFactor
-      , _eDstBlendFactor
-      , _bDepthWrite
-      , _bDepthRead) });
+    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::make_unique<Material>(std::move(_lstPasses)) });
 
     return m_lstMaterials.back().m_pMaterial.get();
   }

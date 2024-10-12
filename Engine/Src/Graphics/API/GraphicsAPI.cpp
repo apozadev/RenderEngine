@@ -23,6 +23,11 @@ namespace api
     API::ShutDownAPI();
   } 
 
+  uint32_t GetDefaultMsaaSamples()
+  {
+    return API::GetDefaultMsaaSamples();
+  }
+
   // Window
 
   APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
@@ -113,9 +118,9 @@ namespace api
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples)
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
   {
-    return API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples);
+    return API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage);
   }
 
   void BindAPITexture(APITexture* _pTexture)
@@ -140,9 +145,9 @@ namespace api
     API::BindAPIRenderTarget(_pRenderTarget);
   }
 
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget)
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
   {
-    API::BeginRenderTargetSetup(_pRenderTarget);
+    API::BeginRenderTargetSetup(_pRenderTarget, _eFormat, _eDepthStencilFormat, _uMsaaSamples);
   }
 
   void RenderTargetAddColorTexture(APITexture* _pTexture)
@@ -165,6 +170,16 @@ namespace api
     API::EndRenderTargetSetup();
   }
 
+  void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  {
+    API::SetUsingAPIRenderTarget(_pRenderTarget);
+  }
+
+  void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  {
+    API::UnbindAPIRenderTarget(_pRenderTarget);
+  }
+
   void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
   {
     API::DestroyAPIRenderTarget(_pRenderTarget);
@@ -173,9 +188,9 @@ namespace api
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo)
+  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples)
   {
-    return API::CreateAPIRenderState(_oInfo);
+    return API::CreateAPIRenderState(_oInfo, _uMsaaSamples);
   }
 
   void BeginRenderStateSetup(APIRenderState* _pAPIRenderState)
@@ -241,11 +256,6 @@ namespace api
   }
 
   // Drawing
-
-  void WaitForEndFrame(APIWindow* _pWindow)
-  {
-    API::WaitForEndFrame(_pWindow);
-  }
 
   int BeginDraw(APIWindow* _pWindow)
   {

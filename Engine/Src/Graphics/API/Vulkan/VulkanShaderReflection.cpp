@@ -23,7 +23,7 @@ namespace api
 namespace vk
 {
 
-void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilder& oMatLayoutBuilder_, DescriptorSetLayoutBuilder& oInstLayoutBuilder_)
+void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilder& oLayoutBuilder_)
 {
   SpvReflectShaderModule oModule;
   SpvReflectResult eResult = spvReflectCreateShaderModule(_oShaderFile.GetSize(), static_cast<void*>(_oShaderFile.GetData()), &oModule);
@@ -50,15 +50,6 @@ void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilde
     DescriptorSetLayoutBuilder* pLayoutBuilder = nullptr;
     
     if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
-    {
-      pLayoutBuilder = &oMatLayoutBuilder_;
-    }
-    else if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL_INSTANCE))
-    {
-      pLayoutBuilder = &oInstLayoutBuilder_;
-    }
-
-    if (pLayoutBuilder != nullptr)
     {
       for (uint32_t j = 0u; j < pDescSet->binding_count; j++)
       {

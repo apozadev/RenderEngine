@@ -7,8 +7,9 @@
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Mesh.h"
 
-RenderPipeline::RenderPipeline(const Window* _pWindow, RenderPipelineConfig&& _rConfig)
+RenderPipeline::RenderPipeline(const Window* _pWindow, std::string _sId, RenderPipelineConfig&& _rConfig)
   : m_pWindow(_pWindow)
+  , m_sId(_sId)
   , m_oConfig(std::move(_rConfig))
 {
   GenerateFromConfig();
@@ -35,46 +36,27 @@ void RenderPipeline::OnWindowResize()
 
 }
 
-void RenderPipeline::Execute(const std::vector<Job>& _lstJobs, const Camera* _pCamera) const
-{
-  const Material* pCurrMaterial = nullptr;
-
+void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTransform) const
+{        
   for (const RenderStep& rStep : m_lstRenderSteps)
-  {    
+  {                
+    rStep.Execute(_pCamera, _pViewTransform);
+  }
+}
 
-    for (const Job& rJob : _lstJobs)
-    {
-
-      if (rJob.m_pWindow != _pCamera->GetWindow())
-      {
-        continue;
-      }
-      
-      const MaterialInstance* pMatInstance = rJob.m_pMaterial;
-
-      const Material* pMaterial = pMatInstance->GetMaterial();
-
-      if (pMaterial != pCurrMaterial)
-      {
-        pMaterial->Bind();
-        _pCamera->Bind();
-        rStep.Bind(_pCamera->GetWindow());
-        pCurrMaterial = pMaterial;
-      }
-
-      rJob.m_pMesh->UpdateTransform(*rJob.m_pMeshTransform);
-
-      pMatInstance->Bind();
-
-      rJob.m_pMesh->Draw();
-    }
-
+void RenderPipeline::Clear()
+{
+  for (RenderStep& rStep : m_lstRenderSteps)
+  {
+    rStep.Clear();
   }
 }
 
 void RenderPipeline::GenerateFromConfig()
 {
   static constexpr char* s_sDefaultRtId = "DEFAULT";
+
+  m_pWindow->SetUsing();
 
   for (const RenderTargetConfig& rRtConfig : m_oConfig.m_lstRenderTargets)
   {
@@ -92,7 +74,7 @@ void RenderPipeline::GenerateFromConfig()
 
   for (const RenderStepConfig& rStepConfig : m_oConfig.m_lstSteps)
   {
-    std::vector<RenderTarget*> lstInputs(rStepConfig.m_lstInputs.size());
+    std::vector<RenderTarget*> lstInputs;
 
     for (const RenderStepInputConfig& rInputConfig : rStepConfig.m_lstInputs)
     {

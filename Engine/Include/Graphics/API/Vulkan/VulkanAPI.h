@@ -3,6 +3,7 @@
 #include <inttypes.h>
 
 #include "Graphics/ImageFormat.h"
+#include "Graphics/TextureUsage.h"
 #include "Graphics/ResourceBindInfo.h"
 #include "Graphics/RenderStateInfo.h"
 
@@ -27,6 +28,8 @@ namespace vk
 	void InitializeAPI();	
 
 	void ShutDownAPI();
+
+	uint32_t GetDefaultMsaaSamples();
 
 	// Window
 
@@ -70,7 +73,7 @@ namespace vk
 
 	// Texture
 
-	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples);
+	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage);
 
 	void BindAPITexture(APITexture* _pTexture);
 
@@ -80,7 +83,7 @@ namespace vk
 
 	APIRenderTarget* CreateAPIRenderTarget();
 
-	void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget);
+	void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
 
 	void RenderTargetAddColorTexture(APITexture* _pTexture);
 
@@ -90,13 +93,17 @@ namespace vk
 
 	void EndRenderTargetSetup();
 
+	void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
 	void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
+	void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
 	void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);	
 
 	// Render state
 
-	APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo);
+	APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples);
 
 	void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
 

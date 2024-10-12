@@ -35,16 +35,15 @@ namespace vk
 
   VkBlendFactor GetVkBlendFactor(BlendFactor _eBlendFactor);
 
+  VkImageUsageFlags GetVkTextureUsage(uint32_t _uUsage);
+
   void CreateInstance();
 
   VkSampleCountFlagBits GetMaxMSAASampleCount();
 
   void CreatePhysicalDevice();
 
-  void CreatePipeline(const file::File& _oVSFile,
-    const file::File& _oPSFile,
-    const RenderStateInfo& _oInfo,
-    APIRenderState* _pRenderState_);
+  void CreatePipeline(const file::File& _oVSFile, const file::File& _oPSFile, const RenderStateInfo& _oInfo, VkRenderPass _hRenderPass, VkSampleCountFlagBits _uMsaaSamples, APIRenderState* _pRenderState_);
 
   void CreateLogicalDevice(APIWindow* _pWindow);
 
@@ -58,7 +57,7 @@ namespace vk
 
   void CreateSwapchain(APIWindow* _pWindow);
 
-  void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_);
+  void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen);
 
   void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITexture** _pColorTextures, uint32_t _uNumColorTextures, APITexture* _pDepthTexture, APITexture** _pColorResolveTextures, VkFramebuffer& hFrameBuffer_);
 

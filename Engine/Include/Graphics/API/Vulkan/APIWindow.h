@@ -55,9 +55,11 @@ namespace vk
 
     VkDescriptorSetLayout m_hGlobalDescSetLayout;    
     VkDescriptorSetLayout m_hPassDescSetLayout;    
+    VkDescriptorSetLayout m_hMatInstanceDescSetLayout;    
 
     DescriptorSetLayoutBuilder m_oGlobalLayoutBuilder;
     DescriptorSetLayoutBuilder m_oPassLayoutBuilder;
+    DescriptorSetLayoutBuilder m_oMatInstanceLayoutBuilder;
 
     bool m_bResized = false;
   };

@@ -120,6 +120,11 @@ void Window::BindDefaultRenderTarget() const
   api::BindDefaultRenderTarget(m_pImpl->m_pAPIWindow);
 }
 
+uint32_t Window::GetMsaaSamples() const
+{
+  return api::GetDefaultMsaaSamples();
+}
+
 bool Window::ShouldClose() const 
 {
   return glfwWindowShouldClose(m_pImpl->m_pGlfwWindow);

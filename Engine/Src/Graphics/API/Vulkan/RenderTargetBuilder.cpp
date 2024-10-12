@@ -8,7 +8,7 @@ namespace vk
 {
   void RenderTargetBuilder::Build(APIRenderTarget* pRenderTarget_)
   {
-    CreateRenderPass(pRenderTarget_->m_pOwnerWindow, m_lstColorTextures.size(), m_eColorFormat, true, m_eDepthStencilFormat, m_uMsaaSamples, pRenderTarget_->m_hRenderPass);
+    CreateRenderPass(pRenderTarget_->m_pOwnerWindow, m_lstColorTextures.size(), m_eColorFormat, true, m_eDepthStencilFormat, m_uMsaaSamples, pRenderTarget_->m_hRenderPass, true);
 
     CreateFramebuffer(pRenderTarget_->m_pOwnerWindow, pRenderTarget_->m_hRenderPass, m_lstColorTextures.data(), m_lstColorTextures.size(), m_pDepthStencilTexture, m_lstColorResolveTextures.data(), pRenderTarget_->m_hFrameBuffer);
   }

@@ -18,10 +18,11 @@ namespace api
       Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pContext;
       Microsoft::WRL::ComPtr<IDXGISwapChain> m_pSwapchain;  
       
-      Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_pBackBufferRTV;
-      //Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;      
+      Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_pRtv;
+      Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDsv;
 
-      APIRenderTarget* m_pMsaaRenderTarget;
+      Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pColorTexture;
+      Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pDSTexture;      
 
       unsigned int m_uWidth, m_uHeight;
 

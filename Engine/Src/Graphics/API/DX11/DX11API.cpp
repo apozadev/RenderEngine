@@ -36,7 +36,7 @@ namespace api
   namespace dx11
   {
 
-    DX11Data s_oGlobalData;
+    DX11Data s_oGlobalData;    
 
     void PollWindowSize(APIWindow* _pWindow)
     {      
@@ -61,9 +61,50 @@ namespace api
       case ImageFormat::R8G8B8A8:
         return DXGI_FORMAT_R8G8B8A8_UNORM;
         break;
+      case ImageFormat::R32:
+        return DXGI_FORMAT_R32_TYPELESS;
+        break;
       default:
         return DXGI_FORMAT_R8G8B8A8_UNORM;
       }
+    }
+
+    DXGI_FORMAT GetDXGISrvFormat(ImageFormat _eFormat)
+    {
+      switch (_eFormat)
+      {
+      case ImageFormat::R8G8B8:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+        break;
+      case ImageFormat::R8G8B8A8:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+        break;
+      case ImageFormat::R32:
+        return DXGI_FORMAT_R32_FLOAT;
+        break;
+      default:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+      }
+    }
+
+    uint32_t GetTextureUsage(uint32_t _uUsage)
+    {
+      uint32_t uRes = 0u;
+
+      if ((_uUsage & static_cast<int>(TextureUsage::SHADER_RESOURCE)) != 0)
+      {
+        uRes |= D3D11_BIND_SHADER_RESOURCE;
+      }
+      if ((_uUsage & static_cast<int>(TextureUsage::COLOR_TARGET)) != 0)
+      {
+        uRes |= D3D11_BIND_RENDER_TARGET;
+      }      
+      if ((_uUsage & static_cast<int>(TextureUsage::DEPTH_TARGET)) != 0)
+      {
+        uRes |= D3D11_BIND_DEPTH_STENCIL;
+      }
+
+      return uRes;
     }
 
     D3D11_BLEND_OP GetD3D11BlendOp(BlendOp _eBlendOp)
@@ -183,47 +224,67 @@ namespace api
     }
 
     void CreateSwapchainViewsAndViewport(APIWindow* _pWindow)
-    {
-      
-      // Get back buffer      
-      ID3D11Texture2D* pBackBuffer = nullptr;
-      DX11_CHECK(_pWindow->m_pSwapchain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
-      DX11_CHECK(_pWindow->m_pDevice->CreateRenderTargetView(pBackBuffer, nullptr, _pWindow->m_pBackBufferRTV.GetAddressOf()));
+    {            
 
-      /*
-      D3D11_TEXTURE2D_DESC oRtDesc;
-      pBackBuffer->GetDesc(&oRtDesc);
+    }
+
+    void CreateWindowRenderTarget(APIWindow* _pWindow, uint32_t _uMsaaSamples)
+    {      
 
       // Create Depth buffer
-      wrl::ComPtr<ID3D11Texture2D> pDepthStencil;
-      D3D11_TEXTURE2D_DESC oTexDesc;
-      oTexDesc.Width = oRtDesc.Width;
-      oTexDesc.Height = oRtDesc.Height;
-      oTexDesc.MipLevels = 1;
-      oTexDesc.ArraySize = 1;
-      oTexDesc.Format = DXGI_FORMAT_D32_FLOAT;
-      oTexDesc.SampleDesc.Count = 1;
-      oTexDesc.SampleDesc.Quality = 0;
-      oTexDesc.Usage = D3D11_USAGE_DEFAULT;
-      oTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-      oTexDesc.CPUAccessFlags = 0;
-      oTexDesc.MiscFlags = 0;
-      DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oTexDesc, NULL, pDepthStencil.GetAddressOf()));
+
+      D3D11_TEXTURE2D_DESC oDSTexDesc = {};
+      oDSTexDesc.Width = _pWindow->m_uWidth;
+      oDSTexDesc.Height = _pWindow->m_uHeight;
+      oDSTexDesc.MipLevels = 1;
+      oDSTexDesc.ArraySize = 1;
+      oDSTexDesc.Format = DXGI_FORMAT_D32_FLOAT;
+      oDSTexDesc.SampleDesc.Count = _uMsaaSamples;
+      oDSTexDesc.SampleDesc.Quality = 0;
+      oDSTexDesc.Usage = D3D11_USAGE_DEFAULT;
+      oDSTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+      oDSTexDesc.CPUAccessFlags = 0;
+      oDSTexDesc.MiscFlags = 0;
+      DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oDSTexDesc, NULL, _pWindow->m_pDSTexture.GetAddressOf()));
+
+      // Create DSV      
 
       D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
       descDSV.Format = DXGI_FORMAT_D32_FLOAT;
-      descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+      descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
       descDSV.Texture2D.MipSlice = 0u;
-      DX11_CHECK(_pWindow->m_pDevice->CreateDepthStencilView(pDepthStencil.Get(), &descDSV, _pWindow->m_pDepthStencilView.GetAddressOf()));
-      */
+      DX11_CHECK(_pWindow->m_pDevice->CreateDepthStencilView(_pWindow->m_pDSTexture.Get(), &descDSV, _pWindow->m_pDsv.GetAddressOf()));
+
+      // Create color texture
+
+      D3D11_TEXTURE2D_DESC oTexDesc = {};
+      oTexDesc.Width = _pWindow->m_uWidth;
+      oTexDesc.Height = _pWindow->m_uHeight;
+      oTexDesc.Format = _pWindow->m_eSwapchainFormat;
+      oTexDesc.MipLevels = 1;
+      oTexDesc.ArraySize = 1;
+      oTexDesc.SampleDesc.Count = _uMsaaSamples;
+      oTexDesc.SampleDesc.Quality = 0;
+      oTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+      oTexDesc.Usage = D3D11_USAGE_DEFAULT;
+      oTexDesc.CPUAccessFlags = 0;
+
+      DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oTexDesc, NULL, _pWindow->m_pColorTexture.GetAddressOf()));
+
+      // Create Render Target View
+
+      D3D11_RENDER_TARGET_VIEW_DESC oRtvDesc = {};
+      oRtvDesc.Format = _pWindow->m_eSwapchainFormat;
+      oRtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+      oRtvDesc.Texture2D.MipSlice = 0;
+
+      DX11_CHECK(_pWindow->m_pDevice->CreateRenderTargetView(_pWindow->m_pColorTexture.Get(), &oRtvDesc, _pWindow->m_pRtv.GetAddressOf()))
+
     }
 
     void ResizeSwapchain(APIWindow* _pWindow)
     {
       PollWindowSize(_pWindow);
-
-      _pWindow->m_pBackBufferRTV.ReleaseAndGetAddressOf();
-      //_pWindow->m_pDepthStencilView.ReleaseAndGetAddressOf();
 
       _pWindow->m_pSwapchain->ResizeBuffers(_pWindow->m_uNumSwapchainImages, _pWindow->m_uWidth, _pWindow->m_uHeight, _pWindow->m_eSwapchainFormat, 0u);
 
@@ -256,14 +317,9 @@ namespace api
       pWindow->m_eSwapchainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
       
       PollWindowSize(pWindow);
-
       CreateDeviceAndSwapChain(pWindow);
-
-      CreateSwapchainViewsAndViewport(pWindow);
-
-      s_oGlobalData.m_pUsingWindow = pWindow;
-
-      pWindow->m_pMsaaRenderTarget = CreateAPIRenderTarget(pWindow->m_uWidth, pWindow->m_uHeight, GetImageFormat(pWindow->m_eSwapchainFormat), true);
+      CreateSwapchainViewsAndViewport(pWindow);      
+      CreateWindowRenderTarget(pWindow, 8u);
 
       // Default to triangle list just in case
       pWindow->m_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -293,9 +349,20 @@ namespace api
       return _pWindow->m_uHeight;
     }
 
+    void BindDefaultRenderTarget(APIWindow* _pWindow)
+    {
+      float aClearColor[] = { 0.f,0.f,0.f,1.f };
+      unsigned int uClearFlags = D3D11_CLEAR_DEPTH;
+      
+      _pWindow->m_pContext->ClearRenderTargetView(_pWindow->m_pRtv.Get(), aClearColor);      
+
+      _pWindow->m_pContext->ClearDepthStencilView(_pWindow->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
+
+      _pWindow->m_pContext->OMSetRenderTargets(1, _pWindow->m_pRtv.GetAddressOf(), _pWindow->m_pDsv.Get());
+    }
+
     void DestroyAPIWindow(APIWindow* _pAPIWindow)
     {
-      DestroyAPIRenderTarget(_pAPIWindow->m_pMsaaRenderTarget);
       delete _pAPIWindow;
     }
 
@@ -453,7 +520,7 @@ namespace api
 
     // Texture
 
-    APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels)
+    APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
     {
       APITexture* pTexture = new APITexture();
 
@@ -466,9 +533,16 @@ namespace api
       uint32_t uMemPitch = uPixelSize * _uWidth;
 
       DXGI_FORMAT eDXGIFormat = GetDXGIFormat(_eFormat);
+      DXGI_FORMAT eDXGISrvFormat = GetDXGISrvFormat(_eFormat);
 
       uint32_t uMaxMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_uWidth, _uWidth)))) + 1;
       _uMipLevels = _uMipLevels == 0u ? uMaxMipLevels : std::min(_uMipLevels, uMaxMipLevels);
+
+      uint32_t uBindFlags = GetTextureUsage(_uUsage);
+      if (_uMipLevels > 1u)
+      {
+        uBindFlags |= D3D11_BIND_RENDER_TARGET;
+      }
 
       D3D11_SUBRESOURCE_DATA oData = {};
       oData.pSysMem = _pData;
@@ -476,10 +550,10 @@ namespace api
 
       D3D11_TEXTURE2D_DESC oTexDesc = {};
       oTexDesc.ArraySize = 1;
-      oTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+      oTexDesc.BindFlags = uBindFlags;
       oTexDesc.CPUAccessFlags = 0;
       oTexDesc.Format = eDXGIFormat;
-      oTexDesc.SampleDesc.Count = 1;
+      oTexDesc.SampleDesc.Count = _uMsaaSamples;
       oTexDesc.SampleDesc.Quality = 0;
       oTexDesc.Usage = D3D11_USAGE_DEFAULT;
       oTexDesc.MipLevels = _uMipLevels;
@@ -493,7 +567,7 @@ namespace api
 
       if (_uMipLevels == 1)
       {
-        DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, &oData, pTexture->m_pTexture.GetAddressOf()));
+        DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _pData? &oData : nullptr, pTexture->m_pTexture.GetAddressOf()));
       }
       else
       {
@@ -502,7 +576,7 @@ namespace api
       }
 
       D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-      srvDesc.Format = eDXGIFormat;
+      srvDesc.Format = eDXGISrvFormat;
       srvDesc.Texture2D.MipLevels = _uMipLevels;
       srvDesc.Texture2D.MostDetailedMip = 0u;
       srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -544,76 +618,43 @@ namespace api
 
     // RenderTarget
 
-    APIRenderTarget* CreateAPIRenderTarget(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, bool _bMultisampled)
+    APIRenderTarget* CreateAPIRenderTarget()
     {
-
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
       APIRenderTarget* pRenderTarget = new APIRenderTarget();
 
       pRenderTarget->m_pOwnerWindow = pWindow;
 
-      uint32_t uSampleCount = _bMultisampled ? 8u : 1u;
-
-      // Create Depth buffer
-      D3D11_TEXTURE2D_DESC oDSTexDesc = {};
-      oDSTexDesc.Width = pWindow->m_uWidth;
-      oDSTexDesc.Height = pWindow->m_uHeight;
-      oDSTexDesc.MipLevels = 1;
-      oDSTexDesc.ArraySize = 1;
-      oDSTexDesc.Format = DXGI_FORMAT_D32_FLOAT;
-      oDSTexDesc.SampleDesc.Count = uSampleCount;
-      oDSTexDesc.SampleDesc.Quality = 0;
-      oDSTexDesc.Usage = D3D11_USAGE_DEFAULT;
-      oDSTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-      oDSTexDesc.CPUAccessFlags = 0;
-      oDSTexDesc.MiscFlags = 0;      
-      DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oDSTexDesc, NULL, pRenderTarget->m_pDSTexture.GetAddressOf()));
-
-      D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
-      descDSV.Format = DXGI_FORMAT_D32_FLOAT;
-      descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-      descDSV.Texture2D.MipSlice = 0u;
-      DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilView(pRenderTarget->m_pDSTexture.Get(), &descDSV, pRenderTarget->m_pDsv.GetAddressOf()));
-
-      // Create color texture
-
-      DXGI_FORMAT eDXGIFormat = GetDXGIFormat(_eFormat);
-
-      D3D11_TEXTURE2D_DESC oTexDesc = {};
-      oTexDesc.Width = pWindow->m_uWidth;
-      oTexDesc.Height = pWindow->m_uHeight;
-      oTexDesc.Format = eDXGIFormat;
-      oTexDesc.MipLevels = 1;
-      oTexDesc.ArraySize = 1;
-      oTexDesc.SampleDesc.Count = uSampleCount;
-      oTexDesc.SampleDesc.Quality = 0;
-      oTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-      oTexDesc.Usage = D3D11_USAGE_DEFAULT;
-      oTexDesc.CPUAccessFlags = 0;
-
-      DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, NULL, pRenderTarget->m_pTexture.GetAddressOf()));
-
-      // Create Shader Resource View
-
-      D3D11_SHADER_RESOURCE_VIEW_DESC oSrvDesc = {};
-      oSrvDesc.Format = eDXGIFormat;
-      oSrvDesc.Texture2D.MipLevels = 1;
-      oSrvDesc.Texture2D.MostDetailedMip = 0u;
-      oSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
-      DX11_CHECK(pWindow->m_pDevice->CreateShaderResourceView(pRenderTarget->m_pTexture.Get(), &oSrvDesc, pRenderTarget->m_pSrv.GetAddressOf()));
-
-      // Create Render Target View
-
-      D3D11_RENDER_TARGET_VIEW_DESC oRtvDesc = {};
-      oRtvDesc.Format = eDXGIFormat;
-      oRtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-      oRtvDesc.Texture2D.MipSlice = 0;
-
-      DX11_CHECK(pWindow->m_pDevice->CreateRenderTargetView(pRenderTarget->m_pTexture.Get(), &oRtvDesc, pRenderTarget->m_pRtv.GetAddressOf()))
-
       return pRenderTarget;
+    }
 
+    void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
+    {
+      s_oGlobalData.m_oRenderTargetBuilder.SetColorFormat(GetDXGIFormat(_eFormat));
+      s_oGlobalData.m_oRenderTargetBuilder.SetDepthStencilFormat(GetDXGIFormat(_eDepthStencilFormat));
+      s_oGlobalData.m_oRenderTargetBuilder.SetMsaaSamples(_uMsaaSamples);
+      s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
+    }
+
+    void RenderTargetAddColorTexture(APITexture* _pTexture)
+    {            
+      s_oGlobalData.m_oRenderTargetBuilder.AddColorTexture(_pTexture);
+    }
+
+    void RenderTargetSetDepthStencilTexture(APITexture* _pTexture)
+    {            
+      s_oGlobalData.m_oRenderTargetBuilder.SetDepthTexture(_pTexture);
+    }
+
+    void RenderTargetAddColorResolveTexture(APITexture* _pTexture)
+    {
+      s_oGlobalData.m_oRenderTargetBuilder.AddResolveColorTexture(_pTexture);
+    }
+
+    void EndRenderTargetSetup()
+    {
+      s_oGlobalData.m_oRenderTargetBuilder.Build(s_oGlobalData.m_pUsingRenderTarget);
     }
 
     void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -623,26 +664,16 @@ namespace api
       float aClearColor[] = { 0.f,0.f,0.f,1.f };
       unsigned int uClearFlags = D3D11_CLEAR_DEPTH;
 
-      pWindow->m_pContext->ClearRenderTargetView(_pRenderTarget->m_pRtv.Get(), aClearColor);
+      for (auto pRtv : _pRenderTarget->m_lstRtv)
+      {
+        pWindow->m_pContext->ClearRenderTargetView(pRtv.Get(), aClearColor);
+      }
+
       pWindow->m_pContext->ClearDepthStencilView(_pRenderTarget->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
 
-      pWindow->m_pContext->OMSetRenderTargets(1u, _pRenderTarget->m_pRtv.GetAddressOf(), _pRenderTarget->m_pDsv.Get());        
+      pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
     }
-
-    void CopyRenderTarget(APIRenderTarget* _pSrc, APIRenderTarget* _pDst)
-    {
-
-      if (_pSrc->m_pOwnerWindow != _pDst->m_pOwnerWindow)
-      {
-        THROW_GENERIC_EXCEPTION("Trying to copy a rendertarget to another from a different window!")
-      }      
-
-      APIWindow* pWindow = _pSrc->m_pOwnerWindow;
-
-      pWindow->m_pContext->CopyResource(_pDst->m_pTexture.Get(), _pSrc->m_pTexture.Get());
-      
-    }
-
+    
     void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
     {
       delete _pRenderTarget;
@@ -754,7 +785,7 @@ namespace api
 
     // Render substate
 
-    APIRenderSubState* CreateAPIRenderSubState()
+    APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)
     {
       return nullptr;
     }
@@ -827,7 +858,7 @@ namespace api
       _pTexture->m_eStage = _oBindInfo.m_eStage;
     }
 
-    void EndSubStateSetup()
+    void EndSubStateSetup(ResourceFrequency _eFrequency)
     {
     }
 
@@ -850,8 +881,6 @@ namespace api
         _pWindow->m_bResize = false;
       }      
       
-      BindAPIRenderTarget(_pWindow->m_pMsaaRenderTarget);
-
       return 0;
     }
 
@@ -879,8 +908,7 @@ namespace api
       ID3D11Texture2D* pBackBuffer = nullptr;
       DX11_CHECK(_pWindow->m_pSwapchain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
       
-      //_pWindow->m_pContext->CopyResource(pBackBuffer, _pWindow->m_pMsaaRenderTarget->m_pTexture.Get());
-      _pWindow->m_pContext->ResolveSubresource(pBackBuffer, 0u, _pWindow->m_pMsaaRenderTarget->m_pTexture.Get(), 0u, _pWindow->m_eSwapchainFormat);
+      _pWindow->m_pContext->ResolveSubresource(pBackBuffer, 0u, _pWindow->m_pColorTexture.Get(), 0u, _pWindow->m_eSwapchainFormat);
 
       DX11_CHECK(_pWindow->m_pSwapchain->Present(1u, 0u))
 

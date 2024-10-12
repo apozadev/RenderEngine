@@ -3,6 +3,7 @@
 #include <inttypes.h>
 
 #include "Graphics/ImageFormat.h"
+#include "Graphics/TextureUsage.h"
 #include "Graphics/ResourceBindInfo.h"
 #include "Graphics/RenderStateInfo.h"
 
@@ -43,8 +44,8 @@ namespace api
   // Global
 
   void InitializeAPI();
-
   void ShutDownAPI();
+  uint32_t GetDefaultMsaaSamples();
 
   // Window
 
@@ -76,7 +77,7 @@ namespace api
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo);
+  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples = 1u);
   void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
   void EndRenderStateSetup();
   void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState);
@@ -95,7 +96,7 @@ namespace api
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples);
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage);
   void BindAPITexture(APITexture* _pTexture);
   void DestroyAPITexture(APITexture* _pTexture);  
 
@@ -103,16 +104,17 @@ namespace api
 
   APIRenderTarget* CreateAPIRenderTarget();
   void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget);
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
   void RenderTargetAddColorTexture(APITexture* _pTexture);
   void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
   void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
   void EndRenderTargetSetup();
+  void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+  void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
   void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
   // Drawing
 
-  void WaitForEndFrame(APIWindow* _pWindow);
   int BeginDraw(APIWindow* _pWindow);
   void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, void* _pConstantData, uint32_t _uConstantSize);
   void EndDraw(APIWindow* _pWindow);    

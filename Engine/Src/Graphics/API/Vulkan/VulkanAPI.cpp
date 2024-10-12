@@ -33,6 +33,11 @@ namespace vk
     vkDestroyInstance(s_oGlobalData.m_hInstance, NULL);
   }
 
+  uint32_t GetDefaultMsaaSamples()
+  {
+    return static_cast<uint32_t>(s_oGlobalData.m_eMaxMsaaSampleCount);
+  }
+
   // Window
 
   APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
@@ -50,7 +55,7 @@ namespace vk
     CreateDescriptorPool(pWindow);
     CreateGlobalDescriptorLayout(pWindow);
 
-    CreateRenderPass(pWindow, 1u, pWindow->m_eSwapchainFormat, true, VK_FORMAT_D32_SFLOAT, s_oGlobalData.m_eMaxMsaaSampleCount, pWindow->m_hRenderPass);
+    CreateRenderPass(pWindow, 1u, pWindow->m_eSwapchainFormat, true, VK_FORMAT_D32_SFLOAT, s_oGlobalData.m_eMaxMsaaSampleCount, pWindow->m_hRenderPass, false);
 
     pWindow->m_pFramebuffers = new VkFramebuffer[pWindow->m_uSwapchainImageCount];
 
@@ -136,6 +141,8 @@ namespace vk
     delete[] _pWindow->m_pInFlightFences;
         
     vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hGlobalDescSetLayout, NULL);        
+    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hPassDescSetLayout, NULL);        
+    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hMatInstanceDescSetLayout, NULL);        
 
     vkDestroyDescriptorPool(_pWindow->m_hDevice, _pWindow->m_hDescPool, NULL);        
 
@@ -311,7 +318,7 @@ namespace vk
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples)
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
   {
 
     APITexture* pTexture = new APITexture();
@@ -332,20 +339,67 @@ namespace vk
 
     if (_pData != nullptr)
     {
-      CreateBuffer(pWindow, uSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, hStagingBuffer, hStagingBufferMemory);
+      CreateBuffer(pWindow
+        , uSize
+        , VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+        , VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        , hStagingBuffer
+        , hStagingBufferMemory);
 
       SetBufferData(pWindow, _pData, uSize, hStagingBufferMemory);
     }
 
-    CreateImage(pWindow, _uWidth, _uHeight, pTexture->m_eFormat, _uMipLevels, static_cast<VkSampleCountFlagBits>(_uMsaaSamples), VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pTexture->m_hImage, pTexture->m_hMemory);
+    VkImageUsageFlags uUsageFlags = GetVkTextureUsage(_uUsage);
 
     if (_pData != nullptr)
     {
-      TransitionImageLayout(pWindow, pTexture->m_hImage, pTexture->m_eFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      uUsageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    }
+
+    if (_uMipLevels > 1u)
+    {
+      uUsageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    }
+
+    CreateImage(pWindow
+      , _uWidth
+      , _uHeight
+      , pTexture->m_eFormat
+      , _uMipLevels
+      , static_cast<VkSampleCountFlagBits>(_uMsaaSamples)
+      , VK_IMAGE_TILING_OPTIMAL
+      , uUsageFlags
+      , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+      , pTexture->m_hImage
+      , pTexture->m_hMemory);
+
+    uint32_t uAspectFlags = 0u;
+
+    if ((_uUsage & TextureUsage::DEPTH_TARGET) != 0u)
+    {
+      uAspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+    else
+    {
+      uAspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
+    if (_pData != nullptr)
+    {
+      TransitionImageLayout(pWindow
+        , pTexture->m_hImage
+        , pTexture->m_eFormat
+        , _uMipLevels
+        , uAspectFlags
+        , VK_IMAGE_LAYOUT_UNDEFINED
+        , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
       CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight);
 
-      GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels);
+      if (_uMipLevels > 1u)
+      {
+        GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels);
+      }
 
       //TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -353,9 +407,17 @@ namespace vk
 
     }
 
-    CreateImageView(pWindow, pTexture->m_hImage, pTexture->m_eFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, pTexture->m_hImageView);
+    CreateImageView(pWindow
+      , pTexture->m_hImage
+      , pTexture->m_eFormat
+      , _uMipLevels
+      , uAspectFlags
+      , pTexture->m_hImageView);
 
-    CreateTextureSampler(pWindow, pTexture, _uMipLevels);
+    if ((_uUsage & TextureUsage::SHADER_RESOURCE) != 0u)
+    {
+      CreateTextureSampler(pWindow, pTexture, _uMipLevels);
+    }
 
     return pTexture;
   }
@@ -392,9 +454,12 @@ namespace vk
     return pRenderTarget;
   }
 
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget)
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
   {
     s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;    
+    s_oGlobalData.m_oRenderTargetBuilder.SetColorFormat(GetVKFormat(_eFormat));
+    s_oGlobalData.m_oRenderTargetBuilder.SetDepthStencilFormat(GetVKFormat(_eDepthStencilFormat));
+    s_oGlobalData.m_oRenderTargetBuilder.SetMsaaSamples(_uMsaaSamples);
   }
 
   void RenderTargetAddColorTexture(APITexture* _pTexture)
@@ -417,6 +482,11 @@ namespace vk
     s_oGlobalData.m_oRenderTargetBuilder.Build(s_oGlobalData.m_pUsingRenderTarget);
 
     s_oGlobalData.m_oRenderTargetBuilder.Clear();
+  }
+
+  void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  {
+    s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
   }
 
   void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -442,6 +512,15 @@ namespace vk
     vkCmdBeginRenderPass(pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
   }
 
+  void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  {
+    APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
+
+    const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
+
+    vkCmdEndRenderPass(pWindow->m_pCmdBuffers[uFrameIdx]);
+  }
+
   void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
   {
     APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
@@ -459,8 +538,20 @@ namespace vk
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo)
+  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples)
   {
+
+    VkRenderPass hRenderPass = VK_NULL_HANDLE;
+
+    if (s_oGlobalData.m_pUsingRenderTarget)
+    {
+      hRenderPass = s_oGlobalData.m_pUsingRenderTarget->m_hRenderPass;
+    }    
+    else
+    {
+      hRenderPass = s_oGlobalData.m_pUsingWindow->m_hRenderPass;
+    }
+
     APIRenderState* pRenderState = new APIRenderState();
     pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;  
     uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;    
@@ -471,13 +562,12 @@ namespace vk
     file::File oVSFile(sVSFilename.c_str());
     file::File oPSFile(sPSFilename.c_str());
 
-    ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);
-    ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder, pRenderState->m_oMatInstanceLayoutBuilder);
+    ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder);
+    ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder);
 
     VkDevice hDevice = pRenderState->m_pOwnerWindow->m_hDevice;
     
-    pRenderState->m_hDescSetLayout = pRenderState->m_oMaterialLayoutBuilder.Build(hDevice);
-    pRenderState->m_hSubDescSetLayout = pRenderState->m_oMatInstanceLayoutBuilder.Build(hDevice);
+    pRenderState->m_hDescSetLayout = pRenderState->m_oMaterialLayoutBuilder.Build(hDevice);    
 
     std::vector<VkDescriptorSetLayout> lstLayouts;
     for (int i = 0; i < uNumImages; i++)
@@ -496,7 +586,7 @@ namespace vk
 
     VK_CHECK(vkAllocateDescriptorSets(hDevice, &oDescSetAllocInfo, pRenderState->m_pDescSets))
 
-    CreatePipeline(oVSFile, oPSFile, _oInfo, pRenderState);
+    CreatePipeline(oVSFile, oPSFile, _oInfo, hRenderPass, static_cast<VkSampleCountFlagBits>(_uMsaaSamples), pRenderState);
 
     return pRenderState;
   }
@@ -570,8 +660,7 @@ namespace vk
 
     delete[] _pAPIRenderState->m_pDescSets;    
 
-    vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hDescSetLayout, NULL);
-    vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hSubDescSetLayout, NULL);
+    vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hDescSetLayout, NULL);    
 
     vkDestroyPipelineLayout(pWindow->m_hDevice, _pAPIRenderState->m_hPipelineLayout, NULL);
 
@@ -589,7 +678,7 @@ namespace vk
     switch (_eFrequency)
     {
     case ResourceFrequency::MATERIAL_INSTANCE:
-      pSubState->m_hDecSetLayout = s_oGlobalData.m_pUsingRenderState->m_hSubDescSetLayout;
+      pSubState->m_hDecSetLayout = pSubState->m_pOwnerWindow->m_hMatInstanceDescSetLayout;
       break;
     case ResourceFrequency::GLOBAL:
       pSubState->m_hDecSetLayout = pSubState->m_pOwnerWindow->m_hGlobalDescSetLayout;
@@ -684,7 +773,7 @@ namespace vk
     switch (_eFrequency)
     {
     case ResourceFrequency::MATERIAL_INSTANCE:
-      pLayoutBuilder = &s_oGlobalData.m_pUsingRenderState->m_oMatInstanceLayoutBuilder;
+      pLayoutBuilder = &pWindow->m_oMatInstanceLayoutBuilder;
       break;
     case ResourceFrequency::GLOBAL:
       pLayoutBuilder = &pWindow->m_oGlobalLayoutBuilder;

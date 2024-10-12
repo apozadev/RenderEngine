@@ -5,6 +5,7 @@
 #include <GLFW/glfw3native.h>
 
 #include "Graphics/ResourceFrequency.h"
+#include "Graphics/TextureUsage.h"
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanShaderReflection.h"
 
@@ -20,7 +21,7 @@ VkFormat GetVKFormat(ImageFormat _eFormat)
 {
   switch (_eFormat)
   {
-  case ImageFormat::D32:
+  case ImageFormat::R32:
     return VK_FORMAT_D32_SFLOAT;
   case ImageFormat::R8G8B8:
     return VK_FORMAT_R8G8B8_SRGB;
@@ -104,6 +105,26 @@ VkBlendFactor GetVkBlendFactor(BlendFactor _eBlendFactor)
   default:
     return VK_BLEND_FACTOR_ZERO;
   }
+}
+
+VkImageUsageFlags GetVkTextureUsage(uint32_t _uUsage)
+{
+  VkImageUsageFlags uRes = 0u;
+
+  if ((_uUsage & static_cast<int>(TextureUsage::SHADER_RESOURCE)) != 0)
+  {
+    uRes |= VK_IMAGE_USAGE_SAMPLED_BIT;
+  }
+  if ((_uUsage & static_cast<int>(TextureUsage::COLOR_TARGET)) != 0)
+  {
+    uRes |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  }
+  if ((_uUsage & static_cast<int>(TextureUsage::DEPTH_TARGET)) != 0)
+  {
+    uRes |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  }
+
+  return uRes;
 }
 
 void CreateInstance()
@@ -246,6 +267,8 @@ void CreatePhysicalDevice()
 void CreatePipeline(const file::File& _oVSFile,
   const file::File& _oPSFile,
   const RenderStateInfo& _oInfo,
+  VkRenderPass _hRenderPass,
+  VkSampleCountFlagBits _uMsaaSamples,
   APIRenderState* _pRenderState_)
 {
 
@@ -351,7 +374,7 @@ void CreatePipeline(const file::File& _oVSFile,
   VkPipelineMultisampleStateCreateInfo oMultisampling{};
   oMultisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   oMultisampling.sampleShadingEnable = VK_FALSE;
-  oMultisampling.rasterizationSamples = s_oGlobalData.m_eMaxMsaaSampleCount;
+  oMultisampling.rasterizationSamples = _uMsaaSamples;
   oMultisampling.minSampleShading = 1.0f; // Optional
   oMultisampling.pSampleMask = NULL; // Optional
   oMultisampling.alphaToCoverageEnable = VK_FALSE; // Optional
@@ -399,7 +422,7 @@ void CreatePipeline(const file::File& _oVSFile,
     pWindow->m_hGlobalDescSetLayout
     , pWindow->m_hPassDescSetLayout
     , _pRenderState_->m_hDescSetLayout
-    , _pRenderState_->m_hSubDescSetLayout
+    , pWindow->m_hMatInstanceDescSetLayout
   };
 
   // Push constants
@@ -418,11 +441,9 @@ void CreatePipeline(const file::File& _oVSFile,
 
   VK_CHECK(vkCreatePipelineLayout(pWindow->m_hDevice, &oPipelineLayoutCreateInfo, NULL, &_pRenderState_->m_hPipelineLayout))
 
-    // Create Pipeline object
+  // Create Pipeline object
 
-    VkGraphicsPipelineCreateInfo oPipelineInfo
-  {
-  };
+  VkGraphicsPipelineCreateInfo oPipelineInfo{};
   oPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   oPipelineInfo.stageCount = 2;
   oPipelineInfo.pStages = aStages;
@@ -436,7 +457,7 @@ void CreatePipeline(const file::File& _oVSFile,
   oPipelineInfo.pColorBlendState = &oColorBlending;
   oPipelineInfo.pDynamicState = NULL;
   oPipelineInfo.layout = _pRenderState_->m_hPipelineLayout;
-  oPipelineInfo.renderPass = pWindow->m_hRenderPass;
+  oPipelineInfo.renderPass = _hRenderPass;
   oPipelineInfo.subpass = 0u;
   oPipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
   oPipelineInfo.basePipelineIndex = -1; // Optional
@@ -744,7 +765,7 @@ void CreateSwapchain(APIWindow* _pWindow)
   }
 }
 
-void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_)
+void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen)
 {
 
   bool bHasMsaa = _uMsaaSampleCount > 1u;
@@ -757,7 +778,15 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
   oColorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   oColorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   oColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  oColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  if (bHasMsaa)
+  {
+    oColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  }
+  else
+  {
+    oColorAttachmentDesc.finalLayout = _bOffscreen ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  }
 
   VkAttachmentDescription oColorResolveAttachmentDesc{};
   oColorResolveAttachmentDesc.format = oColorAttachmentDesc.format;
@@ -767,7 +796,7 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
   oColorResolveAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   oColorResolveAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   oColorResolveAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  oColorResolveAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  oColorResolveAttachmentDesc.finalLayout = _bOffscreen ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; 
 
   VkAttachmentDescription oDepthAttachmentDesc{};
   oDepthAttachmentDesc.format = _eDepthStencilFormat;
@@ -778,6 +807,15 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
   oDepthAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   oDepthAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   oDepthAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  if (bHasMsaa)
+  {
+    oDepthAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  }
+  else
+  {
+    oDepthAttachmentDesc.finalLayout = _bOffscreen ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  }
 
 
   VkAttachmentReference* pColorAttachmentRefs = new VkAttachmentReference[_uNumColorTextures];
@@ -977,7 +1015,7 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
 {
   {
     VkDescriptorSetLayoutBinding oBinding{};
-    oBinding.binding = static_cast<uint32_t>(ResourceFrequency::GLOBAL);
+    oBinding.binding = 0u;//static_cast<uint32_t>(ResourceFrequency::GLOBAL);
     oBinding.descriptorCount = 1u;
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -989,16 +1027,36 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
   }
 
   {
-    VkDescriptorSetLayoutBinding oBinding{};
-    oBinding.binding = static_cast<uint32_t>(ResourceFrequency::RENDER_STEP);
-    oBinding.descriptorCount = 4u;
-    oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    oBinding.pImmutableSamplers = NULL;
 
-    _pWindow->m_oPassLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+    for (uint32_t i = 0u; i < 4u; i++)
+    {
+      VkDescriptorSetLayoutBinding oBinding{};
+      oBinding.binding = i;// static_cast<uint32_t>(ResourceFrequency::RENDER_STEP);
+      oBinding.descriptorCount = 1u;
+      oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+      oBinding.pImmutableSamplers = NULL;
+
+      _pWindow->m_oPassLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+    }
 
     _pWindow->m_hPassDescSetLayout = _pWindow->m_oPassLayoutBuilder.Build(_pWindow->m_hDevice);
+  }
+
+  {
+    for (uint32_t i = 0u; i < 4u; i++)
+    {
+      VkDescriptorSetLayoutBinding oBinding{};
+      oBinding.binding = i;// static_cast<uint32_t>(ResourceFrequency::RENDER_STEP);
+      oBinding.descriptorCount = 1u;
+      oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+      oBinding.pImmutableSamplers = NULL;
+
+      _pWindow->m_oMatInstanceLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+    }
+
+    _pWindow->m_hMatInstanceDescSetLayout = _pWindow->m_oMatInstanceLayoutBuilder.Build(_pWindow->m_hDevice);
   }
 }
 

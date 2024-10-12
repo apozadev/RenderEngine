@@ -27,17 +27,13 @@ def main():
 	if sAPI != "dx11" and sAPI != "vk":
 		print("Second parameter must be \"dx11\" or \"vk\"")
 		return
-	
-	print("Target API: " + sAPI)
-	
+		
 	sType = str(sys.argv[1])		
 
 	if sType == "v":
-		print("Building Vertex Shaders")
 		sVCommonFile = sDx11VertexCommonFile if sAPI == "dx11" else sVkVertexCommonFile
 		sCommon = sCommon + open(sScriptDir + sVCommonFile).read()
 	elif sType == "p":
-		print("Building Pixel Shaders")
 		sVCommonFile = sDx11PixelCommonFile if sAPI == "dx11" else sVkPixelCommonFile
 		sCommon = sCommon + open(sScriptDir + sVCommonFile).read()
 	else:
@@ -82,7 +78,9 @@ def main():
 			os.system("fxc -E main -T " + sCompilerTypeFlag + " -Fo " + sCompilerOutputFilename + " " + sOutFilename)
 		else:
 			os.system(os.environ["VULKAN_SDK"] + "/Bin/glslc.exe " + sOutFilename + " -o " + sCompilerOutputFilename)
-		shutil.rmtree(sOutDir)		
+
+		# if os.path.exists(sOutDir):
+		# 	shutil.rmtree(sOutDir)		
 
 if __name__=="__main__": 
 	main() 

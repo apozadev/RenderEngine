@@ -28,16 +28,21 @@ public:
 
   Material* GetMaterial() const;
 
+  uint16_t GetId() const { return m_uId; }
+
   void Setup();
 
   void Bind() const;    
 
-private:
-
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;  
+private:  
 
   std::vector<Resource*> m_lstResources;
 
   bool m_bSetup;
+
+  uint16_t m_uId;
+
+  class Impl;
+  std::unique_ptr<Impl> m_pImpl;
+
 };

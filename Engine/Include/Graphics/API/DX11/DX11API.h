@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 
+#include "Graphics/TextureUsage.h"
 #include "Graphics/ImageFormat.h"
 
 #include "Graphics/ResourceBindInfo.h"
@@ -41,6 +42,8 @@ namespace api
 
 		uint32_t GetWindowHeight(APIWindow* _pWindow);
 
+		void BindDefaultRenderTarget(APIWindow* _pWindow);
+
 		void DestroyAPIWindow(APIWindow* _pAPIWindow);
 
 		// Camera
@@ -73,7 +76,7 @@ namespace api
 
 		// Texture
 
-		APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels);
+		APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage);
 
 		void BindAPITexture(APITexture* _pTexture);
 
@@ -81,11 +84,19 @@ namespace api
 
 		// RenderTarget
 
-		APIRenderTarget* CreateAPIRenderTarget(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, bool _bMultisampled);
+		APIRenderTarget* CreateAPIRenderTarget();
+
+		void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
+
+		void RenderTargetAddColorTexture(APITexture* _pTexture);
+
+		void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
+
+		void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
+
+		void EndRenderTargetSetup();
 
 		void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
-
-		void CopyRenderTarget(APIRenderTarget* _pSrc, APIRenderTarget* _pDst);
 
 		void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
@@ -105,7 +116,7 @@ namespace api
 
 		// Render substate
 
-		APIRenderSubState* CreateAPIRenderSubState();
+		APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency);
 
 		void BeginSubStateSetup(APIRenderSubState* _pAPIRenderState);
 
@@ -113,7 +124,7 @@ namespace api
 
 		void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);
 
-		void EndSubStateSetup();
+		void EndSubStateSetup(ResourceFrequency _eFrequency);
 
 		void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency);
 

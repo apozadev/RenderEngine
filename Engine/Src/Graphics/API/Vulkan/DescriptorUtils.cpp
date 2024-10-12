@@ -16,6 +16,7 @@ namespace vk
 
 void DescriptorSetLayoutBuilder::AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding)
 {
+  /*
   for (int i = 0; i < m_lstDescSetInfos.size(); i++)
   {
     VkDescriptorSetLayoutBinding& rOther = m_lstDescSetInfos[i];
@@ -29,6 +30,7 @@ void DescriptorSetLayoutBuilder::AddLayoutBinding(VkDescriptorSetLayoutBinding&&
       return;
     }
   }
+  */
 
   // Match not found, add entry
   m_lstDescSetInfos.push_back(std::move(_rBinding));  
@@ -54,7 +56,7 @@ bool DescriptorSetLayoutBuilder::Contains(VkDescriptorSetLayoutBinding _oBinding
   for (const VkDescriptorSetLayoutBinding& rBind : m_lstDescSetInfos)
   {
     if (rBind.binding == _oBinding.binding
-      && rBind.descriptorCount >= _oBinding.descriptorCount
+      && rBind.descriptorCount == _oBinding.descriptorCount
       && rBind.descriptorType == _oBinding.descriptorType
       && rBind.stageFlags == _oBinding.stageFlags)
     {

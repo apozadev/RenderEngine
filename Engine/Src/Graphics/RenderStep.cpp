@@ -1,11 +1,18 @@
 #include "Graphics/RenderStep.h"
 
 #include <vector>
+#include <algorithm>
+
+#include "Math/Transform.h"
 
 #include "Graphics/RenderTarget.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/Window.h"
-
+#include "Graphics/Camera.h"
+#include "Graphics/Pass.h"
+#include "Graphics/MaterialInstance.h"
+#include "Graphics/Mesh.h"
+#include "Graphics/Job.h"
 #include "Graphics/API/GraphicsAPI.h"
 
 class RenderStep::Impl
@@ -35,6 +42,8 @@ public:
     api::DestroyRenderSubState(m_pAPIRenderSubState);
   }
 
+  std::vector<Job> m_lstJobs;
+
   std::vector<RenderTarget*> m_lstInputs;
 
   const RenderTarget* m_pRenderTarget;
@@ -57,6 +66,73 @@ RenderStep::~RenderStep()
 {
 }
 
+void RenderStep::SubmitJob(Job&& _rJob)
+{
+  m_pImpl->m_lstJobs.push_back(std::move(_rJob));
+}
+
+void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransform) const
+{
+
+  // Update key for current camera
+  for (Job& rJob : m_pImpl->m_lstJobs)
+  {
+    rJob.UpdateRenderKey(_pCamera, _pViewTransform, false);
+  }
+
+  // Sort jobs
+  std::sort(m_pImpl->m_lstJobs.begin(), m_pImpl->m_lstJobs.end(), Job::Compare);
+
+  bool bStepBound = false;
+
+  const Pass* pLastPass = nullptr;  
+
+  for (const Job& rJob : m_pImpl->m_lstJobs)
+  {
+
+    if (rJob.m_pWindow != _pCamera->GetWindow())
+    {
+      continue;
+    }
+
+    const MaterialInstance* pMatInstance = rJob.m_pMaterial;
+
+    const Pass* pPass = rJob.m_pPass;
+
+    if (pPass != pLastPass)
+    {
+      pPass->Bind();
+
+      if (!bStepBound)
+      {
+        _pCamera->Bind();
+        Bind(_pCamera->GetWindow());
+        bStepBound = true;
+      }
+
+      pLastPass = pPass;
+    }
+
+    rJob.m_pMesh->UpdateTransform(*rJob.m_pMeshTransform);
+
+    pMatInstance->Bind();
+
+    rJob.m_pMesh->Draw();
+  }
+
+  Unbind();
+}
+
+void RenderStep::Clear()
+{
+  m_pImpl->m_lstJobs.clear();
+}
+
+const RenderTarget* RenderStep::GetRenderTarget() const
+{
+  return m_pImpl->m_pRenderTarget;
+}
+
 void RenderStep::Bind(const Window* _pWindow) const
 {
 
@@ -76,3 +152,12 @@ void RenderStep::Bind(const Window* _pWindow) const
 
   api::BindAPIRenderSubState(m_pImpl->m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);  
 }
+
+void RenderStep::Unbind() const
+{
+  if (m_pImpl->m_pRenderTarget)
+  {
+    m_pImpl->m_pRenderTarget->Unbind();
+  }
+}
+

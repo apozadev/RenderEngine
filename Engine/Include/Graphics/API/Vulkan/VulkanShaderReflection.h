@@ -9,7 +9,7 @@ namespace api
 namespace vk
 {
 
-  void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilder& oMatLayoutBuilder_, DescriptorSetLayoutBuilder& oInstLayoutBuilder_);
+  void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilder& oMatLayoutBuilder_);
 
 }
 }

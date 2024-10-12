@@ -107,7 +107,15 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/API/Vulkan/RenderTargetBuilder.h"
 	"Src/Graphics/API/Vulkan/RenderTargetBuilder.cpp"
 	"Include/Graphics/RenderStep.h"
-	"Src/Graphics/RenderStep.cpp" "Src/Graphics/RenderPipeline.cpp" "Include/Graphics/RenderPipelineConfig.h" "Include/Graphics/Job.h" "Src/Graphics/Job.cpp")
+	"Src/Graphics/RenderStep.cpp" 
+	"Src/Graphics/RenderPipeline.cpp" 
+	"Include/Graphics/RenderPipelineConfig.h" 
+	"Include/Graphics/Job.h" 
+	"Src/Graphics/Job.cpp" 
+	"Include/Graphics/API/DX11/RenderTargetBuilder.h" 
+	"Include/Graphics/TextureUsage.h" 
+	"Include/Graphics/Pass.h" 
+	"Src/Graphics/Pass.cpp" "Include/Graphics/RenderKey.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

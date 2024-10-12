@@ -19,7 +19,7 @@ struct MeshConstant
 class Mesh
 {
 
-  friend class RenderPipeline;
+  friend class RenderStep;
 
 public:    
 
@@ -33,7 +33,7 @@ public:
 
 private: 
 
-  void Draw();  
+  void Draw() const;  
 
   class Impl;
   std::unique_ptr<Impl> m_pImpl;

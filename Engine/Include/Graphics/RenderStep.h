@@ -5,6 +5,9 @@
 
 class Window;
 class RenderTarget;
+class Transform;
+class Camera;
+struct Job;
 
 class RenderStep
 {
@@ -16,8 +19,21 @@ public:
 
   ~RenderStep();
 
+  void SubmitJob(Job&& _rJob);
+
+  void Execute(const Camera* _pCamera, const Transform* _pViewTransform) const;
+
+  void Clear();
+
+  const RenderTarget* GetRenderTarget() const;
+
+private:
+
+
   void Bind(const Window* _pWindow) const;
 
+  void Unbind() const;
+  
 private:
 
   class Impl;
