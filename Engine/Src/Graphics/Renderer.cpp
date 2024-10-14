@@ -110,41 +110,6 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId) const
   return nullptr;
 }
 
-uint16_t Renderer::GetRenderStepLayer(std::string _sPipelineId, uint32_t _uStepIdx) const
-{
-
-  RenderPipeline* pPipeline = nullptr;
-
-  uint8_t uPipelineIdx = 0u;
-
-  while (uPipelineIdx < m_pImpl->m_lstRenderPipelines.size())
-  {
-    RenderPipeline& rCandidate = m_pImpl->m_lstRenderPipelines[uPipelineIdx];
-
-    if (rCandidate.GetId() == _sPipelineId)
-    {
-      pPipeline = &rCandidate;
-      break;
-    }
-
-    ++uPipelineIdx;
-  }   
-
-  uint8_t uLayer = 0xFu;  
-
-  const RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(_uStepIdx) : nullptr;
-
-  if (pStep)
-  {
-    uLayer = 0u;
-       
-    uLayer |= GEN_KEY(uPipelineIdx, 8, 16);
-    uLayer |= GEN_KEY(_uStepIdx, 8, 8);
-  }
-
-  return uLayer;
-}
-
 void Renderer::Draw()
 {  
 

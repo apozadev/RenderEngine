@@ -26,6 +26,7 @@ struct RenderStepConfig
 {
   std::vector<RenderStepInputConfig> m_lstInputs;
   std::string m_sRenderTargetId;
+  bool m_bOrderTranslucent;
 };
 
 struct RenderPipelineConfig

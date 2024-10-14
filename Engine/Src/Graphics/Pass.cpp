@@ -73,14 +73,11 @@ Pass::Pass(Window* _pWindow
   , bool _bDepthWrite
   , bool _bDepthRead
   , const std::string& _sPipelineId
-  , int _uStepIdx)
-{
-
-  uint16_t uStepLayer = Renderer::GetInstance()->GetRenderStepLayer(_sPipelineId, _uStepIdx);
-
-  m_uId = 0u;
-  m_uId |= GEN_KEY(uStepLayer, 16, 32);
-  m_uId |= GEN_KEY(pass_internal::s_uNextId++, 16, 16);
+  , int _uStepIdx
+  , uint16_t _uLayer)  
+{  
+  m_uId = pass_internal::s_uNextId++;
+  m_uLayer = _uLayer;
 
   m_oInfo = {};
   m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
@@ -100,6 +97,7 @@ Pass::Pass(Pass&& rPass)
   : m_pImpl(std::move(rPass.m_pImpl))
   , m_oInfo(std::move(rPass.m_oInfo))
   , m_uId(std::move(rPass.m_uId))
+  , m_uLayer(std::move(rPass.m_uLayer))
 {
 }
 

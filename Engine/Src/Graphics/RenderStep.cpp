@@ -52,13 +52,15 @@ public:
 
 };
 
-RenderStep::RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget)
+RenderStep::RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent)
+  : m_bOrderTranslucent(_bOrderTranslucent)
 {
   m_pImpl = std::make_unique<Impl>(std::move(_lstInputs), _pRenderTarget);
 }
 
 RenderStep::RenderStep(RenderStep&& _rOther)
   : m_pImpl(std::move(_rOther.m_pImpl))
+  , m_bOrderTranslucent(std::move(_rOther.m_bOrderTranslucent))
 {
 }
 
@@ -77,7 +79,7 @@ void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransfor
   // Update key for current camera
   for (Job& rJob : m_pImpl->m_lstJobs)
   {
-    rJob.UpdateRenderKey(_pCamera, _pViewTransform, false);
+    rJob.UpdateRenderKey(_pCamera, _pViewTransform, m_bOrderTranslucent);
   }
 
   // Sort jobs

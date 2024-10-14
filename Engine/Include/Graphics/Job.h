@@ -22,7 +22,7 @@ struct Job
 
   static bool Compare(const Job& j1, const Job& j2)
   {
-    return j1.m_xKey < j2.m_xKey;
+    return j1.m_xKey > j2.m_xKey;
   }
 
   void UpdateRenderKey(const Camera* _pCamera, const Transform* _pCamTransform, bool _bTranslucent);

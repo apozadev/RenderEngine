@@ -32,8 +32,6 @@ public:
   void OnWindowResize(const Window* _pWindow);
 
   RenderPipeline* GetRenderPipeline(std::string _sPipelineId) const;
-
-  uint16_t GetRenderStepLayer(std::string _sPipelineId, uint32_t _uStepIdx) const;
   
   void Draw();
 

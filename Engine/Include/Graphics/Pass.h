@@ -22,7 +22,8 @@ public:
     , bool _bDepthWrite
     , bool _bDepthRead
     , const std::string& _sPipelineId
-    , int _uStepIdx);
+    , int _uStepIdx
+    , uint16_t _uLayer);
 
   Pass(Pass&& rPass);
   ~Pass();
@@ -44,7 +45,9 @@ public:
 
   const RenderStateInfo& GetRenderStateInfo() const { return m_oInfo; }
 
-  uint32_t GetId() const { return m_uId; }
+  uint16_t GetId() const { return m_uId; }
+
+  uint16_t GetLayer() const { return m_uLayer; }
 
   const std::string& GetRenderPipelineId() const;
 
@@ -59,8 +62,8 @@ private:
 private:
 
   RenderStateInfo m_oInfo;
-  uint32_t m_uId;
-
+  uint16_t m_uId;
+  uint16_t m_uLayer;
 
   class Impl;
   std::unique_ptr<Impl> m_pImpl;

@@ -102,6 +102,6 @@ void RenderPipeline::GenerateFromConfig()
       }
     }
 
-    m_lstRenderSteps.push_back(std::move(RenderStep(std::move(lstInputs), pTarget)));
+    m_lstRenderSteps.push_back(std::move(RenderStep(std::move(lstInputs), pTarget, rStepConfig.m_bOrderTranslucent)));
   }
 }

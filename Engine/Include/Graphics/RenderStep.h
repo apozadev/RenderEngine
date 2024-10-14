@@ -13,7 +13,7 @@ class RenderStep
 {
 public:
 
-  RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget);
+  RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent);
 
   RenderStep(RenderStep&& _rOther);
 
@@ -27,6 +27,8 @@ public:
 
   const RenderTarget* GetRenderTarget() const;
 
+  bool IsOrderTranslucent() const { return m_bOrderTranslucent; }
+
 private:
 
 
@@ -35,6 +37,10 @@ private:
   void Unbind() const;
   
 private:
+
+  bool m_bOrderTranslucent;
+
+private: 
 
   class Impl;
 

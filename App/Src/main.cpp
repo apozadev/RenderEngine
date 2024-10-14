@@ -53,10 +53,12 @@ int main(){
 
     RenderStepConfig oStep1 = {};
     oStep1.m_sRenderTargetId = "GBUFFER";
+    oStep1.m_bOrderTranslucent = false;
 
     RenderStepConfig oStep2 = {};    
     oStep2.m_lstInputs.push_back(std::move(oInput));
-    oStep2.m_sRenderTargetId = "DEFAULT";    
+    oStep2.m_sRenderTargetId = "DEFAULT";
+    oStep2.m_bOrderTranslucent = true;
 
     RenderPipelineConfig oConfig = {};
     oConfig.m_sId = "TEST";
@@ -88,19 +90,21 @@ int main(){
     , true
     , true
     , "TEST"
-    , 0);
+    , 0
+    , 0u);
 
   Pass oPass1(pWindow
     , "Assets/Shaders/Vertex/VertexShader.hlsl"
     , "Assets/Shaders/Pixel/PixelShader.hlsl"
-    , false
+    , true
     , BlendOp::BLEND_OP_ADD
     , BlendFactor::BLEND_SRC_ALPHA
     , BlendFactor::BLEND_INV_SRC_ALPHA
-    , true
+    , false
     , true
     , "TEST"
-    , 1);
+    , 1
+    , 0u);
 
   lstPasses.push_back(std::move(oPass0));
   lstPasses.push_back(std::move(oPass1));
@@ -113,7 +117,7 @@ int main(){
   pModelEntity2->AddComponent<ModelComponent>("Assets/Models/demon.fbx", pMaterial, pWindow);    
 
   pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
-  pModelEntity2->GetMutableLocalTransform().SetPos({ 5.f,0.f, -10.f });
+  pModelEntity2->GetMutableLocalTransform().SetPos({ 2.f,0.f, -10.f });
   pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f});    
 
   pScene->Build();
