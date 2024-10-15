@@ -30,6 +30,8 @@ namespace api
 
 		void ShutDownAPI();
 
+		uint32_t GetDefaultMsaaSamples();
+
 		// Window
 
 		APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow);
@@ -98,11 +100,15 @@ namespace api
 
 		void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
+		void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
+		void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
 		void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
 		// Render state
 
-		APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo);
+		APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples);
 
 		void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
 

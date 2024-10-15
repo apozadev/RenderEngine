@@ -72,13 +72,15 @@ namespace api
           DX11_CHECK(pWindow->m_pDevice->CreateRenderTargetView(pTexture->m_pTexture.Get(), &oRtvDesc, pRenderTarget_->m_lstRtv[i].GetAddressOf()))
         }
 
+        if (m_pDepthStencilTexture)
+        {
+          D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+          descDSV.Format = DXGI_FORMAT_D32_FLOAT;//m_eDepthStencilFormat;
+          descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+          descDSV.Texture2D.MipSlice = 0u;
 
-        D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
-        descDSV.Format = DXGI_FORMAT_D32_FLOAT;//m_eDepthStencilFormat;
-        descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-        descDSV.Texture2D.MipSlice = 0u;
-
-        DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilView(m_pDepthStencilTexture->m_pTexture.Get(), &descDSV, pRenderTarget_->m_pDsv.ReleaseAndGetAddressOf()));
+          DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilView(m_pDepthStencilTexture->m_pTexture.Get(), &descDSV, pRenderTarget_->m_pDsv.ReleaseAndGetAddressOf()));
+        }
       }
 
       void Clear()

@@ -228,6 +228,28 @@ namespace api
 
     }
 
+    uint32_t QueryMaxSupportedMsaaSamples(APIWindow* _pWindow)
+    {
+      DXGI_FORMAT eFormat = DXGI_FORMAT_R8G8B8A8_UNORM; // or any other render target format you're interested in
+      UINT uMaxSampleCount = 0;
+
+      for (UINT uSampleCount = 1; uSampleCount <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; ++uSampleCount)
+      {
+        UINT numQualityLevels = 0;
+        HRESULT hr = _pWindow->m_pDevice->CheckMultisampleQualityLevels(eFormat, uSampleCount, &numQualityLevels);
+        if (SUCCEEDED(hr) && numQualityLevels > 0)
+        {
+          uMaxSampleCount = uSampleCount; // Update to the highest supported sample count
+        }
+        else
+        {
+          break; // If no quality levels are supported, stop checking higher counts
+        }
+      }
+
+      return uMaxSampleCount;
+    }
+
     void CreateWindowRenderTarget(APIWindow* _pWindow, uint32_t _uMsaaSamples)
     {      
 
@@ -295,12 +317,17 @@ namespace api
 
     void InitializeAPI()
     {
-
+      s_oGlobalData.m_uMaxMsaaSamples = 0u;
     }
 
     void ShutDownAPI()
     {
 
+    }
+
+    uint32_t GetDefaultMsaaSamples()
+    {
+      return s_oGlobalData.m_uMaxMsaaSamples;
     }
 
     // Window
@@ -314,12 +341,18 @@ namespace api
 
       pWindow->m_uNumSwapchainImages = 2u;
 
-      pWindow->m_eSwapchainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+      pWindow->m_eSwapchainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;      
       
       PollWindowSize(pWindow);
       CreateDeviceAndSwapChain(pWindow);
       CreateSwapchainViewsAndViewport(pWindow);      
-      CreateWindowRenderTarget(pWindow, 8u);
+      
+      if (s_oGlobalData.m_uMaxMsaaSamples < 1u)
+      {
+        s_oGlobalData.m_uMaxMsaaSamples = QueryMaxSupportedMsaaSamples(pWindow);
+      }
+
+      CreateWindowRenderTarget(pWindow, s_oGlobalData.m_uMaxMsaaSamples);
 
       // Default to triangle list just in case
       pWindow->m_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -673,6 +706,19 @@ namespace api
 
       pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
     }
+
+    void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    {
+      s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
+    }
+
+    void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    {
+      const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
+
+      APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
+      pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), _pRenderTarget->m_pDsv.Get());
+    }
     
     void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
     {
@@ -681,7 +727,7 @@ namespace api
 
     // Render state
 
-    APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo)
+    APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t /*_uMsaaSamples*/)
     {
 
       APIRenderState* pRenderState = new APIRenderState();

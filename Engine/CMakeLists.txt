@@ -115,7 +115,8 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/API/DX11/RenderTargetBuilder.h" 
 	"Include/Graphics/TextureUsage.h" 
 	"Include/Graphics/Pass.h" 
-	"Src/Graphics/Pass.cpp" "Include/Graphics/RenderKey.h")
+	"Src/Graphics/Pass.cpp" 
+	"Include/Graphics/RenderKey.h")
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -131,7 +132,7 @@ target_include_directories(${PROJECT_NAME}
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
-set(TARGET_RENDER_API ${RENDER_API_VULKAN})
+set(TARGET_RENDER_API ${RENDER_API_DX11})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
 	RENDER_API=${TARGET_RENDER_API}

@@ -1,7 +1,7 @@
 
-Texture(gbuffTex, 1, 0)
+Texture(gbuffTex,1,0)
 
-Texture(albedoTex, 3, 0)
+Texture(albedoTex,3,0)
 
 PIXEL_MAIN_BEGIN
 

@@ -19,11 +19,6 @@
 
 #include <string>
 
-/*
-* Lista de jobs por renderstep, vamos metiendolos donde toca en el submit
-* Cada renderstep ordena con transparent o opaque
-*/
-
 int main(){
 
   try

@@ -19,6 +19,8 @@ namespace dx11
 
     RenderTargetBuilder m_oRenderTargetBuilder;
 
+    uint32_t m_uMaxMsaaSamples;
+
   };
 
 }
