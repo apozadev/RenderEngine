@@ -55,9 +55,19 @@ namespace api
     return API::GetWindowHeight(_pWindow);
   }
 
+  void ClearDefaultRenderTarget(APIWindow* _pWindow)
+  {
+    API::ClearDefaultRenderTarget(_pWindow);
+  }
+
   void BindDefaultRenderTarget(APIWindow* _pWindow)
   {
     API::BindDefaultRenderTarget(_pWindow);
+  }
+
+  void UnbindDefaultRenderTarget(APIWindow* _pWindow)
+  {
+    API::UnbindDefaultRenderTarget(_pWindow);
   }
 
   void DestroyAPIWindow(APIWindow* _pWindow)
@@ -127,6 +137,11 @@ namespace api
   {
     API::BindAPITexture(_pTexture);
   }
+
+  void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage)
+  {
+    API::ClearAPITexture(_pTexture, _eUsage);
+  }
   
   void DestroyAPITexture(APITexture* _pTexture)
   {
@@ -168,6 +183,11 @@ namespace api
   void EndRenderTargetSetup()
   {
     API::EndRenderTargetSetup();
+  }
+
+  void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  {
+    API::ClearAPIRenderTarget(_pRenderTarget);
   }
 
   void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)

@@ -25,20 +25,30 @@ layout(location = 0) out vec4 outColor;
 #define ddx(x)	dFdx(x)
 #define ddy(x)	dFdy(x)
 
-Texture(gbuffTex,1,0)
-
-Texture(albedoTex,3,0)
+vec2 mod2(vec2 x, vec2 y)
+{
+  return x - y * floor(x / y);
+}
 
 PIXEL_MAIN_BEGIN
 
-  vec3 lightDir = vec3(0, 0, 1);
+float scale = 99.0;
+vec2 cellSize = vec2(1.0, 1.0) / scale;
+vec2 halfCell = cellSize*0.5;
+vec2 lineWidth = vec2(0.0001, 0.0001) / scale;
 
-  float ambientFactor = 0.3;
-  float light = max(0, dot(lightDir, normalize(inNormal)));
+vec2 diff = fwidth(inUv);
 
-  vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+float fade = length(diff) * scale * scale;
 
-  outColor = color * (max(0, dot(lightDir, normalize(inNormal))) + ambientFactor); 
-  outColor.a = 0.7f;
+lineWidth += diff;
+
+vec2 newUv = mod2(inUv, cellSize);
+
+vec2 c = smoothstep(lineWidth, lineWidth*0.5, abs(newUv - halfCell));
+
+float lineAlpha = max(min(c.x + c.y, 1) / fade, 0);
+
+outColor = vec4(1, 1, 1, lineAlpha);
 
 PIXEL_MAIN_END

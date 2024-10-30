@@ -5,6 +5,7 @@
 
 #include "Math/Transform.h"
 
+#include "Core/Engine.h"
 #include "Graphics/RenderTarget.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/Window.h"
@@ -92,11 +93,6 @@ void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransfor
   for (const Job& rJob : m_pImpl->m_lstJobs)
   {
 
-    if (rJob.m_pWindow != _pCamera->GetWindow())
-    {
-      continue;
-    }
-
     const MaterialInstance* pMatInstance = rJob.m_pMaterial;
 
     const Pass* pPass = rJob.m_pPass;
@@ -108,7 +104,7 @@ void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransfor
       if (!bStepBound)
       {
         _pCamera->Bind();
-        Bind(_pCamera->GetWindow());
+        Bind();
         bStepBound = true;
       }
 
@@ -135,7 +131,7 @@ const RenderTarget* RenderStep::GetRenderTarget() const
   return m_pImpl->m_pRenderTarget;
 }
 
-void RenderStep::Bind(const Window* _pWindow) const
+void RenderStep::Bind() const
 {
 
   if (m_pImpl->m_pRenderTarget)
@@ -144,7 +140,7 @@ void RenderStep::Bind(const Window* _pWindow) const
   }
   else
   {
-    _pWindow->BindDefaultRenderTarget();
+    Engine::GetInstance()->GetWindow()->BindDefaultRenderTarget();
   }
 
   for (RenderTarget* _pInput : m_pImpl->m_lstInputs)
@@ -160,6 +156,10 @@ void RenderStep::Unbind() const
   if (m_pImpl->m_pRenderTarget)
   {
     m_pImpl->m_pRenderTarget->Unbind();
+  }
+  else
+  {
+    Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
   }
 }
 

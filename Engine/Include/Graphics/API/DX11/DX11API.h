@@ -44,7 +44,11 @@ namespace api
 
 		uint32_t GetWindowHeight(APIWindow* _pWindow);
 
+		void ClearDefaultRenderTarget(APIWindow* _pWindow);
+
 		void BindDefaultRenderTarget(APIWindow* _pWindow);
+
+		void UnbindDefaultRenderTarget(APIWindow* _pWindow);
 
 		void DestroyAPIWindow(APIWindow* _pAPIWindow);
 
@@ -82,6 +86,8 @@ namespace api
 
 		void BindAPITexture(APITexture* _pTexture);
 
+		void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage);
+
 		void DestroyAPITexture(APITexture* _pTexture);
 
 		// RenderTarget
@@ -97,6 +103,8 @@ namespace api
 		void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
 
 		void EndRenderTargetSetup();
+
+		void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
 		void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 

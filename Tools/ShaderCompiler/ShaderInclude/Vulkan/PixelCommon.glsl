@@ -14,3 +14,6 @@ layout(location = 0) out vec4 outColor;
 #define inPos     fragColor
 #define inUv      fragTexCoord
 #define inNormal  fragNormal
+
+#define ddx(x)	dFdx(x)
+#define ddy(x)	dFdy(x)

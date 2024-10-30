@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "Core/Engine.h"
 #include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/Window.h"
 #include "Graphics/ConstantBuffer.h"
@@ -30,13 +31,8 @@ public:
 
   std::string m_sRenderPipelineId;
 
-  Window* m_pWindow;  
-
-  Impl(Window* _pWindow, const std::string& _sRenderPipelineId)
-    : m_pWindow(_pWindow)    
-  {    
-
-    _pWindow->SetUsing();
+  Impl(const std::string& _sRenderPipelineId)    
+  {        
     m_pAPICamera = api::CreateAPICamera();
 
     m_pCBuffer = std::make_unique<ConstantBuffer<GlobalBufferData>>(0, PipelineStage::VERTEX);
@@ -55,8 +51,8 @@ public:
   }
 };
 
-Camera::Camera(Window* _pWindow, const std::string&  _sRenderPipelineId)
-  : m_pImpl(std::make_unique<Impl>(_pWindow, _sRenderPipelineId))
+Camera::Camera(const std::string&  _sRenderPipelineId)
+  : m_pImpl(std::make_unique<Impl>(_sRenderPipelineId))
 {
 
 }
@@ -76,8 +72,10 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
 {
   GlobalBufferData oData{};
 
+  const Window* pWindow = Engine::GetInstance()->GetWindow();
+
   glm::mat4x4 mView = glm::inverse(_oParentTransform.GetMatrix());
-  oData.m_mViewProj = glm::perspective(45.f, (float)m_pImpl->m_pWindow->GetWidth() / m_pImpl->m_pWindow->GetHeight(), m_fNear, m_fFar) * mView;
+  oData.m_mViewProj = glm::perspective(45.f, (float)pWindow->GetWidth() / pWindow->GetHeight(), m_fNear, m_fFar) * mView;
   
   m_pImpl->m_pCBuffer->SetData(&oData);
 
@@ -89,11 +87,6 @@ void Camera::Bind() const
   api::BindAPICamera(m_pImpl->m_pAPICamera);
   api::BindAPIRenderSubState(m_pImpl->m_pSubState, ResourceFrequency::GLOBAL);
   m_pImpl->m_pCBuffer->Bind();  
-}
-
-Window* Camera::GetWindow() const
-{
-  return m_pImpl->m_pWindow;
 }
 
 uint64_t Camera::GetKey() const

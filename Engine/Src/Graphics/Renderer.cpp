@@ -1,4 +1,6 @@
 #include "Graphics/Renderer.h"
+
+#include "Core/Engine.h"
 #include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Material.h"
@@ -28,9 +30,9 @@ class Renderer::Impl
 {  
 public:
 
-  Impl() {}
+  Impl() = default;
 
-  ~Impl() {}
+  ~Impl() = default;
   
   std::vector<CamView> m_lstCamViews;
   std::vector<RenderPipeline> m_lstRenderPipelines;
@@ -58,13 +60,15 @@ void Renderer::ShutDown()
 
   glfwTerminate();
 
+  m_pImpl.reset();
+
   api::ShutDownAPI();
 }
 
-void Renderer::AddRenderPipeline(const Window* _pWindow, RenderPipelineConfig&& _pPipelineCofig)
+void Renderer::AddRenderPipeline(RenderPipelineConfig&& _pPipelineCofig)
 {
   std::string sId = _pPipelineCofig.m_sId;
-  m_pImpl->m_lstRenderPipelines.push_back(RenderPipeline(_pWindow, sId, std::move(_pPipelineCofig) ));
+  m_pImpl->m_lstRenderPipelines.push_back(std::move(RenderPipeline(sId, std::move(_pPipelineCofig))));
 }
 
 void Renderer::SubmitCamera(Camera* _pCamera, const Transform* _pTransform)
@@ -81,19 +85,16 @@ void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, cons
 
     if (pRenderStep)
     {
-      pRenderStep->SubmitJob({ _pMesh, _pMaterial, &rPass, _pMesh->GetWindow(), _pTransform, 0u });
+      pRenderStep->SubmitJob({ _pMesh, _pMaterial, &rPass, _pTransform, 0u });
     }    
   }
 }
 
-void Renderer::OnWindowResize(const Window* _pWindow)
+void Renderer::OnWindowResize()
 {
   for (RenderPipeline& rPipeline : m_pImpl->m_lstRenderPipelines)
-  {    
-    if (rPipeline.GetOwnerWindow() == _pWindow)
-    {
-      rPipeline.OnWindowResize();
-    }
+  {        
+    rPipeline.OnWindowResize();    
   }
 }
 
@@ -113,28 +114,11 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId) const
 void Renderer::Draw()
 {  
 
-  Window* pLastWindow = nullptr;
-
-  bool bSkipWindow = false;
-
   for (CamView& rCamView : m_pImpl->m_lstCamViews)
-  {        
-    Window* pCurrWindow = rCamView.m_pCamera->GetWindow();
-
-    // Bind new window?
-    if (pLastWindow != pCurrWindow)
+  {                  
+    if (Engine::GetInstance()->GetWindow()->BeginDraw())
     {
-      if (pLastWindow != nullptr)
-      {
-        pLastWindow->EndDraw();
-      }
-      bSkipWindow = pCurrWindow->BeginDraw() != 0;
-      pLastWindow = pCurrWindow;
-    }
-    
-    if (bSkipWindow)
-    {
-      OnWindowResize(pCurrWindow);
+      OnWindowResize();
       break;
     }    
 
@@ -150,11 +134,9 @@ void Renderer::Draw()
     }
 
   }
-
-  if (!bSkipWindow && pLastWindow)
-  {
-    pLastWindow->EndDraw();
-  }
+  
+  Engine::GetInstance()->GetWindow()->EndDraw();
+  
 
   m_pImpl->m_lstCamViews.clear();
 }

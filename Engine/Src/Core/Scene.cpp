@@ -7,15 +7,13 @@
 #include <cstdint>
 
 Scene::Scene(Scene&& _rScene)
-  : m_pWindow(std::move(_rScene.m_pWindow))
-  , m_lstEntities(std::move(_rScene.m_lstEntities))
+  : m_lstEntities(std::move(_rScene.m_lstEntities))
 {
 
 }
 
 Scene& Scene::operator=(Scene&& _rScene)
 {
-  m_pWindow = _rScene.m_pWindow;
   m_lstEntities = std::move(_rScene.m_lstEntities);
   return *this;
 }

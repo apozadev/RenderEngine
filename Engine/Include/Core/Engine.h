@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include "Singleton.h"
 
@@ -13,22 +14,18 @@ class Engine : public Singleton<Engine>
 {
 
 public:
-  int Initialize();
+  int Initialize(int _iWidth, int _iHeight, const char* _sTitle);
   int Run();
   int ScheduleShutDown(); 
+  
+  Window* GetWindow() const { return m_pWindow.get(); }
 
-  Window* CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle);
-  const std::vector<Window>& GetWindows() { return m_lstWindows; }
-
-  Scene* CreateScene(Window* _pWindow);
-
-  void UpdateWindows();
+  Scene* CreateScene();  
 
   bool IsRunning() { return m_bRunning; }
 
 private:
 
-  bool ShouldShutDown();
   void ShutDown();
 
   bool m_bRunning;
@@ -38,5 +35,5 @@ private:
   float m_fDt;    
 
   std::vector<Scene> m_lstScenes;
-  std::vector<Window> m_lstWindows;
+  std::unique_ptr<Window> m_pWindow;
 };

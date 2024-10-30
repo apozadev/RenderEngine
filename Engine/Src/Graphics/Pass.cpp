@@ -25,11 +25,10 @@ public:
   std::string m_sPipelineId;
   int m_iStepIdx;
 
-  Impl(Window* _pWindow, const RenderStateInfo& _rInfo, const std::string& _sPipelineId, int _uStepIdx)
+  Impl(const RenderStateInfo& _rInfo, const std::string& _sPipelineId, int _uStepIdx)
     : m_sPipelineId(_sPipelineId)
     , m_iStepIdx(_uStepIdx)
-  {
-    _pWindow->SetUsing();
+  {    
 
     RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(_sPipelineId);
     RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(_uStepIdx) : nullptr;
@@ -63,8 +62,7 @@ public:
   }
 };
 
-Pass::Pass(Window* _pWindow
-  , const std::string& _sVSFilename
+Pass::Pass(const std::string& _sVSFilename
   , const std::string& _sPSFilename
   , bool _bBlendEnabled
   , BlendOp _eBlendOp
@@ -90,7 +88,7 @@ Pass::Pass(Window* _pWindow
   m_oInfo.m_bDepthWrite = _bDepthWrite;
   m_oInfo.m_bDepthRead = _bDepthRead;  
 
-  m_pImpl = std::make_unique<Impl>(_pWindow, m_oInfo, _sPipelineId, _uStepIdx);
+  m_pImpl = std::make_unique<Impl>(m_oInfo, _sPipelineId, _uStepIdx);
 }
 
 Pass::Pass(Pass&& rPass)

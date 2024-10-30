@@ -33,6 +33,7 @@ public:
   int GetHeight() const;
 
   void BindDefaultRenderTarget() const;
+  void UnbindDefaultRenderTarget() const;
 
   uint32_t GetMsaaSamples() const;
 

@@ -14,15 +14,13 @@ class Camera
 
 public:
 
-  Camera(Window* _pWindow, const std::string& _sRenderPipelineId);
+  Camera(const std::string& _sRenderPipelineId);
   Camera(Camera&& _rCamera);
   ~Camera();  
 
   void UpdateTransform(const Transform& _oParentTransform);
 
-  void Bind() const;
-
-  Window* GetWindow() const;
+  void Bind() const;  
 
   uint64_t GetKey() const;
 

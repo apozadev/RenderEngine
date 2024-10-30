@@ -95,6 +95,42 @@ namespace vk
     return _pWindow->m_oExtent.height;
   }
 
+  void ClearDefaultRenderTarget(APIWindow* _pWindow)
+  {
+    uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
+
+    // Depth buffer
+
+    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    VkImageSubresourceRange oRange = {};
+    oRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    oRange.baseMipLevel = 0;
+    oRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    oRange.baseArrayLayer = 0;
+    oRange.layerCount = 1;
+    
+    VkClearDepthStencilValue oDepthClearColor = { 1.f, 1.f };
+    vkCmdClearDepthStencilImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hDepthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oDepthClearColor, 1u, &oRange);    
+
+    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+    // Color buffer
+
+    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    oRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oRange.baseMipLevel = 0;
+    oRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    oRange.baseArrayLayer = 0;
+    oRange.layerCount = 1;
+  
+    VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+    vkCmdClearColorImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hColorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+
+    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+  }
+
   void BindDefaultRenderTarget(APIWindow* _pWindow)
   {    
     VkClearValue aClearColors[3];
@@ -114,6 +150,13 @@ namespace vk
     const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
 
     vkCmdBeginRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  }
+
+  void UnbindDefaultRenderTarget(APIWindow* _pWindow)
+  {
+    const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
+
+    vkCmdEndRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx]);
   }
 
   void DestroyAPIWindow(APIWindow* _pWindow)
@@ -386,7 +429,7 @@ namespace vk
 
     if (_pData != nullptr)
     {
-      TransitionImageLayout(pWindow
+      TransitionImageLayoutOffline(pWindow
         , pTexture->m_hImage
         , pTexture->m_eFormat
         , _uMipLevels
@@ -401,7 +444,7 @@ namespace vk
         GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels);
       }
 
-      //TransitionImageLayout(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+      //TransitionImageLayoutOffline(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
       DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
 
@@ -425,6 +468,52 @@ namespace vk
   void BindAPITexture(APITexture* /*_pTexture*/)
   {
     
+  }
+
+  void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage)
+  {
+    APIWindow* pWindow = _pTexture->m_pOwnerWindow;
+
+    uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
+
+    uint32_t uAspectFlags = 0u;
+
+    switch (_eUsage)
+    {
+    case TextureUsage::DEPTH_TARGET:
+      uAspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+      break;
+    case TextureUsage::COLOR_TARGET:
+      uAspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+      break;
+    default:
+      THROW_GENERIC_EXCEPTION("[API] [VK] Invalid usage flag in ClearAPITexture")
+      break;
+    }
+
+    TransitionImageLayout(pWindow, _pTexture->m_hImage, _pTexture->m_eFormat, VK_REMAINING_MIP_LEVELS, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    VkImageSubresourceRange oRange = {};
+    oRange.aspectMask = uAspectFlags;
+    oRange.baseMipLevel = 0;
+    oRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    oRange.baseArrayLayer = 0;
+    oRange.layerCount = 1;
+
+    if (_eUsage == TextureUsage::DEPTH_TARGET)
+    {
+      VkClearDepthStencilValue oClearColor = { 1.f, 0.f };
+      vkCmdClearDepthStencilImage(pWindow->m_pCmdBuffers[uFrameIdx], _pTexture->m_hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+    }
+    else
+    {
+      VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f }; 
+      vkCmdClearColorImage(pWindow->m_pCmdBuffers[uFrameIdx], _pTexture->m_hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+    }
+
+    VkImageLayout eFinalLayout = _eUsage == TextureUsage::COLOR_TARGET ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    TransitionImageLayout(pWindow, _pTexture->m_hImage, _pTexture->m_eFormat, VK_REMAINING_MIP_LEVELS, uAspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, eFinalLayout);
   }
 
   void DestroyAPITexture(APITexture* _pTexture)
@@ -484,6 +573,10 @@ namespace vk
     s_oGlobalData.m_oRenderTargetBuilder.Clear();
   }
 
+  void ClearAPIRenderTarget(APIRenderTarget* /*_pRenderTarget*/)
+  {  
+  }
+
   void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)
   {
     s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
@@ -493,10 +586,10 @@ namespace vk
   {
     APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
 
-    VkClearValue aClearColors[3];
+    /*VkClearValue aClearColors[3];
     aClearColors[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
     aClearColors[1].depthStencil = { 1.0f, 0 };
-    aClearColors[2].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    aClearColors[2].color = { {0.0f, 0.0f, 0.0f, 1.0f} };*/
 
     VkRenderPassBeginInfo oRenderPassBeginInfo{};
     oRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -504,8 +597,8 @@ namespace vk
     oRenderPassBeginInfo.framebuffer = _pRenderTarget->m_hFrameBuffer;
     oRenderPassBeginInfo.renderArea.extent = pWindow->m_oExtent;
     oRenderPassBeginInfo.renderArea.offset = { 0,0 };
-    oRenderPassBeginInfo.clearValueCount = 3u;
-    oRenderPassBeginInfo.pClearValues = aClearColors;
+    oRenderPassBeginInfo.clearValueCount = 0u;//3u;
+    oRenderPassBeginInfo.pClearValues = nullptr;//aClearColors;
 
     const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
 
@@ -886,7 +979,7 @@ namespace vk
 
     const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
 
-    vkCmdEndRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx]);
+    //vkCmdEndRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx]);
 
     VK_CHECK(vkEndCommandBuffer(_pWindow->m_pCmdBuffers[uFrameIdx]))
 

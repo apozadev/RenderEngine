@@ -27,6 +27,9 @@ public:
 
   void Bind() const override;
 
+  void ClearAsColor() const;
+  void ClearAsDepthStencil() const;
+
 private:
 
   class Impl;

@@ -16,3 +16,6 @@
 #define inNormal  i.normal
 
 #define outColor  o.color
+
+//#define ddx(x)	ddx(x)
+//#define ddy(x)	ddy(x)

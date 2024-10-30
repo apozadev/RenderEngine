@@ -32,7 +32,7 @@ public:
 private:
 
 
-  void Bind(const Window* _pWindow) const;
+  void Bind() const;
 
   void Unbind() const;
   

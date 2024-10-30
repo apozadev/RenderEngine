@@ -22,6 +22,9 @@ layout(location = 0) out vec4 outColor;
 #define inUv      fragTexCoord
 #define inNormal  fragNormal
 
+#define ddx(x)	dFdx(x)
+#define ddy(x)	dFdy(x)
+
 Texture(gbuffTex,1,0)
 
 Texture(albedoTex,3,0)

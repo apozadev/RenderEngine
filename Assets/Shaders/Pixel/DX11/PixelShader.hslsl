@@ -37,6 +37,10 @@ SamplerState texSampler : register(s0);
 #define inNormal  i.normal
 
 #define outColor  o.color
+
+//#define ddx(x)	ddx(x)
+//#define ddy(x)	ddy(x)
+
 Texture(gbuffTex,1,16)
 
 Texture(albedoTex,3,48)

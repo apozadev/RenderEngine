@@ -8,20 +8,16 @@ class Mesh::Impl
 {
 public:
   api::APIMesh* m_pAPIMesh;
-  Window* m_pWindow;
   glm::mat4 m_mLocalTransform;
   uint32_t m_uVertexCount;
   uint32_t m_uIndexCount;  
   MeshConstant m_oConstant;
 
-  Impl(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow)
-  {
-    m_pWindow = _pWindow;
+  Impl(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices)
+  {    
     m_uVertexCount = _lstVertices.size();
     m_uIndexCount = _lstIndices.size();
-    m_mLocalTransform = glm::mat4(1.f);    
-
-    _pWindow->SetUsing();
+    m_mLocalTransform = glm::mat4(1.f);        
     
     m_pAPIMesh = api::CreateAPIMesh(_lstVertices.data(), m_uVertexCount * sizeof(Vertex), _lstIndices.data(), m_uIndexCount * sizeof(uint16_t));
 
@@ -33,9 +29,9 @@ public:
   }
 };
 
-Mesh::Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow/*, ConstructKey&&*/)
+Mesh::Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices)
 {
-  m_pImpl = std::make_unique<Impl>(_lstVertices, _lstIndices, _pWindow);  
+  m_pImpl = std::make_unique<Impl>(_lstVertices, _lstIndices);  
 }
 
 Mesh::Mesh(Mesh&& _rMesh) : m_pImpl(std::move(_rMesh.m_pImpl))
@@ -45,16 +41,6 @@ Mesh::Mesh(Mesh&& _rMesh) : m_pImpl(std::move(_rMesh.m_pImpl))
 Mesh::~Mesh()
 {  
 }
-
-Window* Mesh::GetWindow() const  
-{
-  return m_pImpl->m_pWindow;
-}
-
-//uint64_t Mesh::GetKey() const
-//{
-//  return static_cast<uint64_t>(m_pImpl->m_pWindow->GetId()) << (sizeof(uint64_t) - sizeof(uint8_t));
-//}
 
 void Mesh::UpdateTransform(const Transform& _oParentTransform)
 {    

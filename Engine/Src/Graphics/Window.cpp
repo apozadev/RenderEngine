@@ -81,7 +81,14 @@ int Window::BeginDraw()
   glfwSetWindowUserPointer(m_pImpl->m_pGlfwWindow, static_cast<void*>(this));
   glfwSetFramebufferSizeCallback(m_pImpl->m_pGlfwWindow, OnWindowResize);
 
-  return api::BeginDraw(m_pImpl->m_pAPIWindow);
+  int iResult = api::BeginDraw(m_pImpl->m_pAPIWindow);
+
+  if (iResult == 0)
+  {
+    api::ClearDefaultRenderTarget(m_pImpl->m_pAPIWindow);
+  }  
+
+  return iResult;
 }
 
 void Window::EndDraw() const
@@ -118,6 +125,11 @@ int Window::GetHeight() const
 void Window::BindDefaultRenderTarget() const
 {
   api::BindDefaultRenderTarget(m_pImpl->m_pAPIWindow);
+}
+
+void Window::UnbindDefaultRenderTarget() const
+{
+  api::UnbindDefaultRenderTarget(m_pImpl->m_pAPIWindow);
 }
 
 uint32_t Window::GetMsaaSamples() const

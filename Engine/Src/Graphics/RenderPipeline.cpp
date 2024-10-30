@@ -1,4 +1,5 @@
 #include "Graphics/RenderPipeline.h"
+#include "Core/Engine.h"
 #include "Graphics/Window.h"
 #include "Graphics/RenderPipelineConfig.h"
 #include "Graphics/RenderTarget.h"
@@ -7,9 +8,8 @@
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Mesh.h"
 
-RenderPipeline::RenderPipeline(const Window* _pWindow, std::string _sId, RenderPipelineConfig&& _rConfig)
-  : m_pWindow(_pWindow)
-  , m_sId(_sId)
+RenderPipeline::RenderPipeline(std::string _sId, RenderPipelineConfig&& _rConfig)
+  : m_sId(_sId)
   , m_oConfig(std::move(_rConfig))
 {
   GenerateFromConfig();
@@ -39,6 +39,12 @@ void RenderPipeline::OnWindowResize()
 
 void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTransform) const
 {        
+
+  for (RenderTarget* pRenderTarget : m_lstRenderTargets)
+  {
+    pRenderTarget->Clear();
+  }
+
   for (const RenderStep& rStep : m_lstRenderSteps)
   {                
     rStep.Execute(_pCamera, _pViewTransform);
@@ -55,14 +61,12 @@ void RenderPipeline::Clear()
 
 void RenderPipeline::GenerateFromConfig()
 {
-  static constexpr char* s_sDefaultRtId = "DEFAULT";
-
-  m_pWindow->SetUsing();
+  static constexpr char* s_sDefaultRtId = "DEFAULT";  
 
   for (const RenderTargetConfig& rRtConfig : m_oConfig.m_lstRenderTargets)
   {
-    unsigned int uWidth = rRtConfig.m_iWidth < 0 ? m_pWindow->GetWidth() : rRtConfig.m_iWidth;
-    unsigned int uHeight = rRtConfig.m_iHeight < 0 ? m_pWindow->GetHeight() : rRtConfig.m_iHeight;
+    unsigned int uWidth = rRtConfig.m_iWidth < 0 ? Engine::GetInstance()->GetWindow()->GetWidth() : rRtConfig.m_iWidth;
+    unsigned int uHeight = rRtConfig.m_iHeight < 0 ? Engine::GetInstance()->GetWindow()->GetHeight() : rRtConfig.m_iHeight;
     m_lstRenderTargets.push_back(new RenderTarget(
       rRtConfig.m_uNumColorTextures
       , uWidth

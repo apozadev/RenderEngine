@@ -12,6 +12,8 @@ class ModelLoader : public Singleton<ModelLoader>
 {
 public:
 
-  void LoadModel(const char* _sFilename, Material* _pMaterial, Window* _pWindow, ModelComponent* pModelComp_);
+  void LoadModel(const char* _sFilename, Material* _pMaterial, ModelComponent* pModelComp_);
+
+  void SetupQuadModel(Material* _pMaterial, ModelComponent* pModelComp_);
 
 };

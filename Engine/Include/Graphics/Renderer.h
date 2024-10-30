@@ -24,12 +24,12 @@ public:
   void Initialize();
   void ShutDown();   
 
-  void AddRenderPipeline(const Window* _pWindow, RenderPipelineConfig&& _pPipelineCofig);  
+  void AddRenderPipeline(RenderPipelineConfig&& _pPipelineCofig);  
 
   void SubmitCamera(Camera* _pCamera, const Transform* _pTransform);
   void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform);
 
-  void OnWindowResize(const Window* _pWindow);
+  void OnWindowResize();
 
   RenderPipeline* GetRenderPipeline(std::string _sPipelineId) const;
   

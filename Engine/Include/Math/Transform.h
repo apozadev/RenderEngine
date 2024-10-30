@@ -84,10 +84,10 @@ public:
 
   glm::mat4 GetMatrix() const
   {
-    glm::mat4 mMat(1.f);
+    glm::mat4 mMat(1.f);    
     mMat = glm::translate(mMat, m_vPos);
-    mMat = mMat * glm::toMat4(m_qRot);
-    mMat = glm::scale(mMat, m_vScale);    
+    mMat = mMat * glm::toMat4(m_qRot);     
+    mMat = glm::scale(mMat, m_vScale);
 
     return mMat;
   }

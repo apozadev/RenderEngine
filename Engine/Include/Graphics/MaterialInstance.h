@@ -18,9 +18,8 @@ public:
   ~MaterialInstance();
 
   template<class T, typename ...Args>
-  inline T* AddResource(Window* _pWindow, Args&&... args)
-  {     
-    _pWindow->SetUsing();
+  inline T* AddResource(Args&&... args)
+  {         
     T* pResource = new T(std::forward<Args>(args)...);
     m_lstResources.push_back(pResource);
     return pResource;

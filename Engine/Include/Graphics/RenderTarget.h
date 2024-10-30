@@ -20,6 +20,8 @@ public:
 
   void Unbind() const;
 
+  void Clear() const;
+
   std::vector<Texture2D*> RenderTarget::GetColorTextures();
 
   Texture2D* GetDepthStencilTexture();

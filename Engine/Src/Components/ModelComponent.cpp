@@ -3,15 +3,24 @@
 #include "Core/Entity.h"
 #include "Util/ModelLoader.h"
 
-ModelComponent::ModelComponent(const char* _sFilename, Material* _pMaterial, Window* _pWindow)
+ModelComponent::ModelComponent(const char* _sFilename, Material* _pMaterial)
 {
-  ModelLoader::GetInstance()->LoadModel(_sFilename, _pMaterial, _pWindow, this);
+  static const std::string s_sQuad("quad");
+
+  if (s_sQuad == _sFilename)
+  {
+    ModelLoader::GetInstance()->SetupQuadModel(_pMaterial, this);
+  }
+  else
+  {
+    ModelLoader::GetInstance()->LoadModel(_sFilename, _pMaterial, this);
+  }
 }
 
-void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx, Window* _pWindow)
+void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx)
 {
   m_lstMeshes.push_back({
-    std::move(Mesh(_lstVertices, _lstIndices, _pWindow))
+    std::move(Mesh(_lstVertices, _lstIndices))
     , _uMaterialIdx
     });
 }

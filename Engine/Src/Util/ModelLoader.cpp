@@ -17,14 +17,12 @@
 
 #include "assimp/Importer.hpp"
 
-void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, Window* _pWindow, ModelComponent* pModelComp_);
-void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, Window* _pWindow, ModelComponent* pModelComp_);
-void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, Window* _pWindow, ModelComponent* pModelComp_);
+void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, ModelComponent* pModelComp_);
+void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_);
+void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, ModelComponent* pModelComp_);
 
-void ModelLoader::LoadModel(const char* _sFilename, Material* _pMaterial, Window* _pWindow, ModelComponent* pModelComp_)
+void ModelLoader::LoadModel(const char* _sFilename, Material* _pMaterial, ModelComponent* pModelComp_)
 {
-
-  _pWindow->SetUsing();
 
   Assimp::Importer oImporter;
 
@@ -41,13 +39,13 @@ void ModelLoader::LoadModel(const char* _sFilename, Material* _pMaterial, Window
   
   std::string sDirectory = sFullFilename.substr(0, sFullFilename.find_last_of('/') + 1);  
 
-  ProcessMaterials(oScene, _pMaterial, sDirectory, _pWindow, pModelComp_);
+  ProcessMaterials(oScene, _pMaterial, sDirectory, pModelComp_);
 
-  ProcessNode(oScene->mRootNode, oScene, _pWindow, pModelComp_);
+  ProcessNode(oScene->mRootNode, oScene, pModelComp_);
 
 }
 
-void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, Window* _pWindow, ModelComponent* pModelComp_)
+void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, ModelComponent* pModelComp_)
 {
 
   for (unsigned int i = 0; i < _pAssimpNode->mNumMeshes; i++)
@@ -59,17 +57,17 @@ void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, Window* _pW
     }
     else
     {*/
-    ProcessMesh(oAssimpMesh, _pAssimpScene, _pWindow, pModelComp_);
+    ProcessMesh(oAssimpMesh, _pAssimpScene, pModelComp_);
     //}
   }
 
   for (unsigned int i = 0; i < _pAssimpNode->mNumChildren; i++)
   {
-    ProcessNode(_pAssimpNode->mChildren[i], _pAssimpScene, _pWindow, pModelComp_);
+    ProcessNode(_pAssimpNode->mChildren[i], _pAssimpScene, pModelComp_);
   }
 }
 
-void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, Window* _pWindow, ModelComponent* pModelComp_)
+void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_)
 {
   for (unsigned int i = 0; i < _pAssimpScene->mNumMaterials; i++)
   {
@@ -97,7 +95,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
           const Image& oImage = ImageManager::GetInstance()->DecodeFromMemory(aiTex->mFilename.C_Str(), (unsigned char*)aiTex->pcData, aiTex->mWidth);
           if (oImage.m_pData)
           {
-            rMatInstance.AddResource<Texture2D>(_pWindow, oImage, j, PipelineStage::PIXEL);
+            rMatInstance.AddResource<Texture2D>(oImage, j, PipelineStage::PIXEL);
           }
         }
         else
@@ -107,21 +105,21 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
           oImage.m_iWidth = aiTex->mWidth;
           oImage.m_iHeight = aiTex->mHeight;
           oImage.m_eFormat = ImageFormat::R8G8B8A8;
-          rMatInstance.AddResource<Texture2D>(_pWindow, oImage, j, PipelineStage::PIXEL);
+          rMatInstance.AddResource<Texture2D>(oImage, j, PipelineStage::PIXEL);
         }
       }
       else //if (INVALID_FILE_ATTRIBUTES != GetFileAttributes(str.C_Str()))
       {
 
         //regular file, read it from disk        
-        rMatInstance.AddResource<Texture2D>(_pWindow, _sDirectory + str.C_Str(), j, PipelineStage::PIXEL);
+        rMatInstance.AddResource<Texture2D>(_sDirectory + str.C_Str(), j, PipelineStage::PIXEL);
       }
     }  
     rMatInstance.Setup();
   }
 }
 
-void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, Window* _pWindow, ModelComponent* pModelComp_)
+void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, ModelComponent* pModelComp_)
 {
   std::vector<Vertex> lstVertices(_pAssimpMesh->mNumVertices);
   std::vector<unsigned short> lstIndices(_pAssimpMesh->mNumFaces * 3u);
@@ -189,6 +187,26 @@ void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, Window* _pW
       lstIndices[i * 3u + j] = face.mIndices[j];
   }
 
-  pModelComp_->AddMesh(lstVertices, lstIndices, _pAssimpMesh->mMaterialIndex, _pWindow);
+  pModelComp_->AddMesh(lstVertices, lstIndices, _pAssimpMesh->mMaterialIndex);
 
+}
+
+void ModelLoader::SetupQuadModel(Material* _pMaterial, ModelComponent* pModelComp_)
+{
+
+  std::vector<Vertex> lstVertices{
+      {{-1.0f,  1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {0, 0}},
+      {{ 1.0f,  1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {1, 0}},
+      {{ 1.0f, -1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {1, 1}},
+      {{-1.0f, -1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {0, 1}}
+  };
+
+  std::vector<unsigned short> lstIndices{
+    3, 0, 1,
+    2, 3, 1
+  };
+
+  pModelComp_->AddMaterialInstance(_pMaterial).Setup();  
+
+  pModelComp_->AddMesh(lstVertices, lstIndices, 0u);
 }

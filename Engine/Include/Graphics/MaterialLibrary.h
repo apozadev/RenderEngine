@@ -9,44 +9,24 @@ class Window;
 typedef uint32_t MaterialId;
 
 class MaterialLibrary : public Singleton<MaterialLibrary>
-{
-
-  struct WindowMatPair
-  {    
-    Window* m_pWindow;
-    std::unique_ptr<Material> m_pMaterial;
-  };
-
+{ 
 public:
 
-  Material* CreateMaterial(Window* _pWindow, std::vector<Pass>&& _lstPasses)
+  Material* CreateMaterial(std::vector<Pass>&& _lstPasses)
   {    
-    m_lstMaterials.push_back(WindowMatPair{ _pWindow, std::make_unique<Material>(std::move(_lstPasses)) });
+    m_lstMaterials.push_back(std::move(std::make_unique<Material>(std::move(_lstPasses))));
 
-    return m_lstMaterials.back().m_pMaterial.get();
+    return m_lstMaterials.back().get();
   }
 
-  void DestroyWindowMaterials(Window* _pWindow)
+  void Clear()
   {
-    for (int i = 0; i < m_lstMaterials.size(); i++)
-    {
-      if (m_lstMaterials[i].m_pWindow == _pWindow)
-      {
-        if (i < m_lstMaterials.size() - 1)
-        {
-          WindowMatPair oAux(std::move(m_lstMaterials[i]));
-          m_lstMaterials[i] = std::move(m_lstMaterials[m_lstMaterials.size() - 1]);
-          m_lstMaterials[m_lstMaterials.size() - 1] = std::move(oAux);
-        }
-        m_lstMaterials.pop_back();
-        i--;
-      }
-    }
+    m_lstMaterials.clear();
   }
 
 private:  
 
-  std::vector<WindowMatPair> m_lstMaterials;
+  std::vector<std::unique_ptr<Material>> m_lstMaterials;
 
   MaterialId m_uNextId = 0u;
 };

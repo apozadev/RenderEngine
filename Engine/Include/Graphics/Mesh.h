@@ -23,13 +23,11 @@ class Mesh
 
 public:    
 
-  Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, Window* _pWindow);
+  Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices);
   Mesh(Mesh&& _rMesh);
   ~Mesh();
 
-  void UpdateTransform(const Transform& _oParentTransform);
-
-  Window* GetWindow() const;
+  void UpdateTransform(const Transform& _oParentTransform);  
 
 private: 
 

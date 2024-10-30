@@ -11,7 +11,7 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/MaterialLibrary.h"
 
-int Engine::Initialize()
+int Engine::Initialize(int _iWidth, int _iHeight, const char* _sTitle)
 {    
   m_fTargetFPS = 120.f;
 
@@ -19,57 +19,17 @@ int Engine::Initialize()
   Renderer::GetInstance()->Initialize();
   InputManager::GetInstance()->Initialize();
 
+  m_pWindow = std::make_unique<Window>(_iWidth, _iHeight, _sTitle);
+
+  m_pWindow->SetUsing();
+
   return 0;
 }
 
-Window* Engine::CreateNewWindow(int _iWidth, int _iHeight, const char* _sTitle)
-{      
-  m_lstWindows.push_back(Window(_iWidth, _iHeight, _sTitle));
-  return &m_lstWindows.back();
-}
-
-Scene* Engine::CreateScene(Window* _pWindow)
+Scene* Engine::CreateScene()
 {
-  m_lstScenes.push_back(std::move(Scene(_pWindow)));  
+  m_lstScenes.emplace_back();  
   return &m_lstScenes.back();
-}
-
-void Engine::UpdateWindows()
-{
-  size_t uCurrSize = m_lstWindows.size();
-  for (int i = 0; i < uCurrSize; i++)
-  {
-    if (m_lstWindows[i].ShouldClose())
-    {
-
-      Window& rWindow = m_lstWindows[i];
-
-      for (int j = 0; j < m_lstScenes.size(); j++)
-      {        
-        if (m_lstScenes[j].GetWindow() == &rWindow)
-        {
-          if (j < m_lstScenes.size() - 1)
-          {
-            Scene oAux(std::move(m_lstScenes[j]));
-            m_lstScenes[j] = std::move(m_lstScenes[m_lstScenes.size() - 1]);
-            m_lstScenes[m_lstScenes.size() - 1] = std::move(oAux);
-          }
-          m_lstScenes.pop_back();
-        }
-      }
-
-      MaterialLibrary::GetInstance()->DestroyWindowMaterials(&rWindow);
-
-      if (i < uCurrSize - 1)
-      {        
-        Window oAux(std::move(m_lstWindows[i]));
-        m_lstWindows[i] = std::move(m_lstWindows[m_lstWindows.size() - 1]);
-        m_lstWindows[m_lstWindows.size() - 1] = std::move(oAux);
-      }      
-
-      m_lstWindows.pop_back();
-    }
-  }    
 }
 
 int Engine::Run()
@@ -82,7 +42,7 @@ int Engine::Run()
 
     while (m_bRunning)
     {
-      if (ShouldShutDown())
+      if (m_pWindow->ShouldClose())
       {
         ScheduleShutDown();
       }
@@ -105,8 +65,6 @@ int Engine::Run()
           }
 
           Renderer::GetInstance()->Draw();
-
-          UpdateWindows();
         }
       }      
     }    
@@ -123,15 +81,16 @@ int Engine::ScheduleShutDown()
   return 0;
 }
 
-bool Engine::ShouldShutDown()
-{
-  return m_lstWindows.size() == 0;
-}
-
 void Engine::ShutDown()
 {
   // Shut down subsystems      
   InputManager::GetInstance()->ShutDown();
   Renderer::GetInstance()->ShutDown();
+  MaterialLibrary::GetInstance()->Clear();
+
+  m_lstScenes.clear();
+
+  m_pWindow.reset();  
+  
 }
 

@@ -18,11 +18,9 @@ class RenderPipeline
 {
 public:
 
-	RenderPipeline(const Window* _pWindow, std::string _sId, RenderPipelineConfig&& _rConfig);
+	RenderPipeline(std::string _sId, RenderPipelineConfig&& _rConfig);
 	RenderPipeline(RenderPipeline&& _rPipeline) = default;
-	~RenderPipeline();
-
-	const Window* GetOwnerWindow() const { return m_pWindow; }
+	~RenderPipeline();	
 
 	const std::string& GetId() const { return m_sId; }
 
@@ -46,6 +44,4 @@ private:
 	std::vector<RenderTarget*> m_lstRenderTargets;
 
 	RenderPipelineConfig m_oConfig;
-
-	const Window* m_pWindow;
 };

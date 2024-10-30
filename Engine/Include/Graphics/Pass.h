@@ -12,8 +12,7 @@ class Pass
 {
 public:
 
-  Pass(Window* _pWindow
-    , const std::string& _sVSFilename
+  Pass( const std::string& _sVSFilename
     , const std::string& _sPSFilename
     , bool _bBlendEnabled
     , BlendOp _eBlendOp

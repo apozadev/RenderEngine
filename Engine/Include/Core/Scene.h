@@ -12,7 +12,7 @@ public:
 
 public:    
 
-  Scene(Window* _pWindow) : m_pWindow(_pWindow) {}
+  Scene() {}
   Scene(Scene&& _rScene);
   ~Scene();
 
@@ -29,8 +29,6 @@ public:
     return m_lstEntities[_rEntity->m_lstChildren[_uChildIdx]].get();
   }  
 
-  Window* GetWindow() const { return m_pWindow; }
-
   Scene& operator=(Scene&& _rScene);
 
 private:    
@@ -38,8 +36,5 @@ private:
   uint32_t BuildTraverse(std::unique_ptr<Entity>& _rEntity, std::vector<std::unique_ptr<Entity>>& _lstNewScene);
 
   std::vector<std::unique_ptr<Entity>> m_lstEntities;    
-
-  Window* m_pWindow;
-
 
 };

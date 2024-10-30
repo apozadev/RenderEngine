@@ -54,7 +54,9 @@ namespace api
   void OnWindowResize(APIWindow* _pWindow);
   uint32_t GetWindowWidth(APIWindow* _pWindow);
   uint32_t GetWindowHeight(APIWindow* _pWindow);
+  void ClearDefaultRenderTarget(APIWindow* _pWindow);
   void BindDefaultRenderTarget(APIWindow* _pWindow);
+  void UnbindDefaultRenderTarget(APIWindow* _pWindow);
   void DestroyAPIWindow(APIWindow* _pWindow);
 
   // Camera
@@ -97,7 +99,8 @@ namespace api
   // Texture
 
   APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage);
-  void BindAPITexture(APITexture* _pTexture);
+  void BindAPITexture(APITexture* _pTexture); 
+  void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage);
   void DestroyAPITexture(APITexture* _pTexture);  
 
   // RenderTarget
@@ -109,6 +112,7 @@ namespace api
   void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
   void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
   void EndRenderTargetSetup();
+  void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget);
   void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget);
   void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
   void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);

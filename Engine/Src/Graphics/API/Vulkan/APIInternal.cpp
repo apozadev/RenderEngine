@@ -117,11 +117,11 @@ VkImageUsageFlags GetVkTextureUsage(uint32_t _uUsage)
   }
   if ((_uUsage & static_cast<int>(TextureUsage::COLOR_TARGET)) != 0)
   {
-    uRes |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    uRes |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
   if ((_uUsage & static_cast<int>(TextureUsage::DEPTH_TARGET)) != 0)
   {
-    uRes |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    uRes |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
 
   return uRes;
@@ -590,7 +590,7 @@ void CreateColorBuffer(APIWindow* _pWindow)
     , 1u
     , s_oGlobalData.m_eMaxMsaaSampleCount
     , VK_IMAGE_TILING_OPTIMAL
-    , VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+    , VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
     , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     , _pWindow->m_hColorImage
     , _pWindow->m_hColorImageMemory);
@@ -611,14 +611,14 @@ void CreateDepthBuffer(APIWindow* _pWindow)
     1u,
     s_oGlobalData.m_eMaxMsaaSampleCount,
     VK_IMAGE_TILING_OPTIMAL,
-    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     _pWindow->m_hDepthImage,
     _pWindow->m_hDepthImageMemory);
 
   CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, uAspectFlags, _pWindow->m_hDepthImageView);
 
-  TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+  TransitionImageLayoutOffline(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
 void CreateSwapchain(APIWindow* _pWindow)
@@ -773,11 +773,11 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
   VkAttachmentDescription oColorAttachmentDesc{};
   oColorAttachmentDesc.format = _eColorFormat;
   oColorAttachmentDesc.samples = static_cast<VkSampleCountFlagBits>(_uMsaaSampleCount);
-  oColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  oColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
   oColorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   oColorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   oColorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  oColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  oColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   if (bHasMsaa)
   {
@@ -801,12 +801,11 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
   VkAttachmentDescription oDepthAttachmentDesc{};
   oDepthAttachmentDesc.format = _eDepthStencilFormat;
   oDepthAttachmentDesc.samples = static_cast<VkSampleCountFlagBits>(_uMsaaSampleCount);
-  oDepthAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  oDepthAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  oDepthAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  oDepthAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   oDepthAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   oDepthAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  oDepthAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  oDepthAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  oDepthAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;  
 
   if (bHasMsaa)
   {
@@ -1309,9 +1308,8 @@ void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, 
   EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }
 
-void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
-{
-  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+{  
 
   VkImageMemoryBarrier oBarrier{};
   oBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1353,12 +1351,40 @@ void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eForm
     uSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     uDstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
   }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    uDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    uDstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  }
   else
   {
     THROW_GENERIC_EXCEPTION("[API] Unsupported layout transition")
   }
 
-  vkCmdPipelineBarrier(hCmdBuffer, uSrcStage, uDstStage, 0, 0, NULL, 0, NULL, 1, &oBarrier);
+  vkCmdPipelineBarrier(_hCmdBuffer, uSrcStage, uDstStage, 0, 0, NULL, 0, NULL, 1, &oBarrier);  
+}
+
+void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+{  
+  PerformTransitionImageLayout(_pWindow->m_pCmdBuffers[_pWindow->m_uCurrFrameIdx], _hImage, _eFormat, _uMipLevels, _uAspectFlags, _eOldLayout, _eNewLayout);
+}
+
+void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+{
+  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+
+  PerformTransitionImageLayout(hCmdBuffer, _hImage, _eFormat, _uMipLevels, _uAspectFlags, _eOldLayout, _eNewLayout);
 
   EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }

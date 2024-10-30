@@ -15,8 +15,7 @@ struct Job
 {
   Mesh* m_pMesh;
   const MaterialInstance* m_pMaterial;
-  const Pass* m_pPass;
-  const Window* m_pWindow;
+  const Pass* m_pPass;  
   const Transform* m_pMeshTransform;
   RenderKey m_xKey;
 

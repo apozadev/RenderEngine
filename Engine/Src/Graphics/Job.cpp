@@ -21,7 +21,6 @@ void Job::UpdateRenderKey(const Camera* _pCamera, const Transform* _pCamTransfor
 
   if(_bTranslucent)
   {
-    SET_KEY_WINDOW_TRANSLUCENT(m_xKey, m_pWindow->GetId());
     SET_KEY_LAYER_TRANSLUCENT(m_xKey, m_pPass->GetLayer());
     SET_KEY_PASS_TRANSLUCENT(m_xKey, m_pPass->GetId());
     SET_KEY_MATINSTANCE_TRANSLUCENT(m_xKey, m_pMaterial->GetId());
@@ -31,7 +30,6 @@ void Job::UpdateRenderKey(const Camera* _pCamera, const Transform* _pCamTransfor
   }
   else
   {    
-    SET_KEY_WINDOW(m_xKey, m_pWindow->GetId());    
     SET_KEY_LAYER(m_xKey, m_pPass->GetLayer());
     SET_KEY_PASS(m_xKey, m_pPass->GetId());
     SET_KEY_MATINSTANCE(m_xKey, m_pMaterial->GetId());

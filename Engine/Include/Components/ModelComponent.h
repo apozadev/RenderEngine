@@ -21,10 +21,9 @@ public:
   };
 
 public:
-  ModelComponent(const char* _sFilename, Material* _pMaterial, Window* _pWindow);
-  //~ModelComponent() {};
+  ModelComponent(const char* _sFilename, Material* _pMaterial);  
 
-  void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx, Window* _pWindow);
+  void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx);
 
   MaterialInstance& AddMaterialInstance(Material* _pMaterial)
   {

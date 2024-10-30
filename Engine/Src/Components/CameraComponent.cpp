@@ -1,5 +1,6 @@
 #include <glm/ext/matrix_clip_space.hpp>
 
+#include "Core/Engine.h"
 #include "Core/Entity.h"
 #include "Graphics/Window.h"
 #include "Graphics/Renderer.h"
@@ -7,10 +8,10 @@
 #include "Components/CameraComponent.h"
 #include "Math/Utils.h"
 
-CameraComponent::CameraComponent(Window* _pWindow)  
+CameraComponent::CameraComponent()  
 {  
 
-  m_pCamera = std::make_unique<Camera>(_pWindow, "TEST");
+  m_pCamera = std::make_unique<Camera>("TEST");
 }
 
 CameraComponent::~CameraComponent()
@@ -23,10 +24,10 @@ void CameraComponent::Start()
   m_fNear = 0.1F;
   m_fFar = 100.f;
 
-  Window& rWindow = *m_pCamera->GetWindow();
+  const Window* pWindow = Engine::GetInstance()->GetWindow();
 
   double dPosX, dPosY;
-  rWindow.GetMousePos(dPosX, dPosY);
+  pWindow->GetMousePos(dPosX, dPosY);
   m_fLastMousePosX = static_cast<float>(dPosX);
   m_fLastMousePosY = static_cast<float>(dPosY);
 
@@ -44,49 +45,49 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
   constexpr float fMoveSpeed = 10.f;
   constexpr float fRotSpeed = 0.3f;  
 
-  Window& rWindow = *m_pCamera->GetWindow();
+  const Window* pWindow = Engine::GetInstance()->GetWindow();
 
   Transform& rTr = m_pEntity->GetMutableLocalTransform();  
 
   double dMousePosX, dMousePosY;
 
-  rWindow.GetMousePos(dMousePosX, dMousePosY);
+  pWindow->GetMousePos(dMousePosX, dMousePosY);
 
   glm::vec3 vTranslation(0.f);
 
-  if (rWindow.IsKeyPressed('a'))
+  if (pWindow->IsKeyPressed('a'))
   {
     vTranslation -= rTr.GetRight() * fMoveSpeed * _fTimeStep;
   }
 
-  if (rWindow.IsKeyPressed('d'))
+  if (pWindow->IsKeyPressed('d'))
   {
     vTranslation += rTr.GetRight() * fMoveSpeed * _fTimeStep;
   }
 
-  if (rWindow.IsKeyPressed('w'))
+  if (pWindow->IsKeyPressed('w'))
   {
     vTranslation -= rTr.GetFront() * fMoveSpeed * _fTimeStep;
   }
 
-  if (rWindow.IsKeyPressed('s'))
+  if (pWindow->IsKeyPressed('s'))
   {
     vTranslation += rTr.GetFront() * fMoveSpeed * _fTimeStep;
   }
 
-  if (rWindow.IsKeyPressed('q'))
+  if (pWindow->IsKeyPressed('q'))
   {
     vTranslation -= rTr.GetUp() * fMoveSpeed * _fTimeStep;
   }
 
-  if (rWindow.IsKeyPressed('e'))
+  if (pWindow->IsKeyPressed('e'))
   {
     vTranslation += rTr.GetUp() * fMoveSpeed * _fTimeStep;
   }
 
   rTr.SetPos(rTr.GetPos() + vTranslation);
 
-  if (rWindow.IsMousePressed(0))
+  if (pWindow->IsMousePressed(0))
   {        
     float fDeltaX = dMousePosX - static_cast<float>(m_fLastMousePosX);
     float fDeltaY = dMousePosY - static_cast<float>(m_fLastMousePosY);            

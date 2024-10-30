@@ -70,3 +70,13 @@ void Texture2D::Bind() const
 {
   api::BindAPITexture(m_pImpl->m_pAPITexture);
 }
+
+void Texture2D::ClearAsColor() const
+{
+  api::ClearAPITexture(m_pImpl->m_pAPITexture, TextureUsage::COLOR_TARGET);
+}
+
+void Texture2D::ClearAsDepthStencil() const
+{
+  api::ClearAPITexture(m_pImpl->m_pAPITexture, TextureUsage::DEPTH_TARGET);
+}

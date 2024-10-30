@@ -9,7 +9,7 @@ class CameraComponent : public Component
 {
 
 public:
-  CameraComponent(Window* _pWindow);   
+  CameraComponent();   
   ~CameraComponent();
 
 protected:

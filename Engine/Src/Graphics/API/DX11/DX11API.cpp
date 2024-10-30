@@ -382,16 +382,25 @@ namespace api
       return _pWindow->m_uHeight;
     }
 
-    void BindDefaultRenderTarget(APIWindow* _pWindow)
+    void ClearDefaultRenderTarget(APIWindow* _pWindow)
     {
       float aClearColor[] = { 0.f,0.f,0.f,1.f };
       unsigned int uClearFlags = D3D11_CLEAR_DEPTH;
-      
-      _pWindow->m_pContext->ClearRenderTargetView(_pWindow->m_pRtv.Get(), aClearColor);      
+
+      _pWindow->m_pContext->ClearRenderTargetView(_pWindow->m_pRtv.Get(), aClearColor);
 
       _pWindow->m_pContext->ClearDepthStencilView(_pWindow->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
+    }
 
+    void BindDefaultRenderTarget(APIWindow* _pWindow)
+    {      
       _pWindow->m_pContext->OMSetRenderTargets(1, _pWindow->m_pRtv.GetAddressOf(), _pWindow->m_pDsv.Get());
+    }
+
+    void UnbindDefaultRenderTarget(APIWindow* _pWindow)
+    {
+      ID3D11RenderTargetView* pNullView =  nullptr;      
+      _pWindow->m_pContext->OMSetRenderTargets(1, &pNullView, nullptr);
     }
 
     void DestroyAPIWindow(APIWindow* _pAPIWindow)
@@ -644,6 +653,11 @@ namespace api
       }
     }
 
+    void ClearAPITexture(APITexture* /*_pTexture*/, TextureUsage /*_eUsage*/)
+    {
+
+    }
+
     void DestroyAPITexture(APITexture* _pTexture)
     {
       delete _pTexture;
@@ -690,7 +704,7 @@ namespace api
       s_oGlobalData.m_oRenderTargetBuilder.Build(s_oGlobalData.m_pUsingRenderTarget);
     }
 
-    void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget)
     {
       APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
 
@@ -702,8 +716,17 @@ namespace api
         pWindow->m_pContext->ClearRenderTargetView(pRtv.Get(), aClearColor);
       }
 
-      pWindow->m_pContext->ClearDepthStencilView(_pRenderTarget->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
+      if (_pRenderTarget->m_pDsv.Get())
+      {
+        pWindow->m_pContext->ClearDepthStencilView(_pRenderTarget->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
+      }
 
+    }
+
+    void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    {
+      APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
+      
       pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
     }
 
@@ -717,7 +740,7 @@ namespace api
       const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
 
       APIWindow* pWindow = _pRenderTarget->m_pOwnerWindow;
-      pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), _pRenderTarget->m_pDsv.Get());
+      pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
     }
     
     void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)

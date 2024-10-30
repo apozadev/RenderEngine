@@ -111,6 +111,23 @@ void RenderTarget::Unbind() const
   api::UnbindAPIRenderTarget(m_pImpl->m_pAPIRenderTarget);
 }
 
+void RenderTarget::Clear() const
+{
+  api::ClearAPIRenderTarget(m_pImpl->m_pAPIRenderTarget);
+
+  for (Texture2D* pTexture : m_pImpl->m_lstColorTextures)
+  {
+    pTexture->ClearAsColor();
+  }
+
+  for (Texture2D* pTexture : m_pImpl->m_lstColorResolveTextures)
+  {
+    pTexture->ClearAsColor();
+  }
+
+  m_pImpl->m_pDepthStencilTexture->ClearAsDepthStencil();
+}
+
 std::vector<Texture2D*> RenderTarget::GetColorTextures()
 {
   if (!m_pImpl->m_lstColorResolveTextures.empty())
