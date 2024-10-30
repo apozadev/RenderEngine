@@ -110,7 +110,7 @@ namespace vk
     oRange.baseArrayLayer = 0;
     oRange.layerCount = 1;
     
-    VkClearDepthStencilValue oDepthClearColor = { 1.f, 1.f };
+    VkClearDepthStencilValue oDepthClearColor = { 1.f, 0.f };
     vkCmdClearDepthStencilImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hDepthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oDepthClearColor, 1u, &oRange);    
 
     TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);

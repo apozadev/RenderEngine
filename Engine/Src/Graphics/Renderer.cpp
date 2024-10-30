@@ -55,13 +55,15 @@ void Renderer::Initialize()
 
 }
 
-void Renderer::ShutDown()
+void Renderer::ShutDownPreWindow()
 {
-
   glfwTerminate();
 
   m_pImpl.reset();
+}
 
+void Renderer::ShutDownPostWindow()
+{
   api::ShutDownAPI();
 }
 

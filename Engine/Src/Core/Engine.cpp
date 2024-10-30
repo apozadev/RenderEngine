@@ -84,13 +84,16 @@ int Engine::ScheduleShutDown()
 void Engine::ShutDown()
 {
   // Shut down subsystems      
-  InputManager::GetInstance()->ShutDown();
-  Renderer::GetInstance()->ShutDown();
+  InputManager::GetInstance()->ShutDown();  
   MaterialLibrary::GetInstance()->Clear();
 
-  m_lstScenes.clear();
+  m_lstScenes.clear();  
 
-  m_pWindow.reset();  
+  Renderer::GetInstance()->ShutDownPreWindow();
+
+  m_pWindow.reset();
+
+  Renderer::GetInstance()->ShutDownPostWindow();
   
 }
 

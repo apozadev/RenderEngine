@@ -22,7 +22,8 @@ public:
   ~Renderer();
 
   void Initialize();
-  void ShutDown();   
+  void ShutDownPreWindow();   
+  void ShutDownPostWindow();   
 
   void AddRenderPipeline(RenderPipelineConfig&& _pPipelineCofig);  
 
