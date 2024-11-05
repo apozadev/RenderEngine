@@ -22,8 +22,6 @@ struct APITexture
 	DXGI_FORMAT m_eFormat;
 	int m_iWidth, m_iHeight;
 
-	APIWindow* m_pOwnerWindow;
-
 };
 
 }

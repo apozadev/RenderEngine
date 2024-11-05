@@ -13,8 +13,6 @@ struct APIWindow;
 struct APICamera
 {
   D3D11_VIEWPORT m_oViewport;
-
-  APIWindow* m_pOwnerWindow;
 };
 
 }

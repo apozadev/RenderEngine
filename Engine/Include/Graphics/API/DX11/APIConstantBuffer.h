@@ -15,10 +15,7 @@ namespace api
 
       unsigned int m_slot;
 
-      unsigned int m_stageMask = 0u;
-
-      APIWindow* m_pOwnerWindow;
-     
+      unsigned int m_stageMask = 0u;     
     };
 
   }

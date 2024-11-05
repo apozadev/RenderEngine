@@ -116,7 +116,11 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/TextureUsage.h" 
 	"Include/Graphics/Pass.h" 
 	"Src/Graphics/Pass.cpp" 
-	"Include/Graphics/RenderKey.h" "Src/Core/Singleton.cpp") 
+	"Include/Graphics/RenderKey.h" 
+	"Src/Core/Singleton.cpp"
+	"Include/Graphics/API/DX11/APIInternal.h"
+	"Src/Graphics/API/DX11/APIInternal.cpp" 
+	"Src/Graphics/API/DX11/RenderTargetBuilder.cpp") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

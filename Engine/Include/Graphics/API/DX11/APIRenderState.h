@@ -25,8 +25,6 @@ namespace dx11
 
     Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_pDSState;
 
-    APIWindow* m_pOwnerWindow;
-
   };
 
 }

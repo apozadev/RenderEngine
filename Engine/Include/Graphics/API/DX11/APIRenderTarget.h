@@ -20,8 +20,6 @@ namespace dx11
 
     unsigned int m_uSampleCount = 1u;
                  
-    APIWindow* m_pOwnerWindow;
-
   };
 
 }
