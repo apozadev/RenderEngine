@@ -120,7 +120,13 @@ add_library(${PROJECT_NAME}
 	"Src/Core/Singleton.cpp"
 	"Include/Graphics/API/DX11/APIInternal.h"
 	"Src/Graphics/API/DX11/APIInternal.cpp" 
-	"Src/Graphics/API/DX11/RenderTargetBuilder.cpp") 
+	"Src/Graphics/API/DX11/RenderTargetBuilder.cpp" 
+	"Include/Graphics/API/DX11/DX11Pools.h"
+	"Include/Core/TypedPool.h"
+	"Src/Graphics/API/DX11/DX11Pools.cpp" 
+	"Include/Graphics/API/Vulkan/VulkanPools.h" 
+	"Src/Graphics/API/Vulkan/VulkanPools.cpp" 
+	"Include/Core/TypedContiguousPool.h") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -136,7 +142,7 @@ target_include_directories(${PROJECT_NAME}
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
-set(TARGET_RENDER_API ${RENDER_API_DX11})
+set(TARGET_RENDER_API ${RENDER_API_VULKAN})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
 	RENDER_API=${TARGET_RENDER_API}

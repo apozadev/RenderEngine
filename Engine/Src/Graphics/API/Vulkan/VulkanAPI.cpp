@@ -13,6 +13,7 @@
 #include "Graphics/API/Vulkan/APIInternal.h"
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanShaderReflection.h"
+#include "Graphics/API/Vulkan/VulkanPools.h"
 #include "File/File.h"
 
 namespace api
@@ -24,12 +25,42 @@ namespace vk
 
   void InitializeAPI()
   {
+
+    s_oRenderStatePool.Initialize(256u);
+    s_oRenderSubStatePool.Initialize(256u);
+    s_oConstantBufferPool.Initialize(256u);
+    s_oMeshPool.Initialize(256u);
+    s_oTexturePool.Initialize(256u);
+    s_oRenderTargetPool.Initialize(256u);
+
+    s_oVkBufferPool.Initialize(256u);
+    s_oVkDeviceMemoryPool.Initialize(256u);
+    s_oVoidPtrPool.Initialize(256u);
+    s_oVkDescriptorSetPool.Initialize(256u);
+    s_oVkAttachmentReferencePool.Initialize(3u);
+    s_oVkAttachmentDescriptionPool.Initialize(3u);
+
     CreateInstance();
     CreatePhysicalDevice();    
   }
 
   void ShutDownAPI()
   {    
+
+    s_oRenderStatePool.Clear();
+    s_oRenderSubStatePool.Clear();
+    s_oConstantBufferPool.Clear();
+    s_oMeshPool.Clear();
+    s_oTexturePool.Clear();
+    s_oRenderTargetPool.Clear();
+
+    s_oVkBufferPool.Clear();
+    s_oVkDeviceMemoryPool.Clear();
+    s_oVoidPtrPool.Clear();
+    s_oVkDescriptorSetPool.Clear();
+    s_oVkAttachmentReferencePool.Clear();
+    s_oVkAttachmentDescriptionPool.Clear();
+
     vkDestroyInstance(s_oGlobalData.m_hInstance, NULL);
   }
 
@@ -225,7 +256,7 @@ namespace vk
 
   APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize)
   {
-    APIMesh* pMesh = new APIMesh();
+    APIMesh* pMesh = s_oMeshPool.PullElement();
 
     pMesh->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;    
 
@@ -288,14 +319,14 @@ namespace vk
     DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hVertexBuffer, _pMesh->m_hVertexBufferMemory);
     DestroyBuffer(_pMesh->m_pOwnerWindow, _pMesh->m_hIndexBuffer, _pMesh->m_hIndexBufferMemory);
 
-    delete _pMesh;
+    s_oMeshPool.ReturnElement(_pMesh);
   }
 
   // Constant buffer
 
   APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
   {
-    APIConstantBuffer* pCBuffer = new APIConstantBuffer();
+    APIConstantBuffer* pCBuffer = s_oConstantBufferPool.PullElement();
 
     pCBuffer->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
 
@@ -305,9 +336,9 @@ namespace vk
 
     // Create buffers
 
-    pCBuffer->m_pUniformBuffers = new VkBuffer[uNumImages];
-    pCBuffer->m_pUniformBuffersMemory = new VkDeviceMemory[uNumImages];
-    pCBuffer->m_pUniformBuffersMapped = new void*[uNumImages];
+    pCBuffer->m_pUniformBuffers = s_oVkBufferPool.PullElements(uNumImages);
+    pCBuffer->m_pUniformBuffersMemory = s_oVkDeviceMemoryPool.PullElements(uNumImages);
+    pCBuffer->m_pUniformBuffersMapped = s_oVoidPtrPool.PullElements(uNumImages);
 
     for (uint32_t i = 0; i < uNumImages; i++)
     {
@@ -352,11 +383,11 @@ namespace vk
       DestroyBuffer(pWindow, _pCBuffer->m_pUniformBuffers[i], _pCBuffer->m_pUniformBuffersMemory[i]);
     }
 
-    delete[] _pCBuffer->m_pUniformBuffers;
-    delete[] _pCBuffer->m_pUniformBuffersMemory;
-    delete[] _pCBuffer->m_pUniformBuffersMapped;
+    s_oVkBufferPool.ReturnElements(_pCBuffer->m_pUniformBuffers);
+    s_oVkDeviceMemoryPool.ReturnElements(_pCBuffer->m_pUniformBuffersMemory);
+    s_oVoidPtrPool.ReturnElements(_pCBuffer->m_pUniformBuffersMapped);
 
-    delete _pCBuffer;
+    s_oConstantBufferPool.ReturnElement(_pCBuffer);
   }
 
   // Texture
@@ -364,7 +395,7 @@ namespace vk
   APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
   {
 
-    APITexture* pTexture = new APITexture();
+    APITexture* pTexture = s_oTexturePool.PullElement();
 
     pTexture->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
 
@@ -529,14 +560,14 @@ namespace vk
     vkDestroyImage(pWindow->m_hDevice, _pTexture->m_hImage, NULL);
     vkFreeMemory(pWindow->m_hDevice, _pTexture->m_hMemory, NULL);
 
-    delete _pTexture;
+    s_oTexturePool.ReturnElement(_pTexture);
   }
 
   // RenderTarget
 
   APIRenderTarget* CreateAPIRenderTarget()
   {
-    APIRenderTarget* pRenderTarget = new APIRenderTarget();    
+    APIRenderTarget* pRenderTarget = s_oRenderTargetPool.PullElement();
 
     pRenderTarget->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;    
 
@@ -626,7 +657,7 @@ namespace vk
 
     vkDestroyRenderPass(pWindow->m_hDevice, _pRenderTarget->m_hRenderPass, nullptr);
 
-    delete _pRenderTarget;
+    s_oRenderTargetPool.ReturnElement(_pRenderTarget);
   }
 
   // Render state
@@ -645,7 +676,7 @@ namespace vk
       hRenderPass = s_oGlobalData.m_pUsingWindow->m_hRenderPass;
     }
 
-    APIRenderState* pRenderState = new APIRenderState();
+    APIRenderState* pRenderState = s_oRenderStatePool.PullElement();
     pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;  
     uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;    
 
@@ -675,7 +706,7 @@ namespace vk
     oDescSetAllocInfo.descriptorSetCount = uNumImages;
     oDescSetAllocInfo.pSetLayouts = lstLayouts.data();
 
-    pRenderState->m_pDescSets = new VkDescriptorSet[uNumImages];    
+    pRenderState->m_pDescSets = s_oVkDescriptorSetPool.PullElements(uNumImages);
 
     VK_CHECK(vkAllocateDescriptorSets(hDevice, &oDescSetAllocInfo, pRenderState->m_pDescSets))
 
@@ -751,7 +782,7 @@ namespace vk
 
     VK_CHECK(vkWaitForFences(pWindow->m_hDevice, uNumImages, pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
 
-    delete[] _pAPIRenderState->m_pDescSets;    
+    s_oVkDescriptorSetPool.ReturnElements(_pAPIRenderState->m_pDescSets);    
 
     vkDestroyDescriptorSetLayout(pWindow->m_hDevice, _pAPIRenderState->m_hDescSetLayout, NULL);    
 
@@ -759,12 +790,12 @@ namespace vk
 
     vkDestroyPipeline(pWindow->m_hDevice, _pAPIRenderState->m_hGraphicsPipeline, NULL);
 
-    delete _pAPIRenderState;
+    s_oRenderStatePool.ReturnElement(_pAPIRenderState);
   }  
 
   APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)
   {    
-    APIRenderSubState* pSubState = new APIRenderSubState();    
+    APIRenderSubState* pSubState = s_oRenderSubStatePool.PullElement();    
 
     pSubState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
 
@@ -811,7 +842,7 @@ namespace vk
     oDescSetAllocInfo.descriptorSetCount = uNumImages;
     oDescSetAllocInfo.pSetLayouts = lstLayouts.data();
 
-    _pSubState->m_pDescSets = new VkDescriptorSet[uNumImages];
+    _pSubState->m_pDescSets = s_oVkDescriptorSetPool.PullElements(uNumImages);
 
     VK_CHECK(vkAllocateDescriptorSets(s_oGlobalData.m_pUsingWindow->m_hDevice, &oDescSetAllocInfo, _pSubState->m_pDescSets))
   }
@@ -902,7 +933,7 @@ namespace vk
     uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
     vkFreeDescriptorSets(pWindow->m_hDevice, pWindow->m_hDescPool, uNumImages, _pAPIRenderSubState->m_pDescSets);*/
 
-    delete _pAPIRenderSubState;
+    s_oRenderSubStatePool.ReturnElement(_pAPIRenderSubState);
   }
 
   // Drawing

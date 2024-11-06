@@ -8,6 +8,7 @@
 #include "Graphics/TextureUsage.h"
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanShaderReflection.h"
+#include "Graphics/API/Vulkan/VulkanPools.h"
 
 namespace api
 {
@@ -817,8 +818,8 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
   }
 
 
-  VkAttachmentReference* pColorAttachmentRefs = new VkAttachmentReference[_uNumColorTextures];
-  VkAttachmentReference* pColorResolveAttachmentRefs = new VkAttachmentReference[_uNumColorTextures];
+  VkAttachmentReference* pColorAttachmentRefs = s_oVkAttachmentReferencePool.PullElements(_uNumColorTextures);
+  VkAttachmentReference* pColorResolveAttachmentRefs = s_oVkAttachmentReferencePool.PullElements(_uNumColorTextures);
 
   for (uint32_t i = 0; i < _uNumColorTextures; i++)
   {
@@ -852,7 +853,7 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
 
   const uint32_t uNumAttachments = _uNumColorTextures + (bHasMsaa ? _uNumColorTextures : 0u) + (_bHasDepthStencil ? 1u : 0u);
 
-  VkAttachmentDescription* pAttachments = new VkAttachmentDescription[uNumAttachments];
+  VkAttachmentDescription* pAttachments = s_oVkAttachmentDescriptionPool.PullElements(uNumAttachments);
 
   uint32_t uAttachmentIdx = 0u;
 
@@ -885,9 +886,9 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
 
   VK_CHECK(vkCreateRenderPass(_pWindow->m_hDevice, &oRenderPassCreateInfo, NULL, &hRenderPass_))
 
-  delete[] pAttachments;
-  delete[] pColorAttachmentRefs;
-  delete[] pColorResolveAttachmentRefs;
+  s_oVkAttachmentDescriptionPool.ReturnElements(pAttachments);
+  s_oVkAttachmentReferencePool.ReturnElements(pColorAttachmentRefs);
+  s_oVkAttachmentReferencePool.ReturnElements(pColorResolveAttachmentRefs);
 
 }
 
@@ -952,7 +953,7 @@ void CreateCommandBuffers(APIWindow* _pWindow)
   oCmdPoolCreateInfo.pNext = NULL;
   VK_CHECK(vkCreateCommandPool(_pWindow->m_hDevice, &oCmdPoolCreateInfo, NULL, &_pWindow->m_hCmdPool))
 
-    _pWindow->m_pCmdBuffers = new VkCommandBuffer[_pWindow->m_uSwapchainImageCount];
+  _pWindow->m_pCmdBuffers = new VkCommandBuffer[_pWindow->m_uSwapchainImageCount];
 
   // Create render command buffer
   {

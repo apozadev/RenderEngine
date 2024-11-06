@@ -29,6 +29,7 @@
 #include "Graphics/API/DX11/APIRenderTarget.h"
 #include "Graphics/API/DX11/DX11BindSlotOffset.h"
 #include "Graphics/API/DX11/APIInternal.h"
+#include "Graphics/API/DX11/DX11Pools.h"
 
 namespace wrl = Microsoft::WRL;
 
@@ -42,11 +43,20 @@ namespace api
     void InitializeAPI()
     {
       s_oGlobalData.m_uMaxMsaaSamples = 0u;
+      s_oRenderStatePool.Initialize(256u);
+      s_oConstantBufferPool.Initialize(256u);
+      s_oMeshPool.Initialize(256u);
+      s_oTexturePool.Initialize(256u);
+      s_oRenderTargetPool.Initialize(36u);
     }
 
     void ShutDownAPI()
     {
-
+      s_oRenderStatePool.Clear();
+      s_oConstantBufferPool.Clear();
+      s_oMeshPool.Clear();
+      s_oTexturePool.Clear();
+      s_oRenderTargetPool.Clear();
     }
 
     uint32_t GetDefaultMsaaSamples()
@@ -190,7 +200,7 @@ namespace api
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-      APIMesh* pMesh = new APIMesh();
+      APIMesh* pMesh = s_oMeshPool.PullElement();
 
       // Vertex buffer
 
@@ -242,14 +252,14 @@ namespace api
     void DestroyAPIMesh(APIMesh* _pMesh)
     {
       DestroyAPIConstanBuffer(_pMesh->m_pModelCBuffer);
-      delete _pMesh;
+      s_oMeshPool.ReturnElement(_pMesh);
     }
 
     // Constant buffer
 
     APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
     {
-      APIConstantBuffer* pCBuffer = new APIConstantBuffer();
+      APIConstantBuffer* pCBuffer = s_oConstantBufferPool.PullElement();
 
       D3D11_BUFFER_DESC oDesc = {};
       oDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -297,14 +307,14 @@ namespace api
 
     void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer)
     {
-      delete _pCBuffer;
+      s_oConstantBufferPool.ReturnElement(_pCBuffer);
     }
 
     // Texture
 
     APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
     {
-      APITexture* pTexture = new APITexture();
+      APITexture* pTexture = s_oTexturePool.PullElement();
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
@@ -398,14 +408,14 @@ namespace api
 
     void DestroyAPITexture(APITexture* _pTexture)
     {
-      delete _pTexture;
+      s_oTexturePool.ReturnElement(_pTexture);
     }
 
     // RenderTarget
 
     APIRenderTarget* CreateAPIRenderTarget()
     {
-      APIRenderTarget* pRenderTarget = new APIRenderTarget();
+      APIRenderTarget* pRenderTarget = s_oRenderTargetPool.PullElement();
 
       return pRenderTarget;
     }
@@ -477,7 +487,7 @@ namespace api
     
     void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
     {
-      delete _pRenderTarget;
+      s_oRenderTargetPool.ReturnElement(_pRenderTarget);
     }
 
     // Render state
@@ -485,7 +495,7 @@ namespace api
     APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t /*_uMsaaSamples*/)
     {
 
-      APIRenderState* pRenderState = new APIRenderState();
+      APIRenderState* pRenderState = s_oRenderStatePool.PullElement();
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
@@ -579,7 +589,7 @@ namespace api
 
     void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)
     {
-      delete _pAPIRenderState;
+      s_oRenderStatePool.ReturnElement(_pAPIRenderState);
     }
 
     // Render substate

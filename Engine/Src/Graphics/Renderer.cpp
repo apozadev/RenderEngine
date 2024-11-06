@@ -116,28 +116,30 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId) const
 void Renderer::Draw()
 {  
 
-  for (CamView& rCamView : m_pImpl->m_lstCamViews)
-  {                  
-    if (Engine::GetInstance()->GetWindow()->BeginDraw())
-    {
-      OnWindowResize();
-      break;
-    }    
-
-    // Execute pipeline            
-    if (RenderPipeline* pPipeline = GetRenderPipeline(rCamView.m_pCamera->GetRenderPipelineId()))
-    {
-      pPipeline->Execute(rCamView.m_pCamera, rCamView.m_pTransform);
-      pPipeline->Clear();
-    }
-    else
-    {
-      THROW_GENERIC_EXCEPTION("Camera RenderPipeline Id is not valid")
-    }
-
+  if (Engine::GetInstance()->GetWindow()->BeginDraw())
+  {
+    OnWindowResize();    
   }
-  
-  Engine::GetInstance()->GetWindow()->EndDraw();
+  else
+  {
+    for (CamView& rCamView : m_pImpl->m_lstCamViews)
+    {
+
+      // Execute pipeline            
+      if (RenderPipeline* pPipeline = GetRenderPipeline(rCamView.m_pCamera->GetRenderPipelineId()))
+      {
+        pPipeline->Execute(rCamView.m_pCamera, rCamView.m_pTransform);
+        pPipeline->Clear();
+      }
+      else
+      {
+        THROW_GENERIC_EXCEPTION("Camera RenderPipeline Id is not valid")
+      }
+
+    }
+
+    Engine::GetInstance()->GetWindow()->EndDraw();
+  }
   
 
   m_pImpl->m_lstCamViews.clear();

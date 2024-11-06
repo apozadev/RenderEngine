@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "Graphics/API/Vulkan/APIRenderSubState.h"
+#include "Graphics/API/Vulkan/DescriptorUtils.h"
 
 namespace api
 {
