@@ -5,6 +5,7 @@
 
 #include "Graphics/Resource.h"
 #include "Graphics/ImageFormat.h"
+#include "Graphics/API/GraphicsAPI.h"
 
 class Material;
 struct Image;
@@ -17,7 +18,7 @@ public:
   Texture2D(const Image& _rImage, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
   Texture2D(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u, uint32_t _uUsage = 1u);
 
-  virtual ~Texture2D() = default;
+  virtual ~Texture2D();
 
   void SetupRenderSubState(ResourceFrequency _eFrequency) const override;
 
@@ -32,7 +33,6 @@ public:
 
 private:
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+  api::APITexture* m_pAPITexture;
 
 };

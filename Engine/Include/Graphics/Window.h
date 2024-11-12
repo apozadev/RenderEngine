@@ -4,6 +4,8 @@
 
 #include <glm/mat4x4.hpp>
 
+#include "Graphics/API/GraphicsAPI.h"
+
 struct GLFWwindow;
  
 class Window
@@ -14,7 +16,6 @@ class Window
 public:
   
   Window(int _iWidth, int _iHeight, const char* _sTitle);
-  Window(Window&& _rWindow);
   ~Window();      
 
   uint8_t GetId() const;
@@ -41,13 +42,17 @@ public:
   bool IsMousePressed(int _iButton) const;
   void GetMousePos(double& iX_, double& iY_) const;
 
-private:            
-
-  Window& operator=(Window&& _rWindow) noexcept;  
+private:              
 
   friend void OnWindowResize(GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/);
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+private:  
+
+  GLFWwindow* m_pGlfwWindow;
+
+  api::APIWindow* m_pAPIWindow;
+
+  uint8_t m_uId;
+
 };
 

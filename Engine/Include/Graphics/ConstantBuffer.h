@@ -2,7 +2,7 @@
 
 #include "Graphics/Resource.h"
 
-#include <memory>
+#include "Graphics/API/GraphicsAPI.h"
 
 class ConstantBufferBase : public Resource
 {
@@ -21,8 +21,7 @@ public:
 
 private:
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+  api::APIConstantBuffer* m_pAPICbuffer;
 };
 
 template <typename T>

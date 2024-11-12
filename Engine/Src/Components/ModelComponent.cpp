@@ -17,12 +17,16 @@ ModelComponent::ModelComponent(const char* _sFilename, Material* _pMaterial)
   }
 }
 
+ModelComponent::~ModelComponent()
+{
+}
+
 void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx)
 {
-  m_lstMeshes.push_back({
-    std::move(Mesh(_lstVertices, _lstIndices))
-    , _uMaterialIdx
-    });
+
+  pooled_ptr<Mesh> pMesh = Mesh::CreateInstance();
+  pMesh->Initialize(_lstVertices, _lstIndices);
+  m_lstMeshes.push_back(MeshMaterialPair{ std::move(pMesh), _uMaterialIdx });
 }
 
 void ModelComponent::Start()
@@ -40,6 +44,6 @@ void ModelComponent::Update(float _fTimeStep)
 {
   for (MeshMaterialPair& rMeshMat : m_lstMeshes)
   {    
-    Renderer::GetInstance()->SubmitMesh(&rMeshMat.m_oMesh, &m_lstMaterials[rMeshMat.m_uMatIdx], &m_pEntity->GetGlobalTransform());
+    Renderer::GetInstance()->SubmitMesh(rMeshMat.m_pMesh.get(), &m_lstMaterials[rMeshMat.m_uMatIdx], &m_pEntity->GetGlobalTransform());
   }
 }

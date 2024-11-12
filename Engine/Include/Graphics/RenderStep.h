@@ -3,11 +3,13 @@
 #include <memory>
 #include <vector>
 
+#include "Graphics/Job.h"
+#include "Graphics/API/GraphicsAPI.h"
+
 class Window;
 class RenderTarget;
 class Transform;
 class Camera;
-struct Job;
 
 class RenderStep
 {
@@ -15,13 +17,11 @@ public:
 
   RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent);
 
-  RenderStep(RenderStep&& _rOther);
-
   ~RenderStep();
 
   void SubmitJob(Job&& _rJob);
 
-  void Execute(const Camera* _pCamera, const Transform* _pViewTransform) const;
+  void Execute(const Camera* _pCamera, const Transform* _pViewTransform);
 
   void Clear();
 
@@ -30,7 +30,6 @@ public:
   bool IsOrderTranslucent() const { return m_bOrderTranslucent; }
 
 private:
-
 
   void Bind() const;
 
@@ -42,7 +41,11 @@ private:
 
 private: 
 
-  class Impl;
+  std::vector<Job> m_lstJobs;
 
-  std::unique_ptr<Impl> m_pImpl;  
+  std::vector<RenderTarget*> m_lstInputs;
+
+  const RenderTarget* m_pRenderTarget;
+
+  api::APIRenderSubState* m_pAPIRenderSubState;
 };

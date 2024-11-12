@@ -3,7 +3,6 @@
 #include <string>
 
 #include "Graphics/Resource.h"
-#include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/Window.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Renderer.h"
@@ -17,52 +16,7 @@ namespace pass_internal
   static uint16_t s_uNextId = 0u;
 }
 
-class Pass::Impl
-{
-public:
-  api::APIRenderState* m_pAPIRenderState;
-  std::vector<Resource*> m_lstResources;  
-  std::string m_sPipelineId;
-  int m_iStepIdx;
-
-  Impl(const RenderStateInfo& _rInfo, const std::string& _sPipelineId, int _uStepIdx)
-    : m_sPipelineId(_sPipelineId)
-    , m_iStepIdx(_uStepIdx)
-  {    
-
-    RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(_sPipelineId);
-    RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(_uStepIdx) : nullptr;
-    const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;    
-
-    uint32_t uMsaaSamples = 1u;
-
-    // If pTarget is null, we are drawing to the backbuffer
-    if (pTarget)
-    {
-      pTarget->SetUsing();
-      uMsaaSamples = pTarget->GetMsaaSamples();
-    }    
-    else
-    {
-      api::SetUsingAPIRenderTarget(nullptr);
-      uMsaaSamples = api::GetDefaultMsaaSamples();
-    }    
-
-    m_pAPIRenderState = api::CreateAPIRenderState(_rInfo, uMsaaSamples);
-  }
-
-  ~Impl()
-  {
-    for (Resource* pResource : m_lstResources)
-    {
-      delete pResource;
-    }
-
-    api::DestroyAPIRenderState(m_pAPIRenderState);
-  }
-};
-
-Pass::Pass(const std::string& _sVSFilename
+void Pass::Initialize(const std::string& _sVSFilename
   , const std::string& _sPSFilename
   , bool _bBlendEnabled
   , BlendOp _eBlendOp
@@ -72,10 +26,15 @@ Pass::Pass(const std::string& _sVSFilename
   , bool _bDepthRead
   , const std::string& _sPipelineId
   , int _uStepIdx
-  , uint16_t _uLayer)  
+  , uint16_t _uLayer)    
 {  
   m_uId = pass_internal::s_uNextId++;
+
   m_uLayer = _uLayer;
+
+  m_sPipelineId = _sPipelineId;
+
+  m_iStepIdx = static_cast<int>(_uStepIdx);
 
   m_oInfo = {};
   m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
@@ -88,26 +47,42 @@ Pass::Pass(const std::string& _sVSFilename
   m_oInfo.m_bDepthWrite = _bDepthWrite;
   m_oInfo.m_bDepthRead = _bDepthRead;  
 
-  m_pImpl = std::make_unique<Impl>(m_oInfo, _sPipelineId, _uStepIdx);
-}
+  RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(_sPipelineId);
+  RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(_uStepIdx) : nullptr;
+  const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;
 
-Pass::Pass(Pass&& rPass)
-  : m_pImpl(std::move(rPass.m_pImpl))
-  , m_oInfo(std::move(rPass.m_oInfo))
-  , m_uId(std::move(rPass.m_uId))
-  , m_uLayer(std::move(rPass.m_uLayer))
-{
+  uint32_t uMsaaSamples = 1u;
+
+  // If pTarget is null, we are drawing to the backbuffer
+  if (pTarget)
+  {
+    pTarget->SetUsing();
+    uMsaaSamples = pTarget->GetMsaaSamples();
+  }
+  else
+  {
+    api::SetUsingAPIRenderTarget(nullptr);
+    uMsaaSamples = api::GetDefaultMsaaSamples();
+  }
+
+  m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
 }
 
 Pass::~Pass()
 {
+  for (Resource* pResource : m_lstResources)
+  {
+    delete pResource;
+  }
+
+  api::DestroyAPIRenderState(m_pAPIRenderState);
 }
 
 void Pass::Setup() const
 {
-  api::BeginRenderStateSetup(m_pImpl->m_pAPIRenderState);
+  api::BeginRenderStateSetup(m_pAPIRenderState);
 
-  for (Resource* pResource : m_pImpl->m_lstResources)
+  for (Resource* pResource : m_lstResources)
   {
     pResource->SetupRenderSubState(ResourceFrequency::MATERIAL);
   }
@@ -118,9 +93,9 @@ void Pass::Setup() const
 void Pass::Bind() const
 {
 
-  api::BindAPIRenderState(m_pImpl->m_pAPIRenderState);
+  api::BindAPIRenderState(m_pAPIRenderState);
 
-  for (const Resource* pResource : m_pImpl->m_lstResources)
+  for (const Resource* pResource : m_lstResources)
   {
     pResource->Bind();
   }
@@ -128,26 +103,22 @@ void Pass::Bind() const
 
 void Pass::SetUsing() const
 {
-  api::SetUsingAPIRenderState(m_pImpl->m_pAPIRenderState);
+  api::SetUsingAPIRenderState(m_pAPIRenderState);
 }
 
 void Pass::AddResourceInternal(Resource* _pResource)
 {
-  m_pImpl->m_lstResources.push_back(_pResource);
+  m_lstResources.push_back(_pResource);
 }
 
 const std::string& Pass::GetRenderPipelineId() const
 {
-  return m_pImpl->m_sPipelineId;
+  return m_sPipelineId;
 }
 
 int Pass::GetRenderStepIdx() const
 {
-  return m_pImpl->m_iStepIdx;
+  return m_iStepIdx;
 }
 
-Pass& Pass::operator=(Pass&& _rPass)
-{
-  m_pImpl = std::move(_rPass.m_pImpl);
-  return *this;
-}
+INIT_POOL(Pass)

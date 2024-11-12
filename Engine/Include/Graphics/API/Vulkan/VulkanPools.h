@@ -15,19 +15,19 @@ namespace api
 namespace vk
 {
 
-  extern TypedPool<APIRenderState>      s_oRenderStatePool;
-  extern TypedPool<APIRenderSubState>   s_oRenderSubStatePool;
-  extern TypedPool<APIConstantBuffer>   s_oConstantBufferPool;
-  extern TypedPool<APIMesh>             s_oMeshPool;
-  extern TypedPool<APITexture>          s_oTexturePool;
-  extern TypedPool<APIRenderTarget>     s_oRenderTargetPool;
+  extern TypedPool<APIRenderState, 256>     s_oRenderStatePool;
+  extern TypedPool<APIRenderSubState, 256>  s_oRenderSubStatePool;
+  extern TypedPool<APIConstantBuffer, 256>  s_oConstantBufferPool;
+  extern TypedPool<APIMesh, 256>            s_oMeshPool;
+  extern TypedPool<APITexture, 256>         s_oTexturePool;
+  extern TypedPool<APIRenderTarget, 256>    s_oRenderTargetPool;
 
-  extern TypedContiguousPool<VkBuffer>                s_oVkBufferPool;
-  extern TypedContiguousPool<VkDeviceMemory>          s_oVkDeviceMemoryPool;
-  extern TypedContiguousPool<void*>                   s_oVoidPtrPool;
-  extern TypedContiguousPool<VkDescriptorSet>         s_oVkDescriptorSetPool;  
-  extern TypedContiguousPool<VkAttachmentReference>   s_oVkAttachmentReferencePool;
-  extern TypedContiguousPool<VkAttachmentDescription> s_oVkAttachmentDescriptionPool;
+  extern TypedContiguousPool<VkBuffer, 256>               s_oVkBufferPool;
+  extern TypedContiguousPool<VkDeviceMemory, 256>         s_oVkDeviceMemoryPool;
+  extern TypedContiguousPool<void*, 256>                  s_oVoidPtrPool;
+  extern TypedContiguousPool<VkDescriptorSet, 256>        s_oVkDescriptorSetPool;  
+  extern TypedContiguousPool<VkAttachmentReference, 3>    s_oVkAttachmentReferencePool;
+  extern TypedContiguousPool<VkAttachmentDescription, 3>  s_oVkAttachmentDescriptionPool;
 
 }
 }

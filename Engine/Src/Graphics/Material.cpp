@@ -11,7 +11,7 @@
 #include "Core/Exception.h"
 
 
-Material::Material(std::vector<Pass>&& _lstPasses)
+Material::Material(std::vector<pooled_ptr<Pass>>&& _lstPasses)
   : m_lstPasses(std::move(_lstPasses))
 {   
 }
@@ -21,10 +21,14 @@ Material::Material(Material&& rMaterial)
 {
 }
 
+Material::~Material()
+{
+}
+
 void Material::Setup() const
 {
-  for (const Pass& rPass : m_lstPasses)
+  for (const pooled_ptr<Pass>& pPass : m_lstPasses)
   {
-    rPass.Setup();
+    pPass->Setup();
   }
 }

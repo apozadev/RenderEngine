@@ -9,39 +9,15 @@
 #include "Graphics/Camera.h"
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/Job.h"
-#include "Graphics/RenderPipeline.h"
 #include "Graphics/RenderPipelineConfig.h"
 #include "Graphics/RenderTarget.h"
 #include "Graphics/RenderKey.h"
 
 #include "Core/Exception.h"
 
-#include "Math/Transform.h"
-
 #include "GLFW/glfw3.h"
 
-struct CamView
-{
-  Camera* m_pCamera;
-  const Transform* m_pTransform;
-};
-
-class Renderer::Impl
-{  
-public:
-
-  Impl() = default;
-
-  ~Impl() = default;
-  
-  std::vector<CamView> m_lstCamViews;
-  std::vector<RenderPipeline> m_lstRenderPipelines;
-};
-
-Renderer::Renderer() : m_pImpl(std::make_unique<Impl>())
-{
-
-}
+Renderer::Renderer() = default;
 
 Renderer::~Renderer() = default;
 
@@ -59,7 +35,9 @@ void Renderer::ShutDownPreWindow()
 {
   glfwTerminate();
 
-  m_pImpl.reset();
+  m_lstCamViews.clear();
+
+  m_lstRenderPipelines.clear();
 }
 
 void Renderer::ShutDownPostWindow()
@@ -70,39 +48,39 @@ void Renderer::ShutDownPostWindow()
 void Renderer::AddRenderPipeline(RenderPipelineConfig&& _pPipelineCofig)
 {
   std::string sId = _pPipelineCofig.m_sId;
-  m_pImpl->m_lstRenderPipelines.push_back(std::move(RenderPipeline(sId, std::move(_pPipelineCofig))));
+  m_lstRenderPipelines.push_back(std::move(RenderPipeline(sId, std::move(_pPipelineCofig))));
 }
 
 void Renderer::SubmitCamera(Camera* _pCamera, const Transform* _pTransform)
 {
-  m_pImpl->m_lstCamViews.push_back({ _pCamera, _pTransform });
+  m_lstCamViews.push_back({ _pCamera, _pTransform });
 }
 
 void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
 {    
-  for (const Pass& rPass : _pMaterial->GetMaterial()->GetPasses())
+  for (const pooled_ptr<Pass>& pPass : _pMaterial->GetMaterial()->GetPasses())
   {
-    RenderPipeline* pPipeline = GetRenderPipeline(rPass.GetRenderPipelineId());
-    RenderStep* pRenderStep = pPipeline ? pPipeline->GetRenderStep(rPass.GetRenderStepIdx()) : nullptr;
+    RenderPipeline* pPipeline = GetRenderPipeline(pPass->GetRenderPipelineId());
+    RenderStep* pRenderStep = pPipeline ? pPipeline->GetRenderStep(pPass->GetRenderStepIdx()) : nullptr;
 
     if (pRenderStep)
     {
-      pRenderStep->SubmitJob({ _pMesh, _pMaterial, &rPass, _pTransform, 0u });
+      pRenderStep->SubmitJob({ _pMesh, _pMaterial, pPass.get(), _pTransform, 0u });
     }    
   }
 }
 
 void Renderer::OnWindowResize()
 {
-  for (RenderPipeline& rPipeline : m_pImpl->m_lstRenderPipelines)
+  for (RenderPipeline& rPipeline : m_lstRenderPipelines)
   {        
     rPipeline.OnWindowResize();    
   }
 }
 
-RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId) const
+RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId)
 {
-  for (RenderPipeline& rPipeline : m_pImpl->m_lstRenderPipelines)
+  for (RenderPipeline& rPipeline : m_lstRenderPipelines)
   {
     if (rPipeline.GetId() == _sPipelineId)
     {
@@ -122,7 +100,7 @@ void Renderer::Draw()
   }
   else
   {
-    for (CamView& rCamView : m_pImpl->m_lstCamViews)
+    for (CamView& rCamView : m_lstCamViews)
     {
 
       // Execute pipeline            
@@ -142,5 +120,5 @@ void Renderer::Draw()
   }
   
 
-  m_pImpl->m_lstCamViews.clear();
+  m_lstCamViews.clear();
 }

@@ -79,9 +79,10 @@ int main(){
   Entity* pModelEntity2 = pScene->AddEntity();
   Entity* pGridEntity = pScene->AddEntity();
 
-  std::vector<Pass> lstPasses;
+  std::vector<pooled_ptr<Pass>> lstPasses;
   {
-    Pass oPass0(
+    pooled_ptr<Pass> pPass0 = Pass::CreateInstance();
+    pPass0->Initialize(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
       , "Assets/Shaders/Pixel/GBuffPixel.hlsl"
       , false
@@ -94,7 +95,8 @@ int main(){
       , 0
       , 0u);
 
-    Pass oPass1(
+    pooled_ptr<Pass> pPass1 = Pass::CreateInstance();
+    pPass1->Initialize(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
       , "Assets/Shaders/Pixel/PixelShader.hlsl"
       , false
@@ -107,16 +109,17 @@ int main(){
       , 1
       , 0u);
 
-    lstPasses.push_back(std::move(oPass0));
-    lstPasses.push_back(std::move(oPass1));
+    lstPasses.push_back(std::move(pPass0));
+    lstPasses.push_back(std::move(pPass1));
   }
 
   Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial(std::move(lstPasses));
   pMaterial->Setup();
 
-  std::vector<Pass> lstPassesGrid;
+  std::vector<pooled_ptr<Pass>> lstPassesGrid;
   {
-    Pass oPass0(
+    pooled_ptr<Pass> pPass0 = Pass::CreateInstance();
+    pPass0->Initialize(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
       , "Assets/Shaders/Pixel/GridPixel.hlsl"
       , true
@@ -129,7 +132,7 @@ int main(){
       , 2
       , 0u);
 
-    lstPassesGrid.push_back(std::move(oPass0));
+    lstPassesGrid.push_back(std::move(pPass0));
   }
 
   Material* pGridMaterial = MaterialLibrary::GetInstance()->CreateMaterial(std::move(lstPassesGrid));  

@@ -3,8 +3,10 @@
 #include <vector>
 #include <memory>
 
-#include "Graphics/Vertex.h"
 #include "Math/Transform.h"
+#include "Graphics/Vertex.h"
+#include "Graphics/API/GraphicsAPI.h"
+#include "Core/PooledObject.h"
 
 class Window;
 
@@ -16,16 +18,18 @@ struct MeshConstant
   glm::mat4 m_mNormal;
 };
 
-class Mesh
+class Mesh : public PooledObject<Mesh, 256>
 {
 
   friend class RenderStep;
 
 public:    
 
-  Mesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices);
-  Mesh(Mesh&& _rMesh);
+  using PooledObject<Mesh, 256>::PooledObject;
+  
   ~Mesh();
+
+  void Initialize(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices);
 
   void UpdateTransform(const Transform& _oParentTransform);  
 
@@ -33,6 +37,16 @@ private:
 
   void Draw() const;  
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+private:
+
+  api::APIMesh* m_pAPIMesh;
+
+  glm::mat4 m_mLocalTransform;
+
+  uint32_t m_uVertexCount;
+
+  uint32_t m_uIndexCount;
+
+  MeshConstant m_oConstant;
+
 };

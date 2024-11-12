@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "ImageFormat.h"
+#include "Graphics/API/GraphicsAPI.h"
 
 class Texture2D;
 
@@ -32,7 +33,14 @@ public:
 
 private:
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+  api::APIRenderTarget* m_pAPIRenderTarget;
+
+  std::vector<Texture2D*> m_lstColorTextures;
+
+  std::vector<Texture2D*> m_lstColorResolveTextures;
+
+  Texture2D* m_pDepthStencilTexture;
+
+  uint32_t m_uMsaaSamples;
   
 };

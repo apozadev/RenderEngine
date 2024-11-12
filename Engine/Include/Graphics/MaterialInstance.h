@@ -4,10 +4,10 @@
 #include <vector>
 
 #include "Graphics/Window.h"
+#include "Graphics/Material.h"
+#include "Graphics/API/GraphicsAPI.h"
 
 class Resource;
-
-class Material;
 
 class MaterialInstance
 {
@@ -25,7 +25,7 @@ public:
     return pResource;
   }
 
-  Material* GetMaterial() const;
+  Material* GetMaterial() const { return m_pMaterial; }
 
   uint16_t GetId() const { return m_uId; }
 
@@ -41,7 +41,8 @@ private:
 
   uint16_t m_uId;
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+  Material* m_pMaterial;
+
+  api::APIRenderSubState* m_pSubState;
 
 };

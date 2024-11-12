@@ -3,6 +3,11 @@
 #include <vector>
 #include <memory>
 
+#include <glm/mat4x4.hpp>
+
+#include "Graphics/ConstantBuffer.h"
+#include "Graphics/API/GraphicsAPI.h"
+
 class Window;
 class Transform;
 class RenderPipeline;
@@ -12,10 +17,15 @@ class Camera
 
   friend class Renderer;
 
+  struct GlobalBufferData
+  {
+    glm::mat4 m_mViewProj;
+  };
+
 public:
 
   Camera(const std::string& _sRenderPipelineId);
-  Camera(Camera&& _rCamera);
+  Camera(Camera&& _oOther);
   ~Camera();  
 
   void UpdateTransform(const Transform& _oParentTransform);
@@ -31,6 +41,11 @@ public:
 
 private:
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;  
+  api::APICamera* m_pAPICamera;
+
+  api::APIRenderSubState* m_pSubState;
+
+  std::unique_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
+
+  std::string m_sRenderPipelineId;
 };

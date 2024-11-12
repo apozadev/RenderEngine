@@ -148,7 +148,7 @@ namespace api
 
 		int BeginDraw(APIWindow* _pWindow);
 
-		void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, void* _pConstantData, uint32_t _uConstantSize);
+		void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize);
 
 		void EndDraw(APIWindow* _pWindow);
 

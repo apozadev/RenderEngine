@@ -43,11 +43,11 @@ namespace api
     void InitializeAPI()
     {
       s_oGlobalData.m_uMaxMsaaSamples = 0u;
-      s_oRenderStatePool.Initialize(256u);
-      s_oConstantBufferPool.Initialize(256u);
-      s_oMeshPool.Initialize(256u);
-      s_oTexturePool.Initialize(256u);
-      s_oRenderTargetPool.Initialize(36u);
+      s_oRenderStatePool.Initialize();
+      s_oConstantBufferPool.Initialize();
+      s_oMeshPool.Initialize();
+      s_oTexturePool.Initialize();
+      s_oRenderTargetPool.Initialize();
     }
 
     void ShutDownAPI()
@@ -681,7 +681,7 @@ namespace api
       return 0;
     }
 
-    void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, void* _pConstantData, uint32_t _uConstantSize)
+    void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize)
     {
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;

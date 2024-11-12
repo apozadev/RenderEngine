@@ -4,17 +4,23 @@
 #include <string>
 
 #include "Core/Singleton.h"
+#include "Graphics/RenderPipeline.h"
 
 class Mesh;
 class MaterialInstance;
 class Transform;
 class Window;
 class Camera;
-class RenderPipeline;
 struct RenderPipelineConfig;
 
 class Renderer : public Singleton<Renderer>
 {
+
+  struct CamView
+  {
+    Camera* m_pCamera;
+    const Transform* m_pTransform;
+  };
 
 public:  
 
@@ -32,12 +38,13 @@ public:
 
   void OnWindowResize();
 
-  RenderPipeline* GetRenderPipeline(std::string _sPipelineId) const;
+  RenderPipeline* GetRenderPipeline(std::string _sPipelineId);
   
   void Draw();
 
 private:  
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;    
+  std::vector<CamView> m_lstCamViews;
+
+  std::vector<RenderPipeline> m_lstRenderPipelines;
 };

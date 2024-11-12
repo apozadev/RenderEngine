@@ -26,19 +26,19 @@ namespace vk
   void InitializeAPI()
   {
 
-    s_oRenderStatePool.Initialize(256u);
-    s_oRenderSubStatePool.Initialize(256u);
-    s_oConstantBufferPool.Initialize(256u);
-    s_oMeshPool.Initialize(256u);
-    s_oTexturePool.Initialize(256u);
-    s_oRenderTargetPool.Initialize(256u);
+    s_oRenderStatePool.Initialize();
+    s_oRenderSubStatePool.Initialize();
+    s_oConstantBufferPool.Initialize();
+    s_oMeshPool.Initialize();
+    s_oTexturePool.Initialize();
+    s_oRenderTargetPool.Initialize();
 
-    s_oVkBufferPool.Initialize(256u);
-    s_oVkDeviceMemoryPool.Initialize(256u);
-    s_oVoidPtrPool.Initialize(256u);
-    s_oVkDescriptorSetPool.Initialize(256u);
-    s_oVkAttachmentReferencePool.Initialize(3u);
-    s_oVkAttachmentDescriptionPool.Initialize(3u);
+    s_oVkBufferPool.Initialize();
+    s_oVkDeviceMemoryPool.Initialize();
+    s_oVoidPtrPool.Initialize();
+    s_oVkDescriptorSetPool.Initialize();
+    s_oVkAttachmentReferencePool.Initialize();
+    s_oVkAttachmentDescriptionPool.Initialize();
 
     CreateInstance();
     CreatePhysicalDevice();    
@@ -984,7 +984,7 @@ namespace vk
     return 0;
   }
 
-  void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, void* _pConstantData, uint32_t _uConstantSize)
+  void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize)
   {
 
     APIWindow* pWindow = _pMesh->m_pOwnerWindow;

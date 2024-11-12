@@ -126,7 +126,9 @@ add_library(${PROJECT_NAME}
 	"Src/Graphics/API/DX11/DX11Pools.cpp" 
 	"Include/Graphics/API/Vulkan/VulkanPools.h" 
 	"Src/Graphics/API/Vulkan/VulkanPools.cpp" 
-	"Include/Core/TypedContiguousPool.h") 
+	"Include/Core/TypedContiguousPool.h" 
+	"Include/Core/PooledObject.h" 
+	 "Src/Core/PooledObject.cpp") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

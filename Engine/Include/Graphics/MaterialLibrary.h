@@ -12,7 +12,7 @@ class MaterialLibrary : public Singleton<MaterialLibrary>
 { 
 public:
 
-  Material* CreateMaterial(std::vector<Pass>&& _lstPasses)
+  Material* CreateMaterial(std::vector<pooled_ptr<Pass>>&& _lstPasses)
   {    
     m_lstMaterials.push_back(std::move(std::make_unique<Material>(std::move(_lstPasses))));
 

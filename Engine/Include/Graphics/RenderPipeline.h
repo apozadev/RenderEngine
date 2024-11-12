@@ -28,7 +28,7 @@ public:
 
 	void OnWindowResize();
 
-	void Execute(const Camera* _pCamera, const Transform* _pViewTransform) const;
+	void Execute(const Camera* _pCamera, const Transform* _pViewTransform);
 
 	void Clear();
 

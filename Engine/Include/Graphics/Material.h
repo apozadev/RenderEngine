@@ -11,16 +11,18 @@ class Material
 {
 public:
 
-  Material(std::vector<Pass>&& _lstPasses);
+  Material(std::vector<pooled_ptr<Pass>>&& _lstPasses);
 
   Material(Material&& rMaterial);  
 
+  ~Material();
+
   void Setup() const;  
 
-  const std::vector<Pass>& GetPasses() { return m_lstPasses; }
+  const std::vector<pooled_ptr<Pass>>& GetPasses() { return m_lstPasses; }
 
 private:
   
-  std::vector<Pass> m_lstPasses;
+  std::vector<pooled_ptr<Pass>> m_lstPasses;
   
 };

@@ -13,11 +13,11 @@ namespace api
 namespace dx11
 {
 
-  extern TypedPool<APIRenderState>     s_oRenderStatePool;
-  extern TypedPool<APIConstantBuffer>  s_oConstantBufferPool;
-  extern TypedPool<APIMesh>            s_oMeshPool;
-  extern TypedPool<APITexture>         s_oTexturePool;
-  extern TypedPool<APIRenderTarget>    s_oRenderTargetPool;
+  extern TypedPool<APIRenderState, 256>     s_oRenderStatePool;
+  extern TypedPool<APIConstantBuffer, 256>  s_oConstantBufferPool;
+  extern TypedPool<APIMesh, 256>            s_oMeshPool;
+  extern TypedPool<APITexture, 256>         s_oTexturePool;
+  extern TypedPool<APIRenderTarget, 256>    s_oRenderTargetPool;
 
 }
 }

@@ -4,35 +4,34 @@
 
 #include "Core/Exception.h"
 
-template<typename T>
+template<typename T, size_t SIZE>
 class TypedContiguousPool
 {
 public:
 
-  void Initialize(size_t _uSize)
+  void Initialize()
   {
-    m_pData = new T[_uSize];
-    m_pArraySizes = new size_t[_uSize];   
-    memset(m_pArraySizes, 0, _uSize * sizeof(size_t));
-    m_uSize = _uSize;
+    m_pData = new T[SIZE];
+    m_pArraySizes = new size_t[SIZE];   
+    memset(m_pArraySizes, 0, SIZE * sizeof(size_t));
     m_uCurrIdx = 0u;
   }
 
   T* PullElements(size_t _uCount)
   {
 
-    size_t uCandidateIdx = m_uSize;
+    size_t uCandidateIdx = SIZE;
 
-    for (size_t i = 0u; i < m_uSize;)
+    for (size_t i = 0u; i < SIZE;)
     {
-      size_t uIdx = (i + m_uCurrIdx) % m_uSize;    
+      size_t uIdx = (i + m_uCurrIdx) % SIZE;    
 
       if (uIdx < uCandidateIdx)
       {
-        uCandidateIdx = m_uSize;
+        uCandidateIdx = SIZE;
       }
 
-      if (uCandidateIdx >= m_uSize)
+      if (uCandidateIdx >= SIZE)
       {
         if (m_pArraySizes[uIdx] == 0u)
         {
@@ -40,7 +39,7 @@ public:
         }
       }
       
-      if(uCandidateIdx < m_uSize
+      if(uCandidateIdx < SIZE
         && m_pArraySizes[uIdx] == 0u
         && uIdx - uCandidateIdx >= _uCount-1u)
       {
@@ -67,14 +66,14 @@ public:
   void ReturnElements(T* _pElement)
   {
     size_t uIdx = (reinterpret_cast<std::uintptr_t>(_pElement) - reinterpret_cast<std::uintptr_t>(m_pData)) / sizeof(T);
-    if (uIdx > m_uSize)
+    if (uIdx > SIZE)
     {
       THROW_GENERIC_EXCEPTION("Tried to return an element to the wrong pool")
     }
 
     if (m_pArraySizes[uIdx] == 0u)
     {
-      THROW_GENERIC_EXCEPTION("The retured must be the first of the array")
+      THROW_GENERIC_EXCEPTION("The elements have been already freed OR this is not the first element")
     }
 
     for (size_t i = uIdx; i < uIdx + m_pArraySizes[uIdx]; i++)
@@ -90,7 +89,6 @@ public:
   {
     delete[] m_pData;
     delete[] m_pArraySizes;
-    m_uSize = 0u;
     m_uCurrIdx = 0u;
   }
 
@@ -99,8 +97,6 @@ private:
   T* m_pData;
 
   size_t* m_pArraySizes;
-
-  size_t m_uSize;
 
   size_t m_uCurrIdx;
 };

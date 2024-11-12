@@ -37,7 +37,7 @@ void RenderPipeline::OnWindowResize()
 
 }
 
-void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTransform) const
+void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTransform)
 {        
 
   for (RenderTarget* pRenderTarget : m_lstRenderTargets)
@@ -45,7 +45,7 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
     pRenderTarget->Clear();
   }
 
-  for (const RenderStep& rStep : m_lstRenderSteps)
+  for (RenderStep& rStep : m_lstRenderSteps)
   {                
     rStep.Execute(_pCamera, _pViewTransform);
   }

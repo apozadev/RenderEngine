@@ -13,84 +13,54 @@
 #include "Graphics/Pass.h"
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Mesh.h"
-#include "Graphics/Job.h"
 #include "Graphics/API/GraphicsAPI.h"
 
-class RenderStep::Impl
-{
-public:
-
-  Impl(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget)
-    : m_lstInputs(std::move(_lstInputs))
-    , m_pRenderTarget(_pRenderTarget)
-  {    
-
-    m_pAPIRenderSubState = api::CreateAPIRenderSubState(ResourceFrequency::RENDER_STEP);
-
-    api::BeginSubStateSetup(m_pAPIRenderSubState);
-
-    for (RenderTarget* _pInput : m_lstInputs)
-    {
-      _pInput->GetColorTextures()[0]->SetupRenderSubState(ResourceFrequency::RENDER_STEP);
-    }
-
-    api::EndSubStateSetup(ResourceFrequency::RENDER_STEP);
-
-  }
-
-  ~Impl()
-  {
-    api::DestroyRenderSubState(m_pAPIRenderSubState);
-  }
-
-  std::vector<Job> m_lstJobs;
-
-  std::vector<RenderTarget*> m_lstInputs;
-
-  const RenderTarget* m_pRenderTarget;
-
-  api::APIRenderSubState* m_pAPIRenderSubState;
-
-};
 
 RenderStep::RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent)
   : m_bOrderTranslucent(_bOrderTranslucent)
+  , m_lstInputs(std::move(_lstInputs))
+  , m_pRenderTarget(_pRenderTarget)
 {
-  m_pImpl = std::make_unique<Impl>(std::move(_lstInputs), _pRenderTarget);
-}
+  m_pAPIRenderSubState = api::CreateAPIRenderSubState(ResourceFrequency::RENDER_STEP);
 
-RenderStep::RenderStep(RenderStep&& _rOther)
-  : m_pImpl(std::move(_rOther.m_pImpl))
-  , m_bOrderTranslucent(std::move(_rOther.m_bOrderTranslucent))
-{
+  api::BeginSubStateSetup(m_pAPIRenderSubState);
+
+  for (RenderTarget* _pInput : m_lstInputs)
+  {
+    _pInput->GetColorTextures()[0]->SetupRenderSubState(ResourceFrequency::RENDER_STEP);
+  }
+
+  api::EndSubStateSetup(ResourceFrequency::RENDER_STEP);
 }
 
 RenderStep::~RenderStep()
 {
+  api::DestroyRenderSubState(m_pAPIRenderSubState);
+
 }
 
 void RenderStep::SubmitJob(Job&& _rJob)
 {
-  m_pImpl->m_lstJobs.push_back(std::move(_rJob));
+  m_lstJobs.push_back(std::move(_rJob));
 }
 
-void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransform) const
+void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransform)
 {
 
   // Update key for current camera
-  for (Job& rJob : m_pImpl->m_lstJobs)
+  for (Job& rJob : m_lstJobs)
   {
     rJob.UpdateRenderKey(_pCamera, _pViewTransform, m_bOrderTranslucent);
   }
 
   // Sort jobs
-  std::sort(m_pImpl->m_lstJobs.begin(), m_pImpl->m_lstJobs.end(), Job::Compare);
+  std::sort(m_lstJobs.begin(), m_lstJobs.end(), Job::Compare);
 
   bool bStepBound = false;
 
   const Pass* pLastPass = nullptr;  
 
-  for (const Job& rJob : m_pImpl->m_lstJobs)
+  for (const Job& rJob : m_lstJobs)
   {
 
     const MaterialInstance* pMatInstance = rJob.m_pMaterial;
@@ -123,39 +93,39 @@ void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransfor
 
 void RenderStep::Clear()
 {
-  m_pImpl->m_lstJobs.clear();
+  m_lstJobs.clear();
 }
 
 const RenderTarget* RenderStep::GetRenderTarget() const
 {
-  return m_pImpl->m_pRenderTarget;
+  return m_pRenderTarget;
 }
 
 void RenderStep::Bind() const
 {
 
-  if (m_pImpl->m_pRenderTarget)
+  if (m_pRenderTarget)
   {
-    m_pImpl->m_pRenderTarget->Bind();
+    m_pRenderTarget->Bind();
   }
   else
   {
     Engine::GetInstance()->GetWindow()->BindDefaultRenderTarget();
   }
 
-  for (RenderTarget* _pInput : m_pImpl->m_lstInputs)
+  for (RenderTarget* _pInput : m_lstInputs)
   {
     _pInput->GetColorTextures()[0]->Bind();
   }
 
-  api::BindAPIRenderSubState(m_pImpl->m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);  
+  api::BindAPIRenderSubState(m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);  
 }
 
 void RenderStep::Unbind() const
 {
-  if (m_pImpl->m_pRenderTarget)
+  if (m_pRenderTarget)
   {
-    m_pImpl->m_pRenderTarget->Unbind();
+    m_pRenderTarget->Unbind();
   }
   else
   {

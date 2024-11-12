@@ -5,14 +5,23 @@
 #include "Graphics/Window.h"
 #include "Graphics/BlendEnums.h"
 #include "Graphics/RenderStateInfo.h"
+#include "Graphics/API/GraphicsAPI.h"
+#include "Core/PooledObject.h"
 
 class Resource;
 
-class Pass
-{
-public:
+#define PASS_POOL_SIZE 256
 
-  Pass( const std::string& _sVSFilename
+class Pass : public PooledObject<Pass, PASS_POOL_SIZE>
+{
+
+public:  
+
+  using PooledObject<Pass, PASS_POOL_SIZE>::PooledObject;
+
+  ~Pass();
+
+  void Initialize(const std::string& _sVSFilename
     , const std::string& _sPSFilename
     , bool _bBlendEnabled
     , BlendOp _eBlendOp
@@ -23,9 +32,6 @@ public:
     , const std::string& _sPipelineId
     , int _uStepIdx
     , uint16_t _uLayer);
-
-  Pass(Pass&& rPass);
-  ~Pass();
 
   template<class T, typename ...Args>
   inline T* AddResource(Window* _pWindow, Args&&... args)
@@ -52,8 +58,6 @@ public:
 
   int GetRenderStepIdx() const;
 
-  Pass& operator=(Pass&& _rPass);
-
 private:
 
   void AddResourceInternal(Resource* _pResource);
@@ -61,10 +65,17 @@ private:
 private:
 
   RenderStateInfo m_oInfo;
+
   uint16_t m_uId;
+
   uint16_t m_uLayer;
 
-  class Impl;
-  std::unique_ptr<Impl> m_pImpl;
+  api::APIRenderState* m_pAPIRenderState;
+
+  std::vector<Resource*> m_lstResources;
+
+  std::string m_sPipelineId;
+
+  int m_iStepIdx;
 
 };
