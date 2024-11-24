@@ -8,8 +8,6 @@
 #include "Core/Component.h"
 #include "Graphics/Mesh.h"
 
-class Material;
-
 class ModelComponent : public Component
 {
 
@@ -27,15 +25,14 @@ public:
 
   void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx);
 
-  MaterialInstance& AddMaterialInstance(Material* _pMaterial)
+  void AddMaterialInstance(pooled_ptr<MaterialInstance>&& _pMaterial)
   {
-    m_lstMaterials.emplace_back(_pMaterial);
-    return m_lstMaterials[m_lstMaterials.size() - 1];
+    m_lstMaterials.emplace_back(std::move(_pMaterial));    
   }
 
-  MaterialInstance& GetMaterial(unsigned int _uIdx)
+  MaterialInstance* GetMaterial(unsigned int _uIdx)
   {
-    return m_lstMaterials[_uIdx];
+    return m_lstMaterials[_uIdx].get();
   }
 
   unsigned int GetMaterialCount() const
@@ -52,5 +49,5 @@ protected:
 private:
   std::vector<MeshMaterialPair> m_lstMeshes;
 
-  std::vector<MaterialInstance> m_lstMaterials;  
+  std::vector<pooled_ptr<MaterialInstance>> m_lstMaterials;  
 };

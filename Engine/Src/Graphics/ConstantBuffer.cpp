@@ -1,10 +1,11 @@
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/ResourceBindInfo.h"
 
-ConstantBufferBase::ConstantBufferBase(size_t _uSize, int _iBinding, PipelineStage _eStage)
-  : Resource(_iBinding, _eStage)
+void ConstantBufferBase::Configure(size_t _uSize, int _iBinding, PipelineStage _eStage)  
 {  
   m_pAPICbuffer = api::CreateAPIConstantBuffer(_uSize);
+  m_iBinding = _iBinding;
+  m_eStage = _eStage;
 }
 
 ConstantBufferBase::~ConstantBufferBase()

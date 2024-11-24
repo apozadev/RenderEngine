@@ -3,19 +3,20 @@
 #include <vector>
 #include <memory>
 
+#include "Core/PooledObject.h"
 #include "Graphics/Pass.h"
 
 class Resource;
 
-class Material
+class Material : public TypedPooledObject<Material, 256>
 {
 public:
 
-  Material(std::vector<pooled_ptr<Pass>>&& _lstPasses);
+  using TypedPooledObject<Material, 256>::TypedPooledObject;
 
-  Material(Material&& rMaterial);  
+  ~Material();  
 
-  ~Material();
+  void AddPass(pooled_ptr<Pass>&& _pPass);
 
   void Setup() const;  
 

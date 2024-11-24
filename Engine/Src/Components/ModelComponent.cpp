@@ -24,7 +24,7 @@ ModelComponent::~ModelComponent()
 void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx)
 {
 
-  pooled_ptr<Mesh> pMesh = Mesh::CreateInstance();
+  pooled_ptr<Mesh> pMesh = Mesh::GetFactory()->CreateInstance();
   pMesh->Initialize(_lstVertices, _lstIndices);
   m_lstMeshes.push_back(MeshMaterialPair{ std::move(pMesh), _uMaterialIdx });
 }
@@ -44,6 +44,6 @@ void ModelComponent::Update(float _fTimeStep)
 {
   for (MeshMaterialPair& rMeshMat : m_lstMeshes)
   {    
-    Renderer::GetInstance()->SubmitMesh(rMeshMat.m_pMesh.get(), &m_lstMaterials[rMeshMat.m_uMatIdx], &m_pEntity->GetGlobalTransform());
+    Renderer::GetInstance()->SubmitMesh(rMeshMat.m_pMesh.get(), m_lstMaterials[rMeshMat.m_uMatIdx].get(), &m_pEntity->GetGlobalTransform());
   }
 }

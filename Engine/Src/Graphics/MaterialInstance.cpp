@@ -8,38 +8,29 @@ namespace matinstance_internal
   static uint16_t s_uNextId = 0u;
 }
 
-MaterialInstance::MaterialInstance(Material* _pMaterial) 
-  : m_bSetup(false)
-  , m_pMaterial(_pMaterial)
-{
+void MaterialInstance::Setup(Material* _pMaterial)
+{    
+
+  if (m_bSetup)
+  {
+    return;
+  }
+
+  m_pMaterial = _pMaterial;
+
   m_uId = matinstance_internal::s_uNextId++;
   m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
-}
 
-MaterialInstance::MaterialInstance(MaterialInstance&& _rMatInstance)   
-  : m_lstResources(std::move(_rMatInstance.m_lstResources))
-  , m_bSetup(std::move(_rMatInstance.m_bSetup))
-  , m_uId(std::move(_rMatInstance.m_uId))
-  , m_pMaterial(std::move(_rMatInstance.m_pMaterial))  
-  , m_pSubState(std::move(_rMatInstance.m_pSubState))
-{
-}
-
-MaterialInstance::~MaterialInstance()
-{
-  for (Resource* pResource : m_lstResources)
-  {
-    delete pResource;
-  }
-}
-
-void MaterialInstance::Setup()
-{    
   api::BeginSubStateSetup(m_pSubState);
 
-  for (const Resource* pResource : m_lstResources)
+  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
   {        
-    pResource->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
+    pTexture->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
+  }
+
+  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  {
+    pCBuffer->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
   }
 
   api::EndSubStateSetup(ResourceFrequency::MATERIAL_INSTANCE);
@@ -56,8 +47,15 @@ void MaterialInstance::Bind() const
 
   api::BindAPIRenderSubState(m_pSubState, ResourceFrequency::MATERIAL_INSTANCE);
 
-  for (const Resource* pResource : m_lstResources)
+  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
   {
-    pResource->Bind();
+    pTexture->Bind();
+  }
+
+  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  {
+    pCBuffer->Bind();
   }
 }
+
+INIT_POOL(MaterialInstance)

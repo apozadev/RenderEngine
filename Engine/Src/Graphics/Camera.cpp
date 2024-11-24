@@ -15,7 +15,8 @@ Camera::Camera(const std::string&  _sRenderPipelineId)
 {
   m_pAPICamera = api::CreateAPICamera();
 
-  m_pCBuffer = std::make_unique<ConstantBuffer<GlobalBufferData>>(0, PipelineStage::VERTEX);
+  m_pCBuffer = std::make_unique<ConstantBuffer<GlobalBufferData>>();
+  m_pCBuffer->Configure(0, PipelineStage::VERTEX);
 
   m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::GLOBAL);
 

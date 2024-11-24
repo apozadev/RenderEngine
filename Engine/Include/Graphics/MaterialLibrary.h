@@ -12,10 +12,10 @@ class MaterialLibrary : public Singleton<MaterialLibrary>
 { 
 public:
 
-  Material* CreateMaterial(std::vector<pooled_ptr<Pass>>&& _lstPasses)
+  Material* CreateMaterial()
   {    
-    m_lstMaterials.push_back(std::move(std::make_unique<Material>(std::move(_lstPasses))));
-
+    pooled_ptr<Material> pMaterial = Material::GetFactory()->CreateInstance();
+    m_lstMaterials.push_back(std::move(pMaterial));
     return m_lstMaterials.back().get();
   }
 
@@ -26,7 +26,7 @@ public:
 
 private:  
 
-  std::vector<std::unique_ptr<Material>> m_lstMaterials;
+  std::vector<pooled_ptr<Material>> m_lstMaterials;
 
   MaterialId m_uNextId = 0u;
 };

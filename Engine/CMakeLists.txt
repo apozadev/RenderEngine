@@ -128,7 +128,7 @@ add_library(${PROJECT_NAME}
 	"Src/Graphics/API/Vulkan/VulkanPools.cpp" 
 	"Include/Core/TypedContiguousPool.h" 
 	"Include/Core/PooledObject.h" 
-	 "Src/Core/PooledObject.cpp") 
+	 "Src/Core/PooledObject.cpp" "Include/Core/GenericPool.h" "Src/Core/GenericPool.cpp"  ) 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

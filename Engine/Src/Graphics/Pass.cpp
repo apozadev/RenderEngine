@@ -16,7 +16,7 @@ namespace pass_internal
   static uint16_t s_uNextId = 0u;
 }
 
-void Pass::Initialize(const std::string& _sVSFilename
+void Pass::Configure(const std::string& _sVSFilename
   , const std::string& _sPSFilename
   , bool _bBlendEnabled
   , BlendOp _eBlendOp
@@ -65,26 +65,36 @@ void Pass::Initialize(const std::string& _sVSFilename
     uMsaaSamples = api::GetDefaultMsaaSamples();
   }
 
+  if (m_pAPIRenderState != nullptr)
+  {
+    api::DestroyAPIRenderState(m_pAPIRenderState);
+  }
+
   m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
 }
 
 Pass::~Pass()
-{
-  for (Resource* pResource : m_lstResources)
-  {
-    delete pResource;
-  }
-
+{  
   api::DestroyAPIRenderState(m_pAPIRenderState);
+
+  for (ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  {
+    delete pCBuffer;
+  }
 }
 
 void Pass::Setup() const
 {
   api::BeginRenderStateSetup(m_pAPIRenderState);
 
-  for (Resource* pResource : m_lstResources)
+  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
   {
-    pResource->SetupRenderSubState(ResourceFrequency::MATERIAL);
+    pTexture->SetupRenderSubState(ResourceFrequency::MATERIAL);
+  }
+
+  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  {
+    pCBuffer->SetupRenderSubState(ResourceFrequency::MATERIAL);
   }
 
   api::EndRenderStateSetup();
@@ -95,20 +105,20 @@ void Pass::Bind() const
 
   api::BindAPIRenderState(m_pAPIRenderState);
 
-  for (const Resource* pResource : m_lstResources)
+  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
   {
-    pResource->Bind();
+    pTexture->Bind();
+  }
+
+  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  {
+    pCBuffer->Bind();
   }
 }
 
 void Pass::SetUsing() const
 {
   api::SetUsingAPIRenderState(m_pAPIRenderState);
-}
-
-void Pass::AddResourceInternal(Resource* _pResource)
-{
-  m_lstResources.push_back(_pResource);
 }
 
 const std::string& Pass::GetRenderPipelineId() const

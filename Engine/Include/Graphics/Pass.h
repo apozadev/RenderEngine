@@ -5,23 +5,23 @@
 #include "Graphics/Window.h"
 #include "Graphics/BlendEnums.h"
 #include "Graphics/RenderStateInfo.h"
+#include "Graphics/Texture2D.h"
+#include "Graphics/ConstantBuffer.h"
 #include "Graphics/API/GraphicsAPI.h"
 #include "Core/PooledObject.h"
 
 class Resource;
 
-#define PASS_POOL_SIZE 256
-
-class Pass : public PooledObject<Pass, PASS_POOL_SIZE>
+class Pass : public TypedPooledObject<Pass, 256>
 {
 
 public:  
 
-  using PooledObject<Pass, PASS_POOL_SIZE>::PooledObject;
+  using TypedPooledObject<Pass, 256>::PooledObject;
 
   ~Pass();
 
-  void Initialize(const std::string& _sVSFilename
+  void Configure(const std::string& _sVSFilename
     , const std::string& _sPSFilename
     , bool _bBlendEnabled
     , BlendOp _eBlendOp
@@ -33,13 +33,15 @@ public:
     , int _uStepIdx
     , uint16_t _uLayer);
 
-  template<class T, typename ...Args>
-  inline T* AddResource(Window* _pWindow, Args&&... args)
+  void AddTexture(pooled_ptr<Texture2D>&& _pTexture)
   {
-    _pWindow->SetUsing();
-    T* pResource = new T(std::forward<Args>(args)...);
-    AddResourceInternal(pResource);
-    return pResource;
+    m_lstTextures.push_back(std::move(_pTexture));    
+  }
+
+  template<typename T>
+  ConstantBuffer<T> AddConstantBuffer()
+  {    
+    m_lstCBuffers.push_back(new ConstantBuffer<T>());
   }
 
   void Setup() const;
@@ -58,9 +60,7 @@ public:
 
   int GetRenderStepIdx() const;
 
-private:
-
-  void AddResourceInternal(Resource* _pResource);
+private:  
 
 private:
 
@@ -72,7 +72,9 @@ private:
 
   api::APIRenderState* m_pAPIRenderState;
 
-  std::vector<Resource*> m_lstResources;
+  std::vector<pooled_ptr<Texture2D>> m_lstTextures;
+
+  std::vector<ConstantBufferBase*> m_lstCBuffers;
 
   std::string m_sPipelineId;
 

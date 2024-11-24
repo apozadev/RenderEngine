@@ -72,7 +72,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
   for (unsigned int i = 0; i < _pAssimpScene->mNumMaterials; i++)
   {
     aiMaterial* aiMat = _pAssimpScene->mMaterials[i];
-    MaterialInstance& rMatInstance = pModelComp_->AddMaterialInstance(_pMaterial);
+    pooled_ptr<MaterialInstance> pMatInstance = MaterialInstance::GetFactory()->CreateInstance();
     std::vector<aiTextureType> types = {
         aiTextureType_DIFFUSE, // t0
         aiTextureType_NORMALS, // t1
@@ -95,7 +95,9 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
           const Image& oImage = ImageManager::GetInstance()->DecodeFromMemory(aiTex->mFilename.C_Str(), (unsigned char*)aiTex->pcData, aiTex->mWidth);
           if (oImage.m_pData)
           {
-            rMatInstance.AddResource<Texture2D>(oImage, j, PipelineStage::PIXEL);
+            pooled_ptr<Texture2D> pTexture = Texture2D::GetFactory()->CreateInstance();
+            pTexture->Configure(oImage, j, PipelineStage::PIXEL);
+            pMatInstance->AddTexture(std::move(pTexture));
           }
         }
         else
@@ -105,17 +107,23 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
           oImage.m_iWidth = aiTex->mWidth;
           oImage.m_iHeight = aiTex->mHeight;
           oImage.m_eFormat = ImageFormat::R8G8B8A8;
-          rMatInstance.AddResource<Texture2D>(oImage, j, PipelineStage::PIXEL);
+
+          pooled_ptr<Texture2D> pTexture = Texture2D::GetFactory()->CreateInstance();
+          pTexture->Configure(oImage, j, PipelineStage::PIXEL);
+          pMatInstance->AddTexture(std::move(pTexture));          
         }
       }
       else //if (INVALID_FILE_ATTRIBUTES != GetFileAttributes(str.C_Str()))
       {
 
-        //regular file, read it from disk        
-        rMatInstance.AddResource<Texture2D>(_sDirectory + str.C_Str(), j, PipelineStage::PIXEL);
+        //regular file, read it from disk                
+        pooled_ptr<Texture2D> pTexture = Texture2D::GetFactory()->CreateInstance();
+        pTexture->Configure(_sDirectory + str.C_Str(), j, PipelineStage::PIXEL);
+        pMatInstance->AddTexture(std::move(pTexture));
       }
     }  
-    rMatInstance.Setup();
+    pMatInstance->Setup(_pMaterial);
+    pModelComp_->AddMaterialInstance(std::move(pMatInstance));
   }
 }
 
@@ -206,7 +214,11 @@ void ModelLoader::SetupQuadModel(Material* _pMaterial, ModelComponent* pModelCom
     2, 3, 1
   };
 
-  pModelComp_->AddMaterialInstance(_pMaterial).Setup();  
+  pooled_ptr<MaterialInstance> pMatInstance = MaterialInstance::GetFactory()->CreateInstance();
+
+  pMatInstance->Setup(_pMaterial);
+
+  pModelComp_->AddMaterialInstance(std::move(pMatInstance));
 
   pModelComp_->AddMesh(lstVertices, lstIndices, 0u);
 }

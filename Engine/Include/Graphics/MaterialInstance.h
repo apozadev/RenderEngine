@@ -3,39 +3,36 @@
 #include <memory>
 #include <vector>
 
+#include "Core/PooledObject.h"
 #include "Graphics/Window.h"
 #include "Graphics/Material.h"
 #include "Graphics/API/GraphicsAPI.h"
 
 class Resource;
 
-class MaterialInstance
+class MaterialInstance : public TypedPooledObject<MaterialInstance, 256>
 {
 public:
-  
-  MaterialInstance(Material* _pMaterial);
-  MaterialInstance(MaterialInstance&& _rMatInstance);
-  ~MaterialInstance();
 
-  template<class T, typename ...Args>
-  inline T* AddResource(Args&&... args)
-  {         
-    T* pResource = new T(std::forward<Args>(args)...);
-    m_lstResources.push_back(pResource);
-    return pResource;
+  using TypedPooledObject<MaterialInstance, 256>::TypedPooledObject;
+
+  void AddTexture(pooled_ptr<Texture2D>&& _pTexture)
+  {
+    m_lstTextures.push_back(std::move(_pTexture));
   }
 
   Material* GetMaterial() const { return m_pMaterial; }
 
   uint16_t GetId() const { return m_uId; }
 
-  void Setup();
+  void Setup(Material* _pMaterial);
 
   void Bind() const;    
 
 private:  
 
-  std::vector<Resource*> m_lstResources;
+  std::vector<pooled_ptr<Texture2D>> m_lstTextures;
+  std::vector<ConstantBufferBase*> m_lstCBuffers;
 
   bool m_bSetup;
 

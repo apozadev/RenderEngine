@@ -6,24 +6,26 @@
 #include "Graphics/ResourceBindInfo.h"
 
 
-Texture2D::Texture2D(const std::string& _sFilename, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)
-  : Resource(_iBinding, _eStage)
+void Texture2D::Configure(const std::string& _sFilename, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)
 {
   const Image& rImage = ImageManager::GetInstance()->LoadImage(_sFilename, true);  
   m_pAPITexture = api::CreateAPITexture(rImage.m_pData, rImage.m_iWidth, rImage.m_iHeight, rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);
-
+  m_iBinding = _iBinding;
+  m_eStage = _eStage;
 }
 
-Texture2D::Texture2D(const Image& _rImage, int _iBinding , PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)
-  : Resource(_iBinding, _eStage)
+void Texture2D::Configure(const Image& _rImage, int _iBinding , PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)  
 {  
   m_pAPITexture = api::CreateAPITexture(_rImage.m_pData, _rImage.m_iWidth, _rImage.m_iHeight, _rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);
+  m_iBinding = _iBinding;
+  m_eStage = _eStage;
 }
 
-Texture2D::Texture2D(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples, uint32_t _uUsage)
-  : Resource(_iBinding, _eStage)
+void Texture2D::Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples, uint32_t _uUsage)  
 {
   m_pAPITexture = api::CreateAPITexture(nullptr, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage);
+  m_iBinding = _iBinding;
+  m_eStage = _eStage;
 }
 
 Texture2D::~Texture2D()
@@ -69,3 +71,5 @@ void Texture2D::ClearAsDepthStencil() const
 {
   api::ClearAPITexture(m_pAPITexture, TextureUsage::DEPTH_TARGET);
 }
+
+INIT_POOL(Texture2D)

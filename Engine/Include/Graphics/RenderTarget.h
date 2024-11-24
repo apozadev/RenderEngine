@@ -5,8 +5,7 @@
 
 #include "ImageFormat.h"
 #include "Graphics/API/GraphicsAPI.h"
-
-class Texture2D;
+#include "Graphics/Texture2D.h"
 
 class RenderTarget
 {
@@ -23,7 +22,7 @@ public:
 
   void Clear() const;
 
-  std::vector<Texture2D*> RenderTarget::GetColorTextures();
+  const std::vector<pooled_ptr<Texture2D>>& RenderTarget::GetColorTextures();
 
   Texture2D* GetDepthStencilTexture();
 
@@ -35,11 +34,11 @@ private:
 
   api::APIRenderTarget* m_pAPIRenderTarget;
 
-  std::vector<Texture2D*> m_lstColorTextures;
+  std::vector<pooled_ptr<Texture2D>> m_lstColorTextures;
 
-  std::vector<Texture2D*> m_lstColorResolveTextures;
+  std::vector<pooled_ptr<Texture2D>> m_lstColorResolveTextures;
 
-  Texture2D* m_pDepthStencilTexture;
+  pooled_ptr<Texture2D> m_pDepthStencilTexture;
 
   uint32_t m_uMsaaSamples;
   

@@ -18,14 +18,14 @@ struct MeshConstant
   glm::mat4 m_mNormal;
 };
 
-class Mesh : public PooledObject<Mesh, 256>
+class Mesh : public TypedPooledObject<Mesh, 256>
 {
 
   friend class RenderStep;
 
 public:    
 
-  using PooledObject<Mesh, 256>::PooledObject;
+  using TypedPooledObject<Mesh, 256>::TypedPooledObject;
   
   ~Mesh();
 
