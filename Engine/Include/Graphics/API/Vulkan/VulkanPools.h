@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core/TypedPool.h"
-#include "Core/TypedContiguousPool.h"
+#include "Memory/TypedPool.h"
+#include "Memory/TypedContiguousPool.h"
 
 #include "Graphics/API/Vulkan/APIRenderState.h"
 #include "Graphics/API/Vulkan/APIRenderSubState.h"
@@ -9,6 +9,8 @@
 #include "Graphics/API/Vulkan/APIMesh.h"
 #include "Graphics/API/Vulkan/APITexture.h"
 #include "Graphics/API/Vulkan/APIRenderTarget.h"
+
+#include "../3rd/spirv-reflect/spirv_reflect.h"
 
 namespace api
 {
@@ -28,6 +30,5 @@ namespace vk
   extern TypedContiguousPool<VkDescriptorSet, 256>        s_oVkDescriptorSetPool;  
   extern TypedContiguousPool<VkAttachmentReference, 3>    s_oVkAttachmentReferencePool;
   extern TypedContiguousPool<VkAttachmentDescription, 3>  s_oVkAttachmentDescriptionPool;
-
 }
 }

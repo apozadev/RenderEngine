@@ -3,27 +3,26 @@
 #include <vector>
 #include <memory>
 
-#include "Core/PooledObject.h"
 #include "Graphics/Pass.h"
+#include "Memory/PtrTypes.h"
+#include "Core/BaseObject.h"
 
 class Resource;
 
-class Material : public TypedPooledObject<Material, 256>
+class Material : public BaseObject
 {
 public:
 
-  using TypedPooledObject<Material, 256>::TypedPooledObject;
-
   ~Material();  
 
-  void AddPass(pooled_ptr<Pass>&& _pPass);
+  void AddPass(owner_ptr<Pass>&& _pPass);
 
   void Setup() const;  
 
-  const std::vector<pooled_ptr<Pass>>& GetPasses() { return m_lstPasses; }
+  const std::vector<owner_ptr<Pass>>& GetPasses() { return m_lstPasses; }
 
 private:
   
-  std::vector<pooled_ptr<Pass>> m_lstPasses;
+  std::vector<owner_ptr<Pass>> m_lstPasses;
   
 };

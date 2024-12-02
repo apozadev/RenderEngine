@@ -10,10 +10,13 @@
 #include "Core/InputManager.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/MaterialLibrary.h"
+#include "Memory/Factory.h"
 
 int Engine::Initialize(int _iWidth, int _iHeight, const char* _sTitle)
 {    
   m_fTargetFPS = 120.f;
+
+  Factory::Init(1024*1024, 1024*1024);
 
   // Init subsystems
   Renderer::GetInstance()->Initialize();

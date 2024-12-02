@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "Graphics/Material.h"
+#include "Memory/Factory.h"
 
 class Window;
 
@@ -14,7 +15,7 @@ public:
 
   Material* CreateMaterial()
   {    
-    pooled_ptr<Material> pMaterial = Material::GetFactory()->CreateInstance();
+    owner_ptr<Material> pMaterial = Factory::Create<Material>();
     m_lstMaterials.push_back(std::move(pMaterial));
     return m_lstMaterials.back().get();
   }
@@ -26,7 +27,7 @@ public:
 
 private:  
 
-  std::vector<pooled_ptr<Material>> m_lstMaterials;
+  std::vector<owner_ptr<Material>> m_lstMaterials;
 
   MaterialId m_uNextId = 0u;
 };

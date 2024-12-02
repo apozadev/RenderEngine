@@ -1,7 +1,8 @@
 #include <memory>
-#include "Core/GenericPool.h"
+#include "Memory/GenericPool.h"
+#include "Core/Exception.h"
 
-#define CHUNK_SIZE 64
+#define CHUNK_SIZE 8
 
   unsigned int calculateNeededChunks(size_t size)
   {
@@ -12,7 +13,7 @@
   {
     if (m_pData)
     {
-      // TODO: [ERROR] Pool already initialized (realloc?)
+      THROW_GENERIC_EXCEPTION("[MEMORY] Pool already initialized(realloc?) ")
       return;
     }
 
@@ -29,6 +30,11 @@
 
   void* GenericPool::Allocate(size_t size, size_t alignment)
   {
+
+    if (m_pData == nullptr)
+    {
+      THROW_GENERIC_EXCEPTION("[MEMORY] Pool not initilized")
+    }
 
     int candidateIdx = -1;
 
@@ -81,7 +87,7 @@
       chunksSkipped += chunksToSkip;
     }
 
-    // TODO: [ERROR] Not enough free chunks
+    THROW_GENERIC_EXCEPTION("[MEMORY] Pool out of free chunks")
 
     return nullptr;
   }
@@ -93,14 +99,13 @@
 
     if (diff % CHUNK_SIZE != 0)
     {
-      // TODO: [ERROR] the provided pointer is not aligned with the chunk size. All pool objects start at the begining of a chunk.
+      THROW_GENERIC_EXCEPTION("[MEMORY] the provided pointer is not aligned with the chunk size. All pool objects start at the begining of a chunk.")
       return false;
     }
 
     long long chunkIdx = ((char*)ptr - (char*)m_pData) / CHUNK_SIZE;
     if (chunkIdx < 0 || chunkIdx > m_numChunks)
-    {
-      // TODO: [ERROR] the object you tried to deallocate is not in the pool
+    {      
       return false;
     }
     m_pChunkUsedBytes[chunkIdx] = 0;

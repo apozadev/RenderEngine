@@ -8,16 +8,16 @@
 #include "Graphics/Texture2D.h"
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/API/GraphicsAPI.h"
-#include "Core/PooledObject.h"
+#include "Memory/PtrTypes.h"
+#include "Memory/Factory.h"
+#include "Core/BaseObject.h"
 
 class Resource;
 
-class Pass : public TypedPooledObject<Pass, 256>
+class Pass : public BaseObject
 {
 
-public:  
-
-  using TypedPooledObject<Pass, 256>::PooledObject;
+public:    
 
   ~Pass();
 
@@ -33,15 +33,15 @@ public:
     , int _uStepIdx
     , uint16_t _uLayer);
 
-  void AddTexture(pooled_ptr<Texture2D>&& _pTexture)
+  void AddTexture(owner_ptr<Texture2D>&& _pTexture)
   {
     m_lstTextures.push_back(std::move(_pTexture));    
   }
 
   template<typename T>
   ConstantBuffer<T> AddConstantBuffer()
-  {    
-    m_lstCBuffers.push_back(new ConstantBuffer<T>());
+  {        
+    m_lstCBuffers.push_back(owner_ptr<ConstantBufferBase>(static_cast<ConstantBufferBase*>(Factory::Create<ConstantBuffer<T>>().release())));
   }
 
   void Setup() const;
@@ -72,9 +72,9 @@ private:
 
   api::APIRenderState* m_pAPIRenderState;
 
-  std::vector<pooled_ptr<Texture2D>> m_lstTextures;
+  std::vector<owner_ptr<Texture2D>> m_lstTextures;
 
-  std::vector<ConstantBufferBase*> m_lstCBuffers;
+  std::vector<owner_ptr<ConstantBufferBase>> m_lstCBuffers;
 
   std::string m_sPipelineId;
 

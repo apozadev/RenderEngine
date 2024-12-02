@@ -23,7 +23,7 @@ void MaterialInstance::Setup(Material* _pMaterial)
 
   api::BeginSubStateSetup(m_pSubState);
 
-  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
+  for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
   {        
     pTexture->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
   }
@@ -47,7 +47,7 @@ void MaterialInstance::Bind() const
 
   api::BindAPIRenderSubState(m_pSubState, ResourceFrequency::MATERIAL_INSTANCE);
 
-  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
+  for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
   {
     pTexture->Bind();
   }
@@ -57,5 +57,3 @@ void MaterialInstance::Bind() const
     pCBuffer->Bind();
   }
 }
-
-INIT_POOL(MaterialInstance)

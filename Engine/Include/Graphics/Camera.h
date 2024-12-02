@@ -8,6 +8,8 @@
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/API/GraphicsAPI.h"
 
+#include "Memory/PtrTypes.h"
+
 class Window;
 class Transform;
 class RenderPipeline;
@@ -45,7 +47,7 @@ private:
 
   api::APIRenderSubState* m_pSubState;
 
-  std::unique_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
+  owner_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
 
   std::string m_sRenderPipelineId;
 };

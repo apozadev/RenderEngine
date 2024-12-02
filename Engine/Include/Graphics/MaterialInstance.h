@@ -3,20 +3,19 @@
 #include <memory>
 #include <vector>
 
-#include "Core/PooledObject.h"
 #include "Graphics/Window.h"
 #include "Graphics/Material.h"
 #include "Graphics/API/GraphicsAPI.h"
+#include "Memory/PtrTypes.h"
+#include "Core/BaseObject.h"
 
 class Resource;
 
-class MaterialInstance : public TypedPooledObject<MaterialInstance, 256>
+class MaterialInstance : public BaseObject
 {
-public:
+public: 
 
-  using TypedPooledObject<MaterialInstance, 256>::TypedPooledObject;
-
-  void AddTexture(pooled_ptr<Texture2D>&& _pTexture)
+  void AddTexture(owner_ptr<Texture2D>&& _pTexture)
   {
     m_lstTextures.push_back(std::move(_pTexture));
   }
@@ -31,7 +30,7 @@ public:
 
 private:  
 
-  std::vector<pooled_ptr<Texture2D>> m_lstTextures;
+  std::vector<owner_ptr<Texture2D>> m_lstTextures;
   std::vector<ConstantBufferBase*> m_lstCBuffers;
 
   bool m_bSetup;

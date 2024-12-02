@@ -15,20 +15,8 @@ RenderPipeline::RenderPipeline(std::string _sId, RenderPipelineConfig&& _rConfig
   GenerateFromConfig();
 }
 
-RenderPipeline::~RenderPipeline()
-{
-  for (RenderTarget* pRenderTarget : m_lstRenderTargets)
-  {
-    delete pRenderTarget;
-  }
-}
-
 void RenderPipeline::OnWindowResize()
 {
-  for (RenderTarget* pRenderTarget : m_lstRenderTargets)
-  {
-    delete pRenderTarget;
-  }
 
   m_lstRenderSteps.clear();
   m_lstRenderTargets.clear();
@@ -40,7 +28,7 @@ void RenderPipeline::OnWindowResize()
 void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTransform)
 {        
 
-  for (RenderTarget* pRenderTarget : m_lstRenderTargets)
+  for (owner_ptr<RenderTarget>& pRenderTarget : m_lstRenderTargets)
   {
     pRenderTarget->Clear();
   }
@@ -67,15 +55,22 @@ void RenderPipeline::GenerateFromConfig()
   {
     unsigned int uWidth = rRtConfig.m_iWidth < 0 ? Engine::GetInstance()->GetWindow()->GetWidth() : rRtConfig.m_iWidth;
     unsigned int uHeight = rRtConfig.m_iHeight < 0 ? Engine::GetInstance()->GetWindow()->GetHeight() : rRtConfig.m_iHeight;
-    m_lstRenderTargets.push_back(new RenderTarget(
+
+    owner_ptr<RenderTarget> pRenderTarget = Factory::Create<RenderTarget>();
+
+    pRenderTarget->Configure(
       rRtConfig.m_uNumColorTextures
       , uWidth
       , uHeight
       , rRtConfig.m_eFormat
       , rRtConfig.m_bHasDepthStencil
       , rRtConfig.m_uMipLevels
-      , rRtConfig.m_uMsaaSamples));
+      , rRtConfig.m_uMsaaSamples);
+
+    m_lstRenderTargets.push_back(std::move(pRenderTarget));
   }
+
+  m_lstRenderSteps.reserve(m_oConfig.m_lstSteps.size());
 
   for (const RenderStepConfig& rStepConfig : m_oConfig.m_lstSteps)
   {
@@ -87,7 +82,7 @@ void RenderPipeline::GenerateFromConfig()
       {
         if (rInputConfig.m_sTargetId == m_oConfig.m_lstRenderTargets[i].m_sId)
         {
-          lstInputs.push_back(m_lstRenderTargets[i]);
+          lstInputs.push_back(m_lstRenderTargets[i].get());
           break;
         }
       }
@@ -101,7 +96,7 @@ void RenderPipeline::GenerateFromConfig()
       {
         if (rStepConfig.m_sRenderTargetId == m_oConfig.m_lstRenderTargets[i].m_sId)
         {
-          pTarget = m_lstRenderTargets[i];
+          pTarget = m_lstRenderTargets[i].get();
         }
       }
     }

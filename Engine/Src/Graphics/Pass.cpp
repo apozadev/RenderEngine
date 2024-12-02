@@ -76,23 +76,18 @@ void Pass::Configure(const std::string& _sVSFilename
 Pass::~Pass()
 {  
   api::DestroyAPIRenderState(m_pAPIRenderState);
-
-  for (ConstantBufferBase* pCBuffer : m_lstCBuffers)
-  {
-    delete pCBuffer;
-  }
 }
 
 void Pass::Setup() const
 {
   api::BeginRenderStateSetup(m_pAPIRenderState);
 
-  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
+  for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
   {
     pTexture->SetupRenderSubState(ResourceFrequency::MATERIAL);
   }
 
-  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  for (const owner_ptr<ConstantBufferBase>& pCBuffer : m_lstCBuffers)
   {
     pCBuffer->SetupRenderSubState(ResourceFrequency::MATERIAL);
   }
@@ -105,12 +100,12 @@ void Pass::Bind() const
 
   api::BindAPIRenderState(m_pAPIRenderState);
 
-  for (const pooled_ptr<Texture2D>& pTexture : m_lstTextures)
+  for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
   {
     pTexture->Bind();
   }
 
-  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  for (const owner_ptr<ConstantBufferBase>& pCBuffer : m_lstCBuffers)
   {
     pCBuffer->Bind();
   }
@@ -130,5 +125,3 @@ int Pass::GetRenderStepIdx() const
 {
   return m_iStepIdx;
 }
-
-INIT_POOL(Pass)

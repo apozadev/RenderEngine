@@ -15,7 +15,7 @@ public:
 
   struct MeshMaterialPair
   {
-    pooled_ptr<Mesh> m_pMesh;
+    owner_ptr<Mesh> m_pMesh;
     unsigned int m_uMatIdx;
   };
 
@@ -25,7 +25,7 @@ public:
 
   void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx);
 
-  void AddMaterialInstance(pooled_ptr<MaterialInstance>&& _pMaterial)
+  void AddMaterialInstance(owner_ptr<MaterialInstance>&& _pMaterial)
   {
     m_lstMaterials.emplace_back(std::move(_pMaterial));    
   }
@@ -49,5 +49,5 @@ protected:
 private:
   std::vector<MeshMaterialPair> m_lstMeshes;
 
-  std::vector<pooled_ptr<MaterialInstance>> m_lstMaterials;  
+  std::vector<owner_ptr<MaterialInstance>> m_lstMaterials;  
 };

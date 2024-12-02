@@ -6,7 +6,7 @@
 #include "Math/Transform.h"
 #include "Graphics/Vertex.h"
 #include "Graphics/API/GraphicsAPI.h"
-#include "Core/PooledObject.h"
+#include "Core/BaseObject.h"
 
 class Window;
 
@@ -18,14 +18,12 @@ struct MeshConstant
   glm::mat4 m_mNormal;
 };
 
-class Mesh : public TypedPooledObject<Mesh, 256>
+class Mesh : public BaseObject
 {
 
   friend class RenderStep;
 
-public:    
-
-  using TypedPooledObject<Mesh, 256>::TypedPooledObject;
+public:      
   
   ~Mesh();
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/TypedPool.h"
+#include "Memory/TypedPool.h"
 
 #include "Graphics/API/DX11/APIRenderState.h"
 #include "Graphics/API/DX11/APIConstantBuffer.h"

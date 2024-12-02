@@ -3,6 +3,8 @@
 #include "Core/Entity.h"
 #include "Util/ModelLoader.h"
 
+#include "Memory/Factory.h"
+
 ModelComponent::ModelComponent(const char* _sFilename, Material* _pMaterial)
 {
   static const std::string s_sQuad("quad");
@@ -24,7 +26,7 @@ ModelComponent::~ModelComponent()
 void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx)
 {
 
-  pooled_ptr<Mesh> pMesh = Mesh::GetFactory()->CreateInstance();
+  owner_ptr<Mesh> pMesh = Factory::Create<Mesh>();
   pMesh->Initialize(_lstVertices, _lstIndices);
   m_lstMeshes.push_back(MeshMaterialPair{ std::move(pMesh), _uMaterialIdx });
 }

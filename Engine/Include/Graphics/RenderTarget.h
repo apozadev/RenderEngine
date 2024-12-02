@@ -6,13 +6,15 @@
 #include "ImageFormat.h"
 #include "Graphics/API/GraphicsAPI.h"
 #include "Graphics/Texture2D.h"
+#include "Memory/PtrTypes.h"
 
 class RenderTarget
 {
 public:
-
-  RenderTarget(unsigned int _uNumColorAttachments, unsigned int _uWidth, unsigned int _uHeight, ImageFormat _eFormat, bool _bHasDepthStencil, unsigned int _uMipLevels = 1u, unsigned int _uMsaaSamples = 1u);
+  
   ~RenderTarget();
+
+  void Configure(unsigned int _uNumColorAttachments, unsigned int _uWidth, unsigned int _uHeight, ImageFormat _eFormat, bool _bHasDepthStencil, unsigned int _uMipLevels = 1u, unsigned int _uMsaaSamples = 1u);
 
   void SetUsing() const;
 
@@ -22,7 +24,7 @@ public:
 
   void Clear() const;
 
-  const std::vector<pooled_ptr<Texture2D>>& RenderTarget::GetColorTextures();
+  const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures();
 
   Texture2D* GetDepthStencilTexture();
 
@@ -34,11 +36,11 @@ private:
 
   api::APIRenderTarget* m_pAPIRenderTarget;
 
-  std::vector<pooled_ptr<Texture2D>> m_lstColorTextures;
+  std::vector<owner_ptr<Texture2D>> m_lstColorTextures;
 
-  std::vector<pooled_ptr<Texture2D>> m_lstColorResolveTextures;
+  std::vector<owner_ptr<Texture2D>> m_lstColorResolveTextures;
 
-  pooled_ptr<Texture2D> m_pDepthStencilTexture;
+  owner_ptr<Texture2D> m_pDepthStencilTexture;
 
   uint32_t m_uMsaaSamples;
   

@@ -30,4 +30,3 @@ void Mesh::Draw() const
   api::DrawMesh(m_pAPIMesh, m_uIndexCount, &m_oConstant, sizeof(MeshConstant));
 }
 
-INIT_POOL(Mesh)

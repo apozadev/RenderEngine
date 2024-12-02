@@ -7,6 +7,8 @@
 #include "RenderStep.h"
 #include "Job.h"
 
+#include "Memory/PtrTypes.h"
+
 class RenderTarget;
 class RenderStep;
 class Window;
@@ -20,7 +22,6 @@ public:
 
 	RenderPipeline(std::string _sId, RenderPipelineConfig&& _rConfig);
 	RenderPipeline(RenderPipeline&& _rPipeline) = default;
-	~RenderPipeline();	
 
 	const std::string& GetId() const { return m_sId; }
 
@@ -41,7 +42,7 @@ private:
 	std::string m_sId;
 	
 	std::vector<RenderStep> m_lstRenderSteps;
-	std::vector<RenderTarget*> m_lstRenderTargets;
+	std::vector<owner_ptr<RenderTarget>> m_lstRenderTargets;
 
 	RenderPipelineConfig m_oConfig;
 };

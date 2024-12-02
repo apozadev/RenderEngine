@@ -3,18 +3,16 @@
 #include <string>
 #include <memory>
 
-#include "Core/PooledObject.h"
+#include "Core/BaseObject.h"
 #include "Graphics/ImageFormat.h"
 #include "Graphics/API/GraphicsAPI.h"
 
 class Material;
 struct Image;
 
-class Texture2D : public TypedPooledObject<Texture2D, 256>
+class Texture2D : public BaseObject
 {
 public:
-
-  using TypedPooledObject<Texture2D, 256>::TypedPooledObject;
   
   void Configure(const std::string& _sFilename, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
   void Configure(const Image& _rImage, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);

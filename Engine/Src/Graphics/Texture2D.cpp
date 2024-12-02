@@ -71,5 +71,3 @@ void Texture2D::ClearAsDepthStencil() const
 {
   api::ClearAPITexture(m_pAPITexture, TextureUsage::DEPTH_TARGET);
 }
-
-INIT_POOL(Texture2D)

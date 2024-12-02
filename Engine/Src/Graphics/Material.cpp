@@ -10,7 +10,7 @@
 #include "Graphics/Pass.h"
 #include "Core/Exception.h"
 
-void Material::AddPass(pooled_ptr<Pass>&& _pPass)
+void Material::AddPass(owner_ptr<Pass>&& _pPass)
 {
   m_lstPasses.push_back(std::move(_pPass));
 }
@@ -21,10 +21,8 @@ Material::~Material()
 
 void Material::Setup() const
 {
-  for (const pooled_ptr<Pass>& pPass : m_lstPasses)
+  for (const owner_ptr<Pass>& pPass : m_lstPasses)
   {
     pPass->Setup();
   }
 }
-
-INIT_POOL(Material)

@@ -1,11 +1,11 @@
 #include "Graphics/API/Vulkan/VulkanShaderReflection.h"
 #include "Graphics/API/Vulkan/DescriptorUtils.h"
+#include "Graphics/API/Vulkan/VulkanPools.h"
 
 #include "Graphics/ResourceFrequency.h"
 
 #include "Core/Exception.h"
 
-//#include "spirv-reflect/spirv_reflect.h"
 #include "../3rd/spirv-reflect/spirv_reflect.h"
 
 #include <string>
@@ -36,16 +36,16 @@ void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilde
   uint32_t uDescSetCount = 0;
   eResult = spvReflectEnumerateEntryPointDescriptorSets( &oModule, "main", &uDescSetCount, NULL);
   CHECK_REFLECT(eResult == SPV_REFLECT_RESULT_SUCCESS, "[API] Error: Failed to enumerate descriptor sets from shader: ")
-  CHECK_REFLECT(uDescSetCount <= 3u, "[API] Error: the shader has more than 3 descriptor sets : ")
+    CHECK_REFLECT(uDescSetCount <= 4u, "[API] Error: the shader has more than 4 descriptor sets : ")
 
-  SpvReflectDescriptorSet** ppDescSets = new SpvReflectDescriptorSet* [uDescSetCount];
+  SpvReflectDescriptorSet* aDescSets[4];// = new SpvReflectDescriptorSet * [uDescSetCount];
 
-  eResult = spvReflectEnumerateEntryPointDescriptorSets(&oModule, "main", &uDescSetCount, ppDescSets);
+  eResult = spvReflectEnumerateEntryPointDescriptorSets(&oModule, "main", &uDescSetCount, aDescSets);
   CHECK_REFLECT(eResult == SPV_REFLECT_RESULT_SUCCESS, "[API] Error: Failed to get descriptor sets from shader: ")  
 
   for (uint32_t i = 0u; i < uDescSetCount; i++)
   {
-    SpvReflectDescriptorSet* pDescSet = ppDescSets[i];  
+    SpvReflectDescriptorSet* pDescSet = aDescSets[i];
 
     DescriptorSetLayoutBuilder* pLayoutBuilder = nullptr;
     
@@ -65,8 +65,6 @@ void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilde
       }
     }
   }
-
-  delete[] ppDescSets;
 
   spvReflectDestroyShaderModule(&oModule);
 

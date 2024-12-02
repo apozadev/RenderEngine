@@ -16,11 +16,11 @@
 #include "Components/CameraComponent.h"
 #include "Graphics/MaterialLibrary.h"
 #include "Graphics/RenderPipelineConfig.h"
+#include "Memory/Factory.h"
 
 #include <string>
 
-// Quitar herencia de Resource para poder hacer Pooled object a textures, cbuffer, etc
-// Listas separadas en MAterial y MaterialInstance
+// Hacer componentes owner_ptr tambien.
 
 int main(){
 
@@ -84,7 +84,7 @@ int main(){
 
   Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial();
   {
-    pooled_ptr<Pass> pPass0 = Pass::GetFactory()->CreateInstance();
+    owner_ptr<Pass> pPass0 = Factory::Create<Pass>();
     pPass0->Configure(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
       , "Assets/Shaders/Pixel/GBuffPixel.hlsl"
@@ -99,7 +99,7 @@ int main(){
       , 0u);
     pMaterial->AddPass(std::move(pPass0));
 
-    pooled_ptr<Pass> pPass1 = Pass::GetFactory()->CreateInstance();
+    owner_ptr<Pass> pPass1 = Factory::Create<Pass>();
     pPass1->Configure(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
       , "Assets/Shaders/Pixel/PixelShader.hlsl"
@@ -118,7 +118,7 @@ int main(){
 
   Material* pGridMaterial = MaterialLibrary::GetInstance()->CreateMaterial();
   {
-    pooled_ptr<Pass> pPass0 = Pass::GetFactory()->CreateInstance();
+    owner_ptr<Pass> pPass0 = Factory::Create<Pass>();
     pPass0->Configure(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
       , "Assets/Shaders/Pixel/GridPixel.hlsl"

@@ -58,7 +58,7 @@ void Renderer::SubmitCamera(Camera* _pCamera, const Transform* _pTransform)
 
 void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform)
 {    
-  for (const pooled_ptr<Pass>& pPass : _pMaterial->GetMaterial()->GetPasses())
+  for (const owner_ptr<Pass>& pPass : _pMaterial->GetMaterial()->GetPasses())
   {
     RenderPipeline* pPipeline = GetRenderPipeline(pPass->GetRenderPipelineId());
     RenderStep* pRenderStep = pPipeline ? pPipeline->GetRenderStep(pPass->GetRenderStepIdx()) : nullptr;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/PooledObject.h"
 #include "Graphics/ResourceFrequency.h"
 #include "Graphics/PipelineStage.h"
 

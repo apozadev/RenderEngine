@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Core/PooledObject.h"
-
 #include "Graphics/API/GraphicsAPI.h"
+#include "Core/BaseObject.h"
 
-class ConstantBufferBase
+class ConstantBufferBase : public BaseObject
 {
 
 public:
@@ -35,7 +34,7 @@ private:
 template <typename T>
 class ConstantBuffer : public ConstantBufferBase
 {  
-public:    
+public:      
 
   void Configure(int _iBinding, PipelineStage _eStage)
   {
@@ -62,7 +61,7 @@ public:
     m_oData = *_pData;
   }    
 
-private:
+protected:
 
   T m_oData;
 };
