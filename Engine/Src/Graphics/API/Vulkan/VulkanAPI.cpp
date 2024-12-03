@@ -815,6 +815,24 @@ namespace vk
       break;
     }
 
+    uint32_t uNumImages = s_oGlobalData.m_pUsingWindow->m_uSwapchainImageCount;
+
+    std::vector<VkDescriptorSetLayout> lstLayouts;
+    for (int i = 0; i < uNumImages; i++)
+    {
+      lstLayouts.push_back(pSubState->m_hDecSetLayout);
+    }
+
+    VkDescriptorSetAllocateInfo oDescSetAllocInfo{};
+    oDescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    oDescSetAllocInfo.descriptorPool = s_oGlobalData.m_pUsingWindow->m_hDescPool;
+    oDescSetAllocInfo.descriptorSetCount = uNumImages;
+    oDescSetAllocInfo.pSetLayouts = lstLayouts.data();
+
+    pSubState->m_pDescSets = s_oVkDescriptorSetPool.PullElements(uNumImages);
+
+    VK_CHECK(vkAllocateDescriptorSets(s_oGlobalData.m_pUsingWindow->m_hDevice, &oDescSetAllocInfo, pSubState->m_pDescSets))
+
     return pSubState;
   }
 
@@ -826,25 +844,7 @@ namespace vk
     }
 
     s_oGlobalData.m_pUsingSubState = _pSubState;
-    s_oGlobalData.m_pUsingWindow = _pSubState->m_pOwnerWindow;
-
-    uint32_t uNumImages = s_oGlobalData.m_pUsingWindow->m_uSwapchainImageCount;
-
-    std::vector<VkDescriptorSetLayout> lstLayouts;
-    for (int i = 0; i < uNumImages; i++)
-    {
-      lstLayouts.push_back(_pSubState->m_hDecSetLayout);
-    }
-
-    VkDescriptorSetAllocateInfo oDescSetAllocInfo{};
-    oDescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    oDescSetAllocInfo.descriptorPool = s_oGlobalData.m_pUsingWindow->m_hDescPool;
-    oDescSetAllocInfo.descriptorSetCount = uNumImages;
-    oDescSetAllocInfo.pSetLayouts = lstLayouts.data();
-
-    _pSubState->m_pDescSets = s_oVkDescriptorSetPool.PullElements(uNumImages);
-
-    VK_CHECK(vkAllocateDescriptorSets(s_oGlobalData.m_pUsingWindow->m_hDevice, &oDescSetAllocInfo, _pSubState->m_pDescSets))
+    s_oGlobalData.m_pUsingWindow = _pSubState->m_pOwnerWindow;    
   }
 
   void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo)
@@ -861,7 +861,7 @@ namespace vk
       oBufferInfo.offset = 0;
       oBufferInfo.range = _uSize;
 
-      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), _oBindInfo.m_iBinding, i);
+      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), _oBindInfo.m_iBinding, i, _oBindInfo.m_eStage);
     }
   }
 
@@ -879,7 +879,7 @@ namespace vk
       oImageInfo.imageView = _pTexture->m_hImageView;
       oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), _oBindInfo.m_iBinding, i);      
+      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), _oBindInfo.m_iBinding, i, _oBindInfo.m_eStage);
     }
   }
 

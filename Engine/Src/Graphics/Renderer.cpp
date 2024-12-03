@@ -12,6 +12,7 @@
 #include "Graphics/RenderPipelineConfig.h"
 #include "Graphics/RenderTarget.h"
 #include "Graphics/RenderKey.h"
+#include "Graphics/RenderStep.h"
 
 #include "Core/Exception.h"
 
@@ -107,7 +108,6 @@ void Renderer::Draw()
       if (RenderPipeline* pPipeline = GetRenderPipeline(rCamView.m_pCamera->GetRenderPipelineId()))
       {
         pPipeline->Execute(rCamView.m_pCamera, rCamView.m_pTransform);
-        pPipeline->Clear();
       }
       else
       {

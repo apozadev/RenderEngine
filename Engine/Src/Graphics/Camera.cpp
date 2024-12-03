@@ -13,7 +13,7 @@
 
 #include "Math/Transform.h"
 
-Camera::Camera(const std::string&  _sRenderPipelineId)
+void Camera::Configure(const std::string&  _sRenderPipelineId)
 {
   m_pAPICamera = api::CreateAPICamera();
 
@@ -29,13 +29,14 @@ Camera::Camera(const std::string&  _sRenderPipelineId)
   m_sRenderPipelineId = _sRenderPipelineId;
 }
 
+/*
 Camera::Camera(Camera&& _oOther)
   : m_pAPICamera(std::move(_oOther.m_pAPICamera))
   , m_pCBuffer(std::move(_oOther.m_pCBuffer))
   , m_pSubState(std::move(_oOther.m_pSubState))
   , m_sRenderPipelineId(std::move(_oOther.m_sRenderPipelineId))
 {
-}
+}*/
 
 Camera::~Camera()
 {

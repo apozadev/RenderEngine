@@ -25,10 +25,11 @@ class Camera
   };
 
 public:
-
-  Camera(const std::string& _sRenderPipelineId);
-  Camera(Camera&& _oOther);
+  
+  //Camera(Camera&& _oOther);
   ~Camera();  
+
+  void Configure(const std::string& _sRenderPipelineId);
 
   void UpdateTransform(const Transform& _oParentTransform);
 

@@ -15,7 +15,7 @@ vec2 diff = fwidth(inUv);
 
 float fade = length(diff) * scale * scale;
 
-lineWidth += diff;
+lineWidth += diff*0.8;
 
 vec2 newUv = mod2(inUv, cellSize);
 

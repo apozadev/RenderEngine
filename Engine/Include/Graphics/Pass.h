@@ -41,7 +41,7 @@ public:
   template<typename T>
   ConstantBuffer<T> AddConstantBuffer()
   {        
-    m_lstCBuffers.push_back(owner_ptr<ConstantBufferBase>(static_cast<ConstantBufferBase*>(Factory::Create<ConstantBuffer<T>>().release())));
+    m_lstCBuffers.push_back(Factory::Create<ConstantBuffer<T>>().cast_release<ConstantBufferBase>());
   }
 
   void Setup() const;

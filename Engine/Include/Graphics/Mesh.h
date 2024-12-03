@@ -21,7 +21,7 @@ struct MeshConstant
 class Mesh : public BaseObject
 {
 
-  friend class RenderStep;
+  friend class GeometryRenderStep;
 
 public:      
   

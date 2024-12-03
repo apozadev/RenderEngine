@@ -21,6 +21,7 @@
 #include <string>
 
 // Hacer componentes owner_ptr tambien.
+// Mover global rendersubstate fuera de Camera. Queremos meter el cbuffer de la luz.
 
 int main(){
 
@@ -121,7 +122,7 @@ int main(){
     owner_ptr<Pass> pPass0 = Factory::Create<Pass>();
     pPass0->Configure(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
-      , "Assets/Shaders/Pixel/GridPixel.hlsl"
+      , "Assets/Shaders/Pixel/SolidPixel.hlsl"
       , true
       , BlendOp::BLEND_OP_ADD
       , BlendFactor::BLEND_SRC_ALPHA

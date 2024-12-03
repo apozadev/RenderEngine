@@ -4,6 +4,7 @@
 
 #include "Graphics/API/Vulkan/APIWindow.h"
 #include "Graphics/API/Vulkan/APIRenderState.h"
+#include "Graphics/API/Vulkan/APIInternal.h"
 
 #include <array>
 
@@ -101,12 +102,13 @@ VkDescriptorPool DescriptorPoolBuilder::Build(VkDevice _hDevice)
   return hDescPool;
 }
 
-void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx)
+void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage)
 {
   for (SetBoundBufferInfoList& rInfoList : m_lstSetBufferInfos)
   {
     if (rInfoList.m_uSetIdx == _uSetIdx
-      && rInfoList.m_uBinding == _uBinding)
+      && rInfoList.m_uBinding == _uBinding
+      && rInfoList.m_eStage == _eStage)
     {
       rInfoList.m_lstBufferInfos.push_back(std::move(_oBufferInfo));      
       return;
@@ -118,16 +120,18 @@ void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, 
   SetBoundBufferInfoList oInfoList{};
   oInfoList.m_uSetIdx = _uSetIdx;
   oInfoList.m_uBinding = _uBinding;
+  oInfoList.m_eStage = _eStage;
   oInfoList.m_lstBufferInfos.push_back(std::move(_oBufferInfo));
   m_lstSetBufferInfos.push_back(std::move(oInfoList));
 }
 
-void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx)
+void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage)
 {
   for (SetBoundImgInfoList& rInfoList : m_lstSetImageInfos)
   {
     if (rInfoList.m_uSetIdx == _uSetIdx
-      && rInfoList.m_uBinding == _uBinding)
+      && rInfoList.m_uBinding == _uBinding
+      && rInfoList.m_eStage == _eStage)
     {      
       rInfoList.m_lstImgInfos.push_back(std::move(_oImageInfo));      
       return;
@@ -139,6 +143,7 @@ void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uin
   SetBoundImgInfoList oInfoList{};
   oInfoList.m_uSetIdx = _uSetIdx;
   oInfoList.m_uBinding = _uBinding;
+  oInfoList.m_eStage = _eStage;
   oInfoList.m_lstImgInfos.push_back(std::move(_oImageInfo));
   m_lstSetImageInfos.push_back(std::move(oInfoList));
 }
@@ -154,7 +159,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.binding = lstSetBufferInfo.m_uBinding;
     oBinding.descriptorCount = lstSetBufferInfo.m_lstBufferInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    oBinding.stageFlags = GetVkStageFlag(lstSetBufferInfo.m_eStage);
     if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
     {
       continue;
@@ -186,7 +191,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.binding = lstSetImageInfo.m_uBinding;
     oBinding.descriptorCount = lstSetImageInfo.m_lstImgInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    oBinding.stageFlags = GetVkStageFlag(lstSetImageInfo.m_eStage);
     if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
     {
       continue;

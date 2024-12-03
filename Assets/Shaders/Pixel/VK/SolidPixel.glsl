@@ -25,30 +25,15 @@ layout(location = 0) out vec4 outColor;
 #define ddx(x)	dFdx(x)
 #define ddy(x)	dFdy(x)
 
-vec2 mod2(vec2 x, vec2 y)
-{
-  return x - y * floor(x / y);
-}
-
 PIXEL_MAIN_BEGIN
 
-float scale = 99.0;
-vec2 cellSize = vec2(1.0, 1.0) / scale;
-vec2 halfCell = cellSize*0.5;
-vec2 lineWidth = vec2(0.0001, 0.0001) / scale;
+vec3 lightDir = vec3(0, 0, 1);
+float ambientFactor = 0.3;
 
-vec2 diff = fwidth(inUv);
+float light = max(0, dot(lightDir, normalize(inNormal)));
 
-float fade = length(diff) * scale * scale;
+vec4 color = vec4(1,1,1,1);
 
-lineWidth += diff*0.8;
-
-vec2 newUv = mod2(inUv, cellSize);
-
-vec2 c = smoothstep(lineWidth, lineWidth*0.5, abs(newUv - halfCell));
-
-float lineAlpha = max(min(c.x + c.y, 1) / fade, 0);
-
-outColor = vec4(1, 1, 1, lineAlpha);
+outColor = color * (light + ambientFactor);
 
 PIXEL_MAIN_END

@@ -127,8 +127,7 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/API/Vulkan/VulkanPools.h" 
 	"Src/Graphics/API/Vulkan/VulkanPools.cpp" 
 	"Include/Memory/TypedContiguousPool.h" 
-	"Include/Memory/PooledObject.h" 
-	
+	"Include/Memory/PooledObject.h" 	
 	"Include/Memory/GenericPool.h" 
 	"Src/Memory/GenericPool.cpp" 
 	"Include/Memory/TypedFactory.h"
@@ -155,7 +154,13 @@ add_library(${PROJECT_NAME}
 	"Src/Reflection/ReflectionSettings.cpp"
 	"3rd/rapidxml/rapidxml.hpp"
 	"3rd/rapidxml/rapidxml_ext.hpp"
-	"Include/Memory/Factory.h") 
+	"Include/Memory/Factory.h" 
+	"Include/Components/DirLightComponent.h" 
+	"Src/Components/DirLightComponent.cpp" 
+	"Include/Graphics/DirLight.h" 
+	"Include/Graphics/GeometryRenderStep.h"
+	"Src/Graphics/GeometryRenderStep.cpp"
+	)  
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

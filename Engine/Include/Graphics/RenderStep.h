@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 
 #include "Graphics/Job.h"
@@ -10,42 +9,40 @@ class Window;
 class RenderTarget;
 class Transform;
 class Camera;
+class Pass;
 
 class RenderStep
 {
 public:
 
-  RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent);
+  RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget);
 
   ~RenderStep();
 
-  void SubmitJob(Job&& _rJob);
+  virtual void SubmitJob(Job&& _rJob) {};
 
-  void Execute(const Camera* _pCamera, const Transform* _pViewTransform);
+  void Execute(const Camera* _pCamera, const Transform* _pViewTransform);  
 
-  void Clear();
+  const RenderTarget* GetRenderTarget() const;  
 
-  const RenderTarget* GetRenderTarget() const;
+protected:
 
-  bool IsOrderTranslucent() const { return m_bOrderTranslucent; }
-
-private:
+  virtual void Prepare(const Camera* _pCamera, const Transform* _pViewTransform) {};
 
   void Bind() const;
 
   void Unbind() const;
+
+  virtual const Pass* GetFirstPass() const = 0;
+
+  virtual void ExecuteInternal(const Camera* _pCamera, const Transform* _pViewTransform) = 0;
   
-private:
-
-  bool m_bOrderTranslucent;
-
-private: 
-
-  std::vector<Job> m_lstJobs;
+private:  
 
   std::vector<RenderTarget*> m_lstInputs;
 
   const RenderTarget* m_pRenderTarget;
 
   api::APIRenderSubState* m_pAPIRenderSubState;
+
 };

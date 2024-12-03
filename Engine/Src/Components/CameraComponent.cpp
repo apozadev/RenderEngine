@@ -7,15 +7,12 @@
 #include "Graphics/RenderPipelineConfig.h"
 #include "Components/CameraComponent.h"
 #include "Math/Utils.h"
+#include "Memory/Factory.h"
 
 CameraComponent::CameraComponent()  
 {  
-
-  m_pCamera = std::make_unique<Camera>("TEST");
-}
-
-CameraComponent::~CameraComponent()
-{
+  m_pCamera = Factory::Create<Camera>();
+  m_pCamera->Configure("TEST");
 }
 
 void CameraComponent::Start() 

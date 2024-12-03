@@ -4,7 +4,6 @@
 #include <string>
 
 #include "RenderPipelineConfig.h"
-#include "RenderStep.h"
 #include "Job.h"
 
 #include "Memory/PtrTypes.h"
@@ -25,13 +24,11 @@ public:
 
 	const std::string& GetId() const { return m_sId; }
 
-	RenderStep* GetRenderStep(int _iIdx) { if (_iIdx < m_lstRenderSteps.size()) return &m_lstRenderSteps[_iIdx]; return nullptr; }
+	RenderStep* GetRenderStep(int _iIdx) { if (_iIdx < m_lstRenderSteps.size()) return m_lstRenderSteps[_iIdx].get(); return nullptr; }
 
 	void OnWindowResize();
 
-	void Execute(const Camera* _pCamera, const Transform* _pViewTransform);
-
-	void Clear();
+	void Execute(const Camera* _pCamera, const Transform* _pViewTransform);	
 
 private:
 
@@ -41,7 +38,7 @@ private:
 
 	std::string m_sId;
 	
-	std::vector<RenderStep> m_lstRenderSteps;
+	std::vector<owner_ptr<RenderStep>> m_lstRenderSteps;
 	std::vector<owner_ptr<RenderTarget>> m_lstRenderTargets;
 
 	RenderPipelineConfig m_oConfig;

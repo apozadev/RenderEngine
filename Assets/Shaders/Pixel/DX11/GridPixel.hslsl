@@ -55,7 +55,7 @@ vec2 lineWidth = vec2(0.0001, 0.0001) / scale;
 
 vec2 diff = fwidth(inUv);
 
-float fade = length(diff) * scale * scale;
+float fade = smoothstep(0.1, 0.5, length(diff)); 
 
 lineWidth += diff;
 

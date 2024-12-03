@@ -3,6 +3,8 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
+#include "Graphics/PipelineStage.h"
+
 namespace api
 {
 namespace vk
@@ -57,6 +59,7 @@ namespace vk
     {
       uint32_t m_uSetIdx;      
       uint32_t m_uBinding;
+      PipelineStage m_eStage;
       std::vector<VkDescriptorBufferInfo> m_lstBufferInfos;
     };
 
@@ -64,13 +67,14 @@ namespace vk
     {
       uint32_t m_uSetIdx;
       uint32_t m_uBinding;
+      PipelineStage m_eStage;
       std::vector<VkDescriptorImageInfo> m_lstImgInfos;
     };
 
   public:
 
-    void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx);
-    void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx);
+    void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage);
+    void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage);
 
     void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, DescriptorSetLayoutBuilder* _pLayoutBuilder);
 

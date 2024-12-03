@@ -7,6 +7,7 @@
 #include "Graphics/Material.h"
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Mesh.h"
+#include "Graphics/GeometryRenderStep.h"
 
 RenderPipeline::RenderPipeline(std::string _sId, RenderPipelineConfig&& _rConfig)
   : m_sId(_sId)
@@ -33,17 +34,9 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
     pRenderTarget->Clear();
   }
 
-  for (RenderStep& rStep : m_lstRenderSteps)
+  for (owner_ptr<RenderStep>& rStep : m_lstRenderSteps)
   {                
-    rStep.Execute(_pCamera, _pViewTransform);
-  }
-}
-
-void RenderPipeline::Clear()
-{
-  for (RenderStep& rStep : m_lstRenderSteps)
-  {
-    rStep.Clear();
+    rStep->Execute(_pCamera, _pViewTransform);
   }
 }
 
@@ -99,8 +92,10 @@ void RenderPipeline::GenerateFromConfig()
           pTarget = m_lstRenderTargets[i].get();
         }
       }
-    }
+    }     
 
-    m_lstRenderSteps.push_back(std::move(RenderStep(std::move(lstInputs), pTarget, rStepConfig.m_bOrderTranslucent)));
+    owner_ptr<GeometryRenderStep> pRenderStep = Factory::Create<GeometryRenderStep>(std::move(lstInputs), pTarget, rStepConfig.m_bOrderTranslucent);
+
+    m_lstRenderSteps.push_back(pRenderStep.cast_release<RenderStep>());
   }
 }

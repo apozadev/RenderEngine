@@ -2,6 +2,7 @@
 
 #include "Core/Component.h"
 #include "Graphics/Camera.h"
+#include "Memory/PtrTypes.h"
 
 class Window;
 
@@ -9,8 +10,7 @@ class CameraComponent : public Component
 {
 
 public:
-  CameraComponent();   
-  ~CameraComponent();
+  CameraComponent();     
 
 protected:
 
@@ -20,7 +20,7 @@ protected:
 
 private:  
 
-  std::unique_ptr<Camera> m_pCamera;
+  owner_ptr<Camera> m_pCamera;
 
   float m_fFov;
   float m_fNear;
