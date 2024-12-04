@@ -19,6 +19,8 @@ public:
 
   ~RenderStep();
 
+  void Setup();
+
   virtual void SubmitJob(Job&& _rJob) {};
 
   void Execute(const Camera* _pCamera, const Transform* _pViewTransform);  
@@ -26,6 +28,8 @@ public:
   const RenderTarget* GetRenderTarget() const;  
 
 protected:
+
+  virtual void SetupInternal();
 
   virtual void Prepare(const Camera* _pCamera, const Transform* _pViewTransform) {};
 

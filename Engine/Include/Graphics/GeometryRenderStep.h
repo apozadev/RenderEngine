@@ -17,6 +17,8 @@ public:
 
 protected:
 
+  void SetupInternal() override;
+
   void Prepare(const Camera* _pCamera, const Transform* _pViewTransform) override;
 
   const Pass* GetFirstPass() const override;

@@ -26,6 +26,8 @@ int Engine::Initialize(int _iWidth, int _iHeight, const char* _sTitle)
 
   m_pWindow->SetUsing();
 
+  Renderer::GetInstance()->InitializePostWindow();
+
   return 0;
 }
 
@@ -38,43 +40,45 @@ Scene* Engine::CreateScene()
 int Engine::Run()
 {
 
-    m_bRunning = true;
+  Renderer::GetInstance()->Setup();
 
-    long long llMinFrameTime = (long long)(1000.f / m_fTargetFPS);
-    Timer oTimer;
+  m_bRunning = true;
 
-    while (m_bRunning)
+  long long llMinFrameTime = (long long)(1000.f / m_fTargetFPS);
+  Timer oTimer;
+
+  while (m_bRunning)
+  {
+    if (m_pWindow->ShouldClose())
     {
-      if (m_pWindow->ShouldClose())
+      ScheduleShutDown();
+    }
+    else
+    {  
+      long long llElapsed = oTimer.Peek() - llMinFrameTime;
+
+      if (llElapsed > llMinFrameTime)
       {
-        ScheduleShutDown();
-      }
-      else
-      {  
-        long long llElapsed = oTimer.Peek() - llMinFrameTime;
+        oTimer.Mark();
 
-        if (llElapsed > llMinFrameTime)
+        m_fDt = (float)llMinFrameTime * 0.001f;//(float)llElapsed * 0.001f;
+        m_fGameTime += m_fDt;
+
+        InputManager::GetInstance()->PollEvents();
+
+        for (Scene& rScene : m_lstScenes)
         {
-          oTimer.Mark();
-
-          m_fDt = (float)llMinFrameTime * 0.001f;//(float)llElapsed * 0.001f;
-          m_fGameTime += m_fDt;
-
-          InputManager::GetInstance()->PollEvents();
-
-          for (Scene& rScene : m_lstScenes)
-          {
-            rScene.Update(m_fDt);
-          }
-
-          Renderer::GetInstance()->Draw();
+          rScene.Update(m_fDt);
         }
-      }      
-    }    
 
-    ShutDown();
+        Renderer::GetInstance()->Draw();
+      }
+    }      
+  }    
 
-    return 0;    
+  ShutDown();
+
+  return 0;    
 
 }
 

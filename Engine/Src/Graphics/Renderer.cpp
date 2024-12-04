@@ -13,6 +13,8 @@
 #include "Graphics/RenderTarget.h"
 #include "Graphics/RenderKey.h"
 #include "Graphics/RenderStep.h"
+#include "Graphics/ConstantBuffer.h"
+#include "Memory/Factory.h"
 
 #include "Core/Exception.h"
 
@@ -32,6 +34,12 @@ void Renderer::Initialize()
 
 }
 
+void Renderer::InitializePostWindow()
+{
+  m_pDirLightCBuff = Factory::Create <ConstantBuffer<DirLightData>>();
+  m_pDirLightCBuff->Configure(4, PipelineStage::PIXEL);
+}
+
 void Renderer::ShutDownPreWindow()
 {
   glfwTerminate();
@@ -39,10 +47,12 @@ void Renderer::ShutDownPreWindow()
   m_lstCamViews.clear();
 
   m_lstRenderPipelines.clear();
+
+  m_pDirLightCBuff.reset();
 }
 
 void Renderer::ShutDownPostWindow()
-{
+{  
   api::ShutDownAPI();
 }
 
@@ -50,6 +60,14 @@ void Renderer::AddRenderPipeline(RenderPipelineConfig&& _pPipelineCofig)
 {
   std::string sId = _pPipelineCofig.m_sId;
   m_lstRenderPipelines.push_back(std::move(RenderPipeline(sId, std::move(_pPipelineCofig))));
+}
+
+void Renderer::Setup()
+{
+  for (RenderPipeline& rPipeline : m_lstRenderPipelines)
+  {
+    rPipeline.Setup();
+  }
 }
 
 void Renderer::SubmitCamera(Camera* _pCamera, const Transform* _pTransform)
@@ -69,6 +87,15 @@ void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, cons
       pRenderStep->SubmitJob({ _pMesh, _pMaterial, pPass.get(), _pTransform, 0u });
     }    
   }
+}
+
+void Renderer::SubmitDirLight(DirLight* _pDirLight, const Transform* _pTransform)
+{
+  DirLightData oData{};
+  oData.m_vColor = glm::vec4{ 1.f, 1.f, 1.f, 1.f };  
+  oData.m_vDir = glm::vec4{ _pTransform->GetFront(), 1.f };
+
+  m_pDirLightCBuff->SetData(&oData);
 }
 
 void Renderer::OnWindowResize()
@@ -92,6 +119,11 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId)
   return nullptr;
 }
 
+void Renderer::SetupSubStateLightCBuffers(ResourceFrequency _eFrequency)
+{
+  m_pDirLightCBuff->SetupRenderSubState(_eFrequency);
+}
+
 void Renderer::Draw()
 {  
 
@@ -101,6 +133,11 @@ void Renderer::Draw()
   }
   else
   {
+
+    m_pDirLightCBuff->Update();
+
+    m_pDirLightCBuff->Bind();
+
     for (CamView& rCamView : m_lstCamViews)
     {
 

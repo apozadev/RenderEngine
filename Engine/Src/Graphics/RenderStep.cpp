@@ -20,20 +20,28 @@ RenderStep::RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarg
   , m_pRenderTarget(_pRenderTarget)
 {
   m_pAPIRenderSubState = api::CreateAPIRenderSubState(ResourceFrequency::RENDER_STEP);
-
-  api::BeginSubStateSetup(m_pAPIRenderSubState);
-
-  for (RenderTarget* _pInput : m_lstInputs)
-  {
-    _pInput->GetColorTextures()[0]->SetupRenderSubState(ResourceFrequency::RENDER_STEP);
-  }
-
-  api::EndSubStateSetup(ResourceFrequency::RENDER_STEP);
 }
 
 RenderStep::~RenderStep()
 {
   api::DestroyRenderSubState(m_pAPIRenderSubState);
+}
+
+void RenderStep::Setup() 
+{   
+  api::BeginSubStateSetup(m_pAPIRenderSubState);
+
+  SetupInternal();
+
+  api::EndSubStateSetup(ResourceFrequency::RENDER_STEP);
+}
+
+void RenderStep::SetupInternal()
+{
+  for (RenderTarget* _pInput : m_lstInputs)
+  {
+    _pInput->GetColorTextures()[0]->SetupRenderSubState(ResourceFrequency::RENDER_STEP);
+  }
 }
 
 void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransform)

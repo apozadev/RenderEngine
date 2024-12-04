@@ -6,6 +6,11 @@ layout(location = 2) in vec2 fragTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
+layout(set = 1, binding = 4) uniform DirLightBuffer {
+    vec3 vDirLightDir;
+    vec3 vDirLightColor;
+};
+
 #define PIXEL_MAIN_BEGIN \
   void main() {
 
@@ -17,3 +22,6 @@ layout(location = 0) out vec4 outColor;
 
 #define ddx(x)	dFdx(x)
 #define ddy(x)	dFdy(x)
+
+#define DirLightDir vDirLightDir
+#define DirLightColor vDirLightColor

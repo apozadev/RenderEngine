@@ -11,6 +11,12 @@
   return o; \
   } 
 
+cbuffer DirLightBuffer : register(b20)
+{
+  float3 vDirLightDir;
+  float3 vDirLightColor;
+};
+
 #define inPos     i.pos
 #define inUv      i.uv
 #define inNormal  i.normal
@@ -19,3 +25,6 @@
 
 //#define ddx(x)	ddx(x)
 //#define ddy(x)	ddy(x)
+
+#define DirLightDir vDirLightDir
+#define DirLightColor vDirLightColor

@@ -28,6 +28,8 @@ public:
 
 	void OnWindowResize();
 
+	void Setup();
+
 	void Execute(const Camera* _pCamera, const Transform* _pViewTransform);	
 
 private:

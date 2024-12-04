@@ -5,11 +5,19 @@
 #include "Graphics/Pass.h"
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Mesh.h"
+#include "Graphics/Renderer.h"
 
 GeometryRenderStep::GeometryRenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent)
   : RenderStep(std::move(_lstInputs), _pRenderTarget)
   , m_bOrderTranslucent(_bOrderTranslucent)
 {
+}
+
+void GeometryRenderStep::SetupInternal()
+{
+  RenderStep::SetupInternal();
+
+  Renderer::GetInstance()->SetupSubStateLightCBuffers(ResourceFrequency::RENDER_STEP);
 }
 
 void GeometryRenderStep::SubmitJob(Job&& _rJob)
@@ -37,7 +45,7 @@ const Pass* GeometryRenderStep::GetFirstPass() const
 void GeometryRenderStep::ExecuteInternal(const Camera* _pCamera, const Transform* _pViewTransform)
 {
 
-  if (m_lstJobs.empty()) { return; }
+  if (m_lstJobs.empty()) { return; }  
 
   const Pass* pLastPass = m_lstJobs[0].m_pPass;
 

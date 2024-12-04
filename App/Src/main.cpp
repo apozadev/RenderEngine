@@ -14,6 +14,7 @@
 #include "Graphics/BlendEnums.h"
 #include "Components/ModelComponent.h"
 #include "Components/CameraComponent.h"
+#include "Components/DirLightComponent.h"
 #include "Graphics/MaterialLibrary.h"
 #include "Graphics/RenderPipelineConfig.h"
 #include "Memory/Factory.h"
@@ -82,6 +83,7 @@ int main(){
   Entity* pModelEntity1 = pScene->AddEntity();
   Entity* pModelEntity2 = pScene->AddEntity();
   Entity* pGridEntity = pScene->AddEntity();
+  Entity* pLightEntity = pScene->AddEntity();
 
   Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial();
   {
@@ -149,6 +151,9 @@ int main(){
   pGridEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f / 2.f, glm::vec3{ 1.f, 0.f, 0.f }));
   pGridEntity->GetMutableLocalTransform().SetPos({ 0.f, 0.f, -10.f });  
   pGridEntity->GetMutableLocalTransform().SetScale({ 99.f, 99.f, 99.f });
+
+  pLightEntity->AddComponent<DirLightComponent>();
+  //pLightEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(0.f, glm::vec3{ 1.f, 0.f, 0.f }));
 
   pScene->Build();
 

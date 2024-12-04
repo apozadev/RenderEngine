@@ -3,18 +3,32 @@
 #include <memory>
 #include <string>
 
+#include "glm/vec4.hpp"
 #include "Core/Singleton.h"
 #include "Graphics/RenderPipeline.h"
+#include "Graphics/ResourceFrequency.h"
+#include "Memory/PtrTypes.h"
 
 class Mesh;
 class MaterialInstance;
 class Transform;
 class Window;
 class Camera;
+class DirLight;
 struct RenderPipelineConfig;
 
+template<typename T> class ConstantBuffer;
+
 class Renderer : public Singleton<Renderer>
-{
+{  
+
+  struct DirLightData
+  {
+    glm::vec4 m_vDir;    
+    glm::vec4 m_vColor;    
+  };
+
+public:  
 
   struct CamView
   {
@@ -22,29 +36,35 @@ class Renderer : public Singleton<Renderer>
     const Transform* m_pTransform;
   };
 
-public:  
-
   Renderer();
   ~Renderer();
 
   void Initialize();
+  void InitializePostWindow();
   void ShutDownPreWindow();   
   void ShutDownPostWindow();   
 
   void AddRenderPipeline(RenderPipelineConfig&& _pPipelineCofig);  
 
+  void Setup();
+
   void SubmitCamera(Camera* _pCamera, const Transform* _pTransform);
   void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform);
+  void SubmitDirLight(DirLight* _pDirLight, const Transform* _pTransform);
 
   void OnWindowResize();
 
   RenderPipeline* GetRenderPipeline(std::string _sPipelineId);
+
+  void SetupSubStateLightCBuffers(ResourceFrequency _eFrequency);
   
-  void Draw();
+  void Draw();  
 
 private:  
 
-  std::vector<CamView> m_lstCamViews;
+  std::vector<CamView> m_lstCamViews;  
 
-  std::vector<RenderPipeline> m_lstRenderPipelines;
+  std::vector<RenderPipeline> m_lstRenderPipelines;  
+
+  owner_ptr<ConstantBuffer<DirLightData>> m_pDirLightCBuff;
 };

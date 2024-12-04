@@ -1040,6 +1040,15 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
       _pWindow->m_oPassLayoutBuilder.AddLayoutBinding(std::move(oBinding));
     }
 
+    VkDescriptorSetLayoutBinding oBinding{};
+    oBinding.binding = 4u;
+    oBinding.descriptorCount = 1u;
+    oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    oBinding.pImmutableSamplers = NULL;
+
+    _pWindow->m_oPassLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+
     _pWindow->m_hPassDescSetLayout = _pWindow->m_oPassLayoutBuilder.Build(_pWindow->m_hDevice);
   }
 

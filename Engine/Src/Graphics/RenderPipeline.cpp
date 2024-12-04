@@ -26,6 +26,14 @@ void RenderPipeline::OnWindowResize()
 
 }
 
+void RenderPipeline::Setup()
+{
+  for (owner_ptr<RenderStep>& rStep : m_lstRenderSteps)
+  {
+    rStep->Setup();
+  }
+}
+
 void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTransform)
 {        
 

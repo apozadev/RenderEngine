@@ -608,7 +608,7 @@ namespace api
 
       _pCBuffer->m_stageMask = static_cast<unsigned int>(_oBindInfo.m_eStage);
 
-      uint32_t uSlotOffset = 0u;
+      /*uint32_t uSlotOffset = 0u;
 
       if ((_pCBuffer->m_stageMask & static_cast<uint32_t>(PipelineStage::VERTEX)) != 0u)
       {
@@ -616,6 +616,9 @@ namespace api
         {
         case ResourceFrequency::GLOBAL:
           uSlotOffset = VS_SLOT_OFFSET_GLOBAL;
+          break;
+        case ResourceFrequency::RENDER_STEP:
+          uSlotOffset = VS_SLOT_OFFSET_STEP;
           break;
         case ResourceFrequency::MATERIAL:
           uSlotOffset = VS_SLOT_OFFSET_MATERIAL;
@@ -634,6 +637,9 @@ namespace api
         case ResourceFrequency::GLOBAL:
           uSlotOffset = PS_SLOT_OFFSET_GLOBAL;
           break;
+        case ResourceFrequency::RENDER_STEP:
+          uSlotOffset = PS_SLOT_OFFSET_STEP;
+          break;
         case ResourceFrequency::MATERIAL:
           uSlotOffset = PS_SLOT_OFFSET_MATERIAL;
           break;
@@ -645,7 +651,9 @@ namespace api
         }
       }
 
-      _pCBuffer->m_slot = _oBindInfo.m_iBinding + uSlotOffset;      
+      _pCBuffer->m_slot = _oBindInfo.m_iBinding + uSlotOffset;      */
+
+      _pCBuffer->m_slot = static_cast<unsigned int>(_oBindInfo.m_iBinding + static_cast<int>(_oBindInfo.m_eLevel) * 16);
 
     }
 
