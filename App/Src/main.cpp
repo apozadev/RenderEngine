@@ -84,6 +84,7 @@ int main(){
   Entity* pModelEntity2 = pScene->AddEntity();
   Entity* pGridEntity = pScene->AddEntity();
   Entity* pLightEntity = pScene->AddEntity();
+  Entity* pLightEntity2 = pScene->AddEntity();
 
   Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial();
   {
@@ -124,7 +125,7 @@ int main(){
     owner_ptr<Pass> pPass0 = Factory::Create<Pass>();
     pPass0->Configure(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
-      , "Assets/Shaders/Pixel/SolidPixel.hlsl"
+      , "Assets/Shaders/Pixel/GridPixel.hlsl"
       , true
       , BlendOp::BLEND_OP_ADD
       , BlendFactor::BLEND_SRC_ALPHA
@@ -153,7 +154,8 @@ int main(){
   pGridEntity->GetMutableLocalTransform().SetScale({ 99.f, 99.f, 99.f });
 
   pLightEntity->AddComponent<DirLightComponent>();
-  //pLightEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(0.f, glm::vec3{ 1.f, 0.f, 0.f }));
+  pLightEntity2->AddComponent<DirLightComponent>()->SetColor({5.5f, 0.5f, 0.3f});
+  pLightEntity2->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 1.f, 0.f, 0.f }));
 
   pScene->Build();
 

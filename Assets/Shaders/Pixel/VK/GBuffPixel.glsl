@@ -1,3 +1,10 @@
+#version 450
+
+#define mul(mat, v) (mat * v)
+
+#define sampleTex(tex, uv) texture(tex, uv);
+
+#define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
 #pragma shader_stage(fragment)
 
 layout(location = 0) in vec3 fragColor;
@@ -30,4 +37,22 @@ layout(set = 1, binding = 4) uniform LightBuffer {
 
 #define DirLightDir(i) aDirLights[i].vDirLightDir
 #define DirLightColor(i) aDirLights[i].vDirLightColor
-#define DirLightCount uNumLights
+#define DirLightCount uNumLighhts
+
+Texture(gbuffTex,1,0)
+
+Texture(albedoTex,3,0)
+
+PIXEL_MAIN_BEGIN
+
+  vec3 lightDir = vec3(0, 0, 1);
+
+  float ambientFactor = 0.3;
+  float light = max(0, dot(lightDir, normalize(inNormal)));
+
+  vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+
+  outColor = color * (max(0, dot(lightDir, normalize(inNormal))) + ambientFactor); 
+  outColor.a = 0.7f;
+
+PIXEL_MAIN_END

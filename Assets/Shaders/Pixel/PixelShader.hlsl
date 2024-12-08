@@ -7,7 +7,12 @@ PIXEL_MAIN_BEGIN
 
   vec3 ambientFactor = vec3(0.3, 0.3, 0.3);  
 
-  vec3 light = DirLightColor * max(0, dot(DirLightDir, normalize(inNormal)));
+  vec3 light = vec3(0, 0, 0);
+
+  for (uint i = 0; i < DirLightCount; i++)
+  {
+    light += DirLightColor(i) * max(0, dot(DirLightDir(i), normalize(inNormal))); 
+  }
 
   vec4 color = sampleTex(albedoTex, inUv);
 

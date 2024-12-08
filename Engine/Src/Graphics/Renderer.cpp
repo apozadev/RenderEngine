@@ -14,6 +14,7 @@
 #include "Graphics/RenderKey.h"
 #include "Graphics/RenderStep.h"
 #include "Graphics/ConstantBuffer.h"
+#include "Graphics/DirLight.h"
 #include "Memory/Factory.h"
 
 #include "Core/Exception.h"
@@ -36,8 +37,10 @@ void Renderer::Initialize()
 
 void Renderer::InitializePostWindow()
 {
-  m_pDirLightCBuff = Factory::Create <ConstantBuffer<DirLightData>>();
-  m_pDirLightCBuff->Configure(4, PipelineStage::PIXEL);
+  m_pLightCBuff = Factory::Create <ConstantBuffer<LightData>>();
+  m_pLightCBuff->Configure(4, PipelineStage::PIXEL);
+
+  m_pLightCBuff->GetData()->m_uNumLights = 0u;
 }
 
 void Renderer::ShutDownPreWindow()
@@ -48,7 +51,7 @@ void Renderer::ShutDownPreWindow()
 
   m_lstRenderPipelines.clear();
 
-  m_pDirLightCBuff.reset();
+  m_pLightCBuff.reset();
 }
 
 void Renderer::ShutDownPostWindow()
@@ -62,7 +65,7 @@ void Renderer::AddRenderPipeline(RenderPipelineConfig&& _pPipelineCofig)
   m_lstRenderPipelines.push_back(std::move(RenderPipeline(sId, std::move(_pPipelineCofig))));
 }
 
-void Renderer::Setup()
+void Renderer::Setup() 
 {
   for (RenderPipeline& rPipeline : m_lstRenderPipelines)
   {
@@ -91,11 +94,16 @@ void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, cons
 
 void Renderer::SubmitDirLight(DirLight* _pDirLight, const Transform* _pTransform)
 {
-  DirLightData oData{};
-  oData.m_vColor = glm::vec4{ 1.f, 1.f, 1.f, 1.f };  
-  oData.m_vDir = glm::vec4{ _pTransform->GetFront(), 1.f };
+  if (m_pLightCBuff->GetData()->m_uNumLights < MAX_LIGHTS)
+  {
+    DirLightData oData{};    
+    oData.m_vColor = glm::vec4{ _pDirLight->m_vColor, 1.f };
+    oData.m_vDir = glm::vec4{ _pTransform->GetFront(), 1.f };
 
-  m_pDirLightCBuff->SetData(&oData);
+    m_pLightCBuff->GetData()->m_aLights[m_pLightCBuff->GetData()->m_uNumLights] = oData;
+
+    m_pLightCBuff->GetData()->m_uNumLights++;
+  }
 }
 
 void Renderer::OnWindowResize()
@@ -121,7 +129,7 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId)
 
 void Renderer::SetupSubStateLightCBuffers(ResourceFrequency _eFrequency)
 {
-  m_pDirLightCBuff->SetupRenderSubState(_eFrequency);
+  m_pLightCBuff->SetupRenderSubState(_eFrequency);
 }
 
 void Renderer::Draw()
@@ -134,9 +142,9 @@ void Renderer::Draw()
   else
   {
 
-    m_pDirLightCBuff->Update();
+    m_pLightCBuff->Update();
 
-    m_pDirLightCBuff->Bind();
+    m_pLightCBuff->Bind();
 
     for (CamView& rCamView : m_lstCamViews)
     {
@@ -158,4 +166,6 @@ void Renderer::Draw()
   
 
   m_lstCamViews.clear();
+
+  m_pLightCBuff->GetData()->m_uNumLights = 0u;
 }

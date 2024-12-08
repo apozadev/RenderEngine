@@ -176,7 +176,7 @@ target_include_directories(${PROJECT_NAME}
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
-set(TARGET_RENDER_API ${RENDER_API_VULKAN}) 
+set(TARGET_RENDER_API ${RENDER_API_VULKAN})  
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
 	RENDER_API=${TARGET_RENDER_API}
@@ -191,21 +191,24 @@ set(SHADER_BINARY_FILES)
 
 function(CompileHLSL FILE TYPE_ARG)
   get_filename_component(FILE_NAME ${FILE} NAME_WE)
-  get_filename_component(FILE_PATH ${FILE} PATH)  
-  set(CSO "${FILE_PATH}/${FILE_NAME}.cso")  
+  get_filename_component(FILE_PATH ${FILE} PATH)    
   set(API_ARG)
-  if(${TARGET_RENDER_API} MATCHES ${RENDER_API_DX11})
-    set(API_ARG dx11)
-  else()
-    set(API_ARG vk)
-  endif()
-
-  add_custom_command(OUTPUT ${CSO} 
-                     COMMAND python3 ${CMAKE_SOURCE_DIR}/Tools/ShaderCompiler/ShaderCompiler.py ${TYPE_ARG} ${API_ARG} ${FILE}
+  if(${TARGET_RENDER_API} MATCHES ${RENDER_API_DX11})    
+	set(CSO "${FILE_PATH}/${FILE_NAME}.cso")    
+	add_custom_command(OUTPUT ${CSO} 
+                     COMMAND python3 ${CMAKE_SOURCE_DIR}/Tools/ShaderCompiler/ShaderCompiler.py ${TYPE_ARG} dx11 ${FILE}
                      DEPENDS ${FILE}
                      VERBATIM)  
-  
-  list(APPEND SHADER_BINARY_FILES ${CSO})
+	list(APPEND SHADER_BINARY_FILES ${CSO})
+  else()    
+	set(SPV "${FILE_PATH}/${FILE_NAME}.spv")  
+	add_custom_command(OUTPUT ${SPV} 
+                     COMMAND python3 ${CMAKE_SOURCE_DIR}/Tools/ShaderCompiler/ShaderCompiler.py ${TYPE_ARG} vk ${FILE}
+                     DEPENDS ${FILE}
+                     VERBATIM)  
+	list(APPEND SHADER_BINARY_FILES ${SPV})
+  endif()  
+    
   set(SHADER_BINARY_FILES ${SHADER_BINARY_FILES} PARENT_SCOPE)  
 endfunction()
 

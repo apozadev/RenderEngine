@@ -11,10 +11,16 @@
   return o; \
   } 
 
-cbuffer DirLightBuffer : register(b20)
+struct DirLight
 {
   float3 vDirLightDir;
   float3 vDirLightColor;
+};
+
+cbuffer LightBuffer : register(b20)
+{
+  DirLight aDirLights[5];
+  uint uNumLights;
 };
 
 #define inPos     i.pos
@@ -26,5 +32,6 @@ cbuffer DirLightBuffer : register(b20)
 //#define ddx(x)	ddx(x)
 //#define ddy(x)	ddy(x)
 
-#define DirLightDir vDirLightDir
-#define DirLightColor vDirLightColor
+#define DirLightDir(i) aDirLights[i].vDirLightDir
+#define DirLightColor(i) aDirLights[i].vDirLightColor
+#define DirLightCount uNumLights

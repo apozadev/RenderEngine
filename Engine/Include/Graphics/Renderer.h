@@ -14,10 +14,12 @@ class MaterialInstance;
 class Transform;
 class Window;
 class Camera;
-class DirLight;
+struct DirLight;
 struct RenderPipelineConfig;
 
 template<typename T> class ConstantBuffer;
+
+#define MAX_LIGHTS 5
 
 class Renderer : public Singleton<Renderer>
 {  
@@ -26,6 +28,12 @@ class Renderer : public Singleton<Renderer>
   {
     glm::vec4 m_vDir;    
     glm::vec4 m_vColor;    
+  };
+
+  struct LightData
+  {
+    DirLightData m_aLights[MAX_LIGHTS];
+    unsigned int m_uNumLights;
   };
 
 public:  
@@ -66,5 +74,5 @@ private:
 
   std::vector<RenderPipeline> m_lstRenderPipelines;  
 
-  owner_ptr<ConstantBuffer<DirLightData>> m_pDirLightCBuff;
+  owner_ptr<ConstantBuffer<LightData>> m_pLightCBuff;
 };

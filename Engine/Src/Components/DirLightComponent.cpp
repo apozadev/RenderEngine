@@ -5,6 +5,7 @@
 
 DirLightComponent::DirLightComponent()
 {
+  m_oDirLight.m_vColor = { 1.f, 1.f, 1.f };
 }
 
 DirLightComponent::~DirLightComponent() 
@@ -12,8 +13,7 @@ DirLightComponent::~DirLightComponent()
 }
 
 void DirLightComponent::Start()
-{
-  m_pDirLight = Factory::Create<DirLight>();
+{  
 }
 
 void DirLightComponent::PreTransformUpdate(float _fTimeStep)
@@ -22,5 +22,5 @@ void DirLightComponent::PreTransformUpdate(float _fTimeStep)
 
 void DirLightComponent::Update(float _fTimeStep)
 {
-  Renderer::GetInstance()->SubmitDirLight(m_pDirLight.get(), &m_pEntity->GetGlobalTransform());
+  Renderer::GetInstance()->SubmitDirLight(&m_oDirLight, &m_pEntity->GetGlobalTransform());
 }

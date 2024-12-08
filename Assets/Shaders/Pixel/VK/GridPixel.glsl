@@ -37,31 +37,32 @@ layout(set = 1, binding = 4) uniform LightBuffer {
 
 #define DirLightDir(i) aDirLights[i].vDirLightDir
 #define DirLightColor(i) aDirLights[i].vDirLightColor
-#define DirLightCount uNumLights
+#define DirLightCount uNumLighhts
 
-Texture(gbuffTex,1,0)
-
-Texture(albedoTex,3,0)
+vec2 mod2(vec2 x, vec2 y)
+{
+  return x - y * floor(x / y);
+}
 
 PIXEL_MAIN_BEGIN
 
-  vec3 ambientFactor = vec3(0.3, 0.3, 0.3);  
+float scale = 99.0;
+vec2 cellSize = vec2(1.0, 1.0) / scale;
+vec2 halfCell = cellSize*0.5;
+vec2 lineWidth = vec2(0.0001, 0.0001) / scale;
 
-  vec3 light = vec3(0, 0, 0);
+vec2 diff = fwidth(inUv);
 
-  for (uint i = 0; i < DirLightCount; i++)
-  {
-    light += DirLightColor(i) * max(0, dot(DirLightDir(i), normalize(inNormal))); 
-  }
+float fade = length(diff) * scale * scale;
 
-  vec4 color = sampleTex(albedoTex, inUv);
+lineWidth += diff*0.8;
 
-  /*if (light < 0.5)  
-  {
-    color = sampleTex(gbuffTex, inUv);
-  }  */
+vec2 newUv = mod2(inUv, cellSize);
 
-  outColor = color * vec4((light + ambientFactor), 1);
-  outColor.a = 0.7f; 
- 
+vec2 c = smoothstep(lineWidth, lineWidth*0.5, abs(newUv - halfCell));
+
+float lineAlpha = max(min(c.x + c.y, 1) / fade, 0);
+
+outColor = vec4(1, 1, 1, lineAlpha);
+
 PIXEL_MAIN_END
