@@ -24,6 +24,7 @@ void RenderPipeline::OnWindowResize()
 
   GenerateFromConfig();
 
+  Setup();
 }
 
 void RenderPipeline::Setup()

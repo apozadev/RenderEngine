@@ -81,6 +81,8 @@ namespace vk
 
 	void BindAPITexture(APITexture* _pTexture);
 
+	void UnbindAPITexture(APITexture* _pTexture);
+
 	void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage);
 
 	void DestroyAPITexture(APITexture* _pTexture);

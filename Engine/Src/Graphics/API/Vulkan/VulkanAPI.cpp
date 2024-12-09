@@ -501,6 +501,11 @@ namespace vk
     
   }
 
+  void UnbindAPITexture(APITexture* /*_pTexture*/)
+  {
+
+  }
+
   void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage)
   {
     APIWindow* pWindow = _pTexture->m_pOwnerWindow;

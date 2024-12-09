@@ -27,6 +27,7 @@ public:
   void SetupAsRenderTargetColorResolve() const;
 
   void Bind() const;
+  void Unbind() const;
 
   void ClearAsColor() const;
   void ClearAsDepthStencil() const;

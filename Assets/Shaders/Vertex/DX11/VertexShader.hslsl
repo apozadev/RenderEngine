@@ -33,7 +33,7 @@ cbuffer global : register(b0)
 	matrix viewproj;
 };
 
-cbuffer model : register(b2)
+cbuffer model : register(b3)
 {
 	matrix model;
 	matrix normal;

@@ -138,6 +138,11 @@ namespace api
     API::BindAPITexture(_pTexture);
   }
 
+  void UnbindAPITexture(APITexture* _pTexture)
+  {
+    API::UnbindAPITexture(_pTexture);
+  }
+
   void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage)
   {
     API::ClearAPITexture(_pTexture, _eUsage);

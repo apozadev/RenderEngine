@@ -62,6 +62,11 @@ void Texture2D::Bind() const
   api::BindAPITexture(m_pAPITexture);
 }
 
+void Texture2D::Unbind() const
+{
+  api::UnbindAPITexture(m_pAPITexture);
+}
+
 void Texture2D::ClearAsColor() const
 {
   api::ClearAPITexture(m_pAPITexture, TextureUsage::COLOR_TARGET);

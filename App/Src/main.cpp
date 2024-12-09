@@ -22,7 +22,7 @@
 #include <string>
 
 // Hacer componentes owner_ptr tambien.
-// Mover global rendersubstate fuera de Camera. Queremos meter el cbuffer de la luz.
+// Se ve negro en dx11
 
 int main(){
 
@@ -79,6 +79,9 @@ int main(){
 
   pCameraEntity->AddComponent<CameraComponent>();
   pCameraEntity->GetMutableLocalTransform().SetPos({ 0.f, 2.f, 0.f });
+
+  /*pCameraEntity->GetMutableLocalTransform().SetPos({ 0.f, 2.f, -20.f });
+  pCameraEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 0.f, 1.f, 0.f }));*/
 
   Entity* pModelEntity1 = pScene->AddEntity();
   Entity* pModelEntity2 = pScene->AddEntity();

@@ -15,7 +15,7 @@ namespace dx11
   {
 
     RECT rect;
-    if (!GetWindowRect(_pWindow->m_hWnd, &rect))
+    if (!GetClientRect(_pWindow->m_hWnd, &rect))
     {
       THROW_GENERIC_EXCEPTION("[DX11] Could not get window rect")
     }

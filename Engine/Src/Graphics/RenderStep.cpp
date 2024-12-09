@@ -92,6 +92,12 @@ void RenderStep::Bind() const
 
 void RenderStep::Unbind() const
 {
+
+  for (RenderTarget* _pInput : m_lstInputs)
+  {
+    _pInput->GetColorTextures()[0]->Unbind();
+  }
+
   if (m_pRenderTarget)
   {
     m_pRenderTarget->Unbind();

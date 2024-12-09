@@ -7,8 +7,8 @@ layout(location = 2) in vec2 fragTexCoord;
 layout(location = 0) out vec4 outColor;
 
 struct DirLightData {
-    vec3 vDirLightDir;
-    vec3 vDirLightColor;
+    vec4 vDirLightDir;
+    vec4 vDirLightColor;
 };
 
 layout(set = 1, binding = 4) uniform LightBuffer {

@@ -401,6 +401,24 @@ namespace api
       }
     }
 
+    void UnbindAPITexture(APITexture* _pTexture)
+    {
+      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
+
+      uint32_t uStageMsk = static_cast<uint32_t>(_pTexture->m_eStage);
+
+      ID3D11ShaderResourceView* pNullSrv = nullptr;
+
+      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::VERTEX)) != 0u)
+      {
+        pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
+      }
+      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::PIXEL)) != 0u)
+      {
+        pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
+      }
+    }
+
     void ClearAPITexture(APITexture* /*_pTexture*/, TextureUsage /*_eUsage*/)
     {
 
@@ -653,7 +671,7 @@ namespace api
 
       _pCBuffer->m_slot = _oBindInfo.m_iBinding + uSlotOffset;      */
 
-      _pCBuffer->m_slot = static_cast<unsigned int>(_oBindInfo.m_iBinding + static_cast<int>(_oBindInfo.m_eLevel) * 16);
+      _pCBuffer->m_slot = static_cast<unsigned int>(/*_oBindInfo.m_iBinding +*/ static_cast<int>(_oBindInfo.m_eLevel) /** 16*/);
 
     }
 

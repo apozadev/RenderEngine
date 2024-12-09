@@ -25,9 +25,9 @@ VkFormat GetVKFormat(ImageFormat _eFormat)
   case ImageFormat::R32:
     return VK_FORMAT_D32_SFLOAT;
   case ImageFormat::R8G8B8:
-    return VK_FORMAT_R8G8B8_SRGB;
+    return VK_FORMAT_R8G8B8_UNORM;
   case ImageFormat::R8G8B8A8:
-    return VK_FORMAT_R8G8B8A8_SRGB;
+    return VK_FORMAT_R8G8B8A8_UNORM;
   default:
     break;
   }
@@ -647,7 +647,7 @@ void CreateSwapchain(APIWindow* _pWindow)
     _pWindow->m_eSwapchainFormat = pSurfaceFormats[0].format;
     for (int i = 0; i < uSurfaceFormatCount; i++)
     {
-      if (pSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB
+      if (pSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_UNORM
         && pSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
       {
         _pWindow->m_eSwapchainFormat = pSurfaceFormats[i].format;
@@ -1226,6 +1226,8 @@ void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _
   oSamplerInfo.minLod = 0.0f;
   oSamplerInfo.maxLod = static_cast<float>(_uMipLevels);
   oSamplerInfo.mipLodBias = 0.0f;
+  oSamplerInfo.magFilter = VK_FILTER_LINEAR;
+  oSamplerInfo.minFilter = VK_FILTER_LINEAR;
 
   VK_CHECK(vkCreateSampler(_pWindow->m_hDevice, &oSamplerInfo, NULL, &_pTexture->m_hSampler))
 }

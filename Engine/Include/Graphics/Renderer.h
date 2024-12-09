@@ -29,11 +29,12 @@ class Renderer : public Singleton<Renderer>
     glm::vec4 m_vDir;    
     glm::vec4 m_vColor;    
   };
-
-  struct LightData
+  
+  struct alignas(16) LightData
   {
     DirLightData m_aLights[MAX_LIGHTS];
     unsigned int m_uNumLights;
+    float pad0, pad1, pad2;
   };
 
 public:  
