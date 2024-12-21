@@ -44,6 +44,16 @@ cbuffer LightBuffer : register(b1)
   uint uNumLights;
 };
 
+Texture(Input0, 1, 0)
+Texture(Input1, 1, 1)
+Texture(Input2, 1, 2)
+Texture(Input3, 1, 3)
+
+Texture(Texture0, 3, 0)
+Texture(Texture1, 3, 1)
+Texture(Texture2, 3, 2)
+Texture(Texture3, 3, 3)
+
 #define inPos     __input.pos
 #define inUv      __input.uv
 #define inNormal  __input.normal
@@ -68,5 +78,5 @@ vec4 color = vec4(1,1,1,1);
 
 outColor = color * (light + ambientFactor);
 
-PIXEL_MAIN_END
+PIXEL_MAIN_END 
 

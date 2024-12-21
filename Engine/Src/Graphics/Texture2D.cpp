@@ -6,26 +6,20 @@
 #include "Graphics/ResourceBindInfo.h"
 
 
-void Texture2D::Configure(const std::string& _sFilename, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)
+void Texture2D::Configure(const std::string& _sFilename, unsigned int _uMipLevels, unsigned int _uMsaaSamples)
 {
   const Image& rImage = ImageManager::GetInstance()->LoadImage(_sFilename, true);  
-  m_pAPITexture = api::CreateAPITexture(rImage.m_pData, rImage.m_iWidth, rImage.m_iHeight, rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);
-  m_iBinding = _iBinding;
-  m_eStage = _eStage;
+  m_pAPITexture = api::CreateAPITexture(rImage.m_pData, rImage.m_iWidth, rImage.m_iHeight, rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);    
 }
 
-void Texture2D::Configure(const Image& _rImage, int _iBinding , PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)  
+void Texture2D::Configure(const Image& _rImage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)  
 {  
-  m_pAPITexture = api::CreateAPITexture(_rImage.m_pData, _rImage.m_iWidth, _rImage.m_iHeight, _rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);
-  m_iBinding = _iBinding;
-  m_eStage = _eStage;
+  m_pAPITexture = api::CreateAPITexture(_rImage.m_pData, _rImage.m_iWidth, _rImage.m_iHeight, _rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);  
 }
 
-void Texture2D::Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels, unsigned int _uMsaaSamples, uint32_t _uUsage)  
+void Texture2D::Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, unsigned int _uMipLevels, unsigned int _uMsaaSamples, uint32_t _uUsage)  
 {
   m_pAPITexture = api::CreateAPITexture(nullptr, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage);
-  m_iBinding = _iBinding;
-  m_eStage = _eStage;
 }
 
 Texture2D::~Texture2D()
@@ -33,12 +27,12 @@ Texture2D::~Texture2D()
   api::DestroyAPITexture(m_pAPITexture);
 }
 
-void Texture2D::SetupRenderSubState(ResourceFrequency _eFrequency) const
+void Texture2D::SetupRenderSubState(std::string&& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const
 {  
   ResourceBindInfo oBindInfo {};
   oBindInfo.m_eLevel = _eFrequency;
-  oBindInfo.m_eStage = m_eStage;
-  oBindInfo.m_iBinding = m_iBinding;
+  oBindInfo.m_eStage = _eStage;
+  oBindInfo.m_sName = _sName;
   api::SubStateSetupTexture(m_pAPITexture, oBindInfo);
 }
 

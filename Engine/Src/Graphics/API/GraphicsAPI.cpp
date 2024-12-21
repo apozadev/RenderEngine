@@ -243,6 +243,49 @@ namespace api
     API::DestroyAPIRenderState(_pAPIRenderState);
   }
 
+  // Shader Reflection
+
+  uint32_t GetConstantBufferCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
+  {
+    return API::GetConstantBufferCount(_pAPIRenderState, _eStage);
+  }
+
+  uint32_t GetTextureCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
+  {
+    return API::GetTextureCount(_pAPIRenderState, _eStage);
+  }
+
+  std::string GetConstantBufferName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
+  {
+    return API::GetConstantBufferName(_pAPIRenderState, _eStage, _uIdx);
+  }
+
+  const char* GetTextureName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
+  {
+    return API::GetTextureName(_pAPIRenderState, _eStage, _uIdx);
+  }
+
+  uint32_t GetConstantBufferMemberCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
+  {
+    return API::GetConstantBufferMemberCount(_pAPIRenderState, _eStage, _uIdx);
+  }
+
+  std::string GetConstantBufferMemberName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+  {
+    return API::GetConstantBufferMemberName(_pAPIRenderState, _eStage, _uIdx, _uMemberIdx);
+  }
+
+  size_t GetConstantBufferMemberSize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+  {
+    return API::GetConstantBufferMemberSize(_pAPIRenderState, _eStage, _uIdx, _uMemberIdx);
+  }
+
+  ConstantBufferType GetConstantBufferMemberType(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+  {
+    return API::GetConstantBufferMemberType(_pAPIRenderState, _eStage, _uIdx, _uMemberIdx);
+  }
+
+
   // Render sub state
 
   APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)

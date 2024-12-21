@@ -215,7 +215,7 @@ namespace vk
     delete[] _pWindow->m_pInFlightFences;
         
     vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hGlobalDescSetLayout, NULL);        
-    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hPassDescSetLayout, NULL);        
+    vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hStepDescSetLayout, NULL);        
     vkDestroyDescriptorSetLayout(_pWindow->m_hDevice, _pWindow->m_hMatInstanceDescSetLayout, NULL);        
 
     vkDestroyDescriptorPool(_pWindow->m_hDevice, _pWindow->m_hDescPool, NULL);        
@@ -796,7 +796,47 @@ namespace vk
     vkDestroyPipeline(pWindow->m_hDevice, _pAPIRenderState->m_hGraphicsPipeline, NULL);
 
     s_oRenderStatePool.ReturnElement(_pAPIRenderState);
-  }  
+  }    
+
+  uint32_t GetConstantBufferCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
+  {
+    return 0u;
+  }
+
+  uint32_t GetTextureCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
+  {
+    return 0u;
+  }
+
+  std::string GetConstantBufferName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
+  {
+    return "";
+  }
+
+  const char* GetTextureName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
+  {
+    return nullptr;
+  }
+
+  uint32_t GetConstantBufferMemberCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
+  {
+    return 0u;
+  }
+
+  std::string GetConstantBufferMemberName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+  {
+    return "";
+  }
+
+  size_t GetConstantBufferMemberSize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+  {
+    return 0u;
+  }
+
+  ConstantBufferType GetConstantBufferMemberType(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+  {
+    return ConstantBufferType::NONE;
+  }
 
   APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)
   {    
@@ -813,7 +853,7 @@ namespace vk
       pSubState->m_hDecSetLayout = pSubState->m_pOwnerWindow->m_hGlobalDescSetLayout;
       break;
     case ResourceFrequency::RENDER_STEP:
-      pSubState->m_hDecSetLayout = pSubState->m_pOwnerWindow->m_hPassDescSetLayout;
+      pSubState->m_hDecSetLayout = pSubState->m_pOwnerWindow->m_hStepDescSetLayout;
       break;
     default:
       THROW_GENERIC_EXCEPTION("[API] [VK] Tried to create an APIRenderSubState with invalid ResourceFrequency")
@@ -857,16 +897,18 @@ namespace vk
 
     APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;    
+
+    uint32_t uBinding = FindBinding(pWindow, _oBindInfo, VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
     for (int i = 0; i < uNumImages; i++)
-    {
+    {            
       VkDescriptorBufferInfo oBufferInfo{};
       oBufferInfo.buffer = _pCBuffer->m_pUniformBuffers[i];
       oBufferInfo.offset = 0;
       oBufferInfo.range = _uSize;
 
-      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), _oBindInfo.m_iBinding, i, _oBindInfo.m_eStage);
+      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, i, _oBindInfo.m_eStage);
     }
   }
 
@@ -877,6 +919,8 @@ namespace vk
 
     uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
+    uint32_t uBinding = FindBinding(pWindow, _oBindInfo, VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
     for (int i = 0; i < uNumImages; i++)
     {
       VkDescriptorImageInfo oImageInfo{};
@@ -884,7 +928,7 @@ namespace vk
       oImageInfo.imageView = _pTexture->m_hImageView;
       oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), _oBindInfo.m_iBinding, i, _oBindInfo.m_eStage);
+      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, i, _oBindInfo.m_eStage);
     }
   }
 
@@ -908,7 +952,7 @@ namespace vk
       pLayoutBuilder = &pWindow->m_oGlobalLayoutBuilder;
       break;
     case ResourceFrequency::RENDER_STEP:
-      pLayoutBuilder = &pWindow->m_oPassLayoutBuilder;
+      pLayoutBuilder = &pWindow->m_oStepLayoutBuilder;
       break;
     }
 

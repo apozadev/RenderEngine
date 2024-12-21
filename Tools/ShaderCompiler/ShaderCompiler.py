@@ -63,7 +63,7 @@ def main():
 						iCommaIdx = line.rfind(',')
 						iBind = int(line[iCommaIdx+1 : iCommaIdx+2])						
 						iSet = int(line[iCommaIdx-1 : iCommaIdx])
-						line = line[:iCommaIdx+1] + str(iBind + iSet*16) + line[iCommaIdx+2:]
+						line = line[:iCommaIdx+1] + str(iBind + iSet*4) + line[iCommaIdx+2:]
 					sNewShader += line + '\n'
 				sShader = sNewShader
 			sShader = sCommon + sShader

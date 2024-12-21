@@ -6,6 +6,7 @@
 #include "Graphics/TextureUsage.h"
 #include "Graphics/ResourceBindInfo.h"
 #include "Graphics/RenderStateInfo.h"
+#include "Graphics/ConstantBufferTypes.h"
 
 struct GLFWwindow;
 
@@ -124,6 +125,24 @@ namespace vk
 	void BindAPIRenderState(APIRenderState* _pAPIRenderState);	
 
 	void DestroyAPIRenderState(APIRenderState* _pAPIRenderState);
+
+	// Shader Reflection
+
+	uint32_t GetConstantBufferCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage);
+
+	uint32_t GetTextureCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage);
+
+	std::string GetConstantBufferName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx);
+
+	const char* GetTextureName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx);
+
+	uint32_t GetConstantBufferMemberCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx);
+
+	std::string GetConstantBufferMemberName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
+
+	size_t GetConstantBufferMemberSize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
+
+	ConstantBufferType GetConstantBufferMemberType(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
 
 	// Render substate
 

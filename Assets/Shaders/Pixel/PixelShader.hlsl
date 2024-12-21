@@ -1,7 +1,9 @@
 
-Texture(gbuffTex,1,0)
-
-Texture(albedoTex,3,0)
+CBuffer(MatBuffer, 2)
+{
+  float4 vTint;
+  float fMult;
+}
 
 PIXEL_MAIN_BEGIN
 
@@ -11,17 +13,19 @@ PIXEL_MAIN_BEGIN
 
   for (uint i = 0; i < DirLightCount; i++)
   {
-    light += DirLightColor(i) * max(0, dot(DirLightDir(i), normalize(inNormal))); 
+    light += DirLightColor(i).xyz * max(0, dot(DirLightDir(i).xyz, normalize(inNormal))); 
   }
 
-  vec4 color = sampleTex(albedoTex, inUv);
+  vec4 color = sampleTex(Texture0, inUv);
 
   /*if (light < 0.5)  
   {
     color = sampleTex(gbuffTex, inUv);
   }  */
 
-  outColor = color * vec4((light + ambientFactor), 1);
+  outColor = color * vec4((light + ambientFactor), 1); 
   outColor.a = 0.7f; 
+
+  outColor *= vTint * fMult;  
  
 PIXEL_MAIN_END

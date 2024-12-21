@@ -15,7 +15,7 @@ namespace vk
 
 // DescriptorSetLayoutBuilder
 
-void DescriptorSetLayoutBuilder::AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding)
+void DescriptorSetLayoutBuilder::AddLayoutBinding(const char* _sName, VkDescriptorSetLayoutBinding&& _oBinding)
 {
   /*
   for (int i = 0; i < m_lstDescSetInfos.size(); i++)
@@ -34,7 +34,8 @@ void DescriptorSetLayoutBuilder::AddLayoutBinding(VkDescriptorSetLayoutBinding&&
   */
 
   // Match not found, add entry
-  m_lstDescSetInfos.push_back(std::move(_rBinding));  
+  m_lstDescriptors.push_back(std::move(_oBinding));
+  m_lstNames.emplace_back(_sName);
 }
 
 VkDescriptorSetLayout DescriptorSetLayoutBuilder::Build(VkDevice _hDevice)
@@ -42,8 +43,8 @@ VkDescriptorSetLayout DescriptorSetLayoutBuilder::Build(VkDevice _hDevice)
 
   VkDescriptorSetLayoutCreateInfo oDescSetLayoutInfo{};
   oDescSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  oDescSetLayoutInfo.bindingCount = m_lstDescSetInfos.size();
-  oDescSetLayoutInfo.pBindings = m_lstDescSetInfos.data();
+  oDescSetLayoutInfo.bindingCount = m_lstDescriptors.size();
+  oDescSetLayoutInfo.pBindings = m_lstDescriptors.data();
 
   VkDescriptorSetLayout hDescSetLayout;
 
@@ -54,7 +55,7 @@ VkDescriptorSetLayout DescriptorSetLayoutBuilder::Build(VkDevice _hDevice)
 
 bool DescriptorSetLayoutBuilder::Contains(VkDescriptorSetLayoutBinding _oBinding) const
 {
-  for (const VkDescriptorSetLayoutBinding& rBind : m_lstDescSetInfos)
+  for (const VkDescriptorSetLayoutBinding& rBind : m_lstDescriptors)
   {
     if (rBind.binding == _oBinding.binding
       && rBind.descriptorCount == _oBinding.descriptorCount
@@ -65,6 +66,20 @@ bool DescriptorSetLayoutBuilder::Contains(VkDescriptorSetLayoutBinding _oBinding
     }
   }
   return false;
+}
+
+uint32_t DescriptorSetLayoutBuilder::FindBinding(const std::string& _sName, PipelineStage _eStage, VkDescriptorType _eType) const
+{
+  for (int i = 0; i < m_lstNames.size(); i++)
+  {
+    if (_sName == m_lstNames[i] 
+      && (m_lstDescriptors[i].stageFlags & GetVkStageFlag(_eStage)) != 0u
+      && m_lstDescriptors[i].descriptorType == _eType)
+    {
+      return m_lstDescriptors[i].binding;      
+    }
+  }
+  return 0xFFFFFFFFu;
 }
 
 // DescriptorPoolBuilder

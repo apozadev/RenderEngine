@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include <D3dCompiler.h>
 #include <wrl.h>
 
 namespace api
@@ -24,6 +25,10 @@ namespace dx11
     Microsoft::WRL::ComPtr<ID3D11BlendState> m_pBlendState;
 
     Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_pDSState;
+
+    Microsoft::WRL::ComPtr<ID3D11ShaderReflection> m_pVertexReflection;
+
+    Microsoft::WRL::ComPtr<ID3D11ShaderReflection> m_pPixelReflection;
 
   };
 

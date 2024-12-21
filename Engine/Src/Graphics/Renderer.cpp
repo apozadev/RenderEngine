@@ -37,8 +37,8 @@ void Renderer::Initialize()
 
 void Renderer::InitializePostWindow()
 {
-  m_pLightCBuff = Factory::Create <ConstantBuffer<LightData>>();
-  m_pLightCBuff->Configure(4, PipelineStage::PIXEL);
+  m_pLightCBuff = Factory::Create<ConstantBuffer<LightData>>();
+  m_pLightCBuff->Configure();
 
   m_pLightCBuff->GetData()->m_uNumLights = 0u;
 }
@@ -129,13 +129,14 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId)
 
 void Renderer::SetupSubStateLightCBuffers(ResourceFrequency _eFrequency)
 {
-  m_pLightCBuff->SetupRenderSubState(_eFrequency);
+  m_pLightCBuff->SetupRenderSubState("LightBuffer", PipelineStage::PIXEL, _eFrequency);
 }
 
 void Renderer::Draw()
 {  
+  bool bNeedsResize = Engine::GetInstance()->GetWindow()->BeginDraw() != 0;
 
-  if (Engine::GetInstance()->GetWindow()->BeginDraw())
+  if (bNeedsResize)
   {
     OnWindowResize();    
   }

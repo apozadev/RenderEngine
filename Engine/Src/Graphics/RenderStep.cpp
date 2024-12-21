@@ -38,9 +38,18 @@ void RenderStep::Setup()
 
 void RenderStep::SetupInternal()
 {
-  for (RenderTarget* _pInput : m_lstInputs)
+
+  static const char s_aNames[4][7] = { "Input0", "Input1", "Input2", "Input3" };
+
+  if (m_lstInputs.size() > 4)
   {
-    _pInput->GetColorTextures()[0]->SetupRenderSubState(ResourceFrequency::RENDER_STEP);
+    THROW_GENERIC_EXCEPTION("RenderStep has more than 4 inputs")
+  }
+
+  for (int i = 0; i < m_lstInputs.size(); i++)
+  {
+    RenderTarget* _pInput = m_lstInputs[i];
+    _pInput->GetColorTextures()[0]->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::RENDER_STEP);
   }
 }
 

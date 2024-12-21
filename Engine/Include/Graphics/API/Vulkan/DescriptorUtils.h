@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <string>
 
 #include "Graphics/PipelineStage.h"
 
@@ -12,19 +13,29 @@ namespace vk
 
   class DescriptorSetLayoutBuilder
   {
+
+    struct Descriptor
+    {
+      std::string m_sName;
+      VkDescriptorSetLayoutBinding m_oBinding;
+    };
+
   public:
 
-    void AddLayoutBinding(VkDescriptorSetLayoutBinding&& _rBinding);
+    void AddLayoutBinding(const char* _sName, VkDescriptorSetLayoutBinding&& _oBinding);
 
     VkDescriptorSetLayout Build(VkDevice _hDevice);    
 
     bool Contains(VkDescriptorSetLayoutBinding _oBinding) const;
 
-    void Clear() { m_lstDescSetInfos.clear();}
+    uint32_t FindBinding(const std::string& _sName, PipelineStage _eStage, VkDescriptorType _eType) const;
+
+    void Clear() { m_lstDescriptors.clear();}
 
   private:
 
-    std::vector<VkDescriptorSetLayoutBinding> m_lstDescSetInfos;    
+    std::vector<VkDescriptorSetLayoutBinding> m_lstDescriptors;
+    std::vector<std::string> m_lstNames;
   };
 
   //------------------------------------------------------

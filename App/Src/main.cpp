@@ -21,8 +21,9 @@
 
 #include <string>
 
+// TODO:
 // Hacer componentes owner_ptr tambien.
-// Se ve negro en dx11
+// Sacar reflected cbuffers de los passes
 
 int main(){
 
@@ -30,7 +31,7 @@ int main(){
   {
 
   // Startup
-  Engine::GetInstance()->Initialize(1080, 920, "App"); 
+  Engine::GetInstance()->Initialize(1080, 920, "App");   
 
   Scene* pScene = Engine::GetInstance()->CreateScene();
 
@@ -72,6 +73,8 @@ int main(){
 
     Renderer::GetInstance()->AddRenderPipeline(std::move(oConfig));
   }
+
+  Factory::PushGlobalMode(false);
 
   // Create entities
 
@@ -123,6 +126,10 @@ int main(){
   }  
   pMaterial->Setup();
 
+  float aTint[4] = { 0.5f, 1.f, 0.25f, 1.f };
+  pMaterial->GetPasses()[1]->SetVec4("vTint", aTint);
+  pMaterial->GetPasses()[1]->SetFloat("fMult", 1.f);
+
   Material* pGridMaterial = MaterialLibrary::GetInstance()->CreateMaterial();
   {
     owner_ptr<Pass> pPass0 = Factory::Create<Pass>();
@@ -134,7 +141,7 @@ int main(){
       , BlendFactor::BLEND_SRC_ALPHA
       , BlendFactor::BLEND_INV_SRC_ALPHA
       , false
-      , true
+      , false 
       , "TEST"
       , 2
       , 0u);

@@ -11,6 +11,8 @@ namespace matinstance_internal
 void MaterialInstance::Setup(Material* _pMaterial)
 {    
 
+  static const char s_aNames[4][9] = { "Texture0", "Texture1", "Texture2", "Texture3" };
+
   if (m_bSetup)
   {
     return;
@@ -23,15 +25,16 @@ void MaterialInstance::Setup(Material* _pMaterial)
 
   api::BeginSubStateSetup(m_pSubState);
 
-  for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
-  {        
-    pTexture->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
+  for (int i = 0; i < m_lstTextures.size(); i++)
+  {     
+    const owner_ptr<Texture2D>& pTexture = m_lstTextures[i];
+    pTexture->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::MATERIAL_INSTANCE);
   }
 
-  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  /*for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
   {
     pCBuffer->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
-  }
+  }*/
 
   api::EndSubStateSetup(ResourceFrequency::MATERIAL_INSTANCE);
   
@@ -52,8 +55,8 @@ void MaterialInstance::Bind() const
     pTexture->Bind();
   }
 
-  for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
+  /*for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
   {
     pCBuffer->Bind();
-  }
+  }*/
 }

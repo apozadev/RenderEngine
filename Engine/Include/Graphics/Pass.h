@@ -1,12 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "Graphics/Window.h"
 #include "Graphics/BlendEnums.h"
 #include "Graphics/RenderStateInfo.h"
 #include "Graphics/Texture2D.h"
-#include "Graphics/ConstantBuffer.h"
+#include "Graphics/ReflectedConstantBuffer.h"
 #include "Graphics/API/GraphicsAPI.h"
 #include "Memory/PtrTypes.h"
 #include "Memory/Factory.h"
@@ -33,16 +34,18 @@ public:
     , int _uStepIdx
     , uint16_t _uLayer);
 
-  void AddTexture(owner_ptr<Texture2D>&& _pTexture)
+  /*void AddTexture(owner_ptr<Texture2D>&& _pTexture)
   {
     m_lstTextures.push_back(std::move(_pTexture));    
-  }
+  }*/
 
-  template<typename T>
+  /*template<typename T>
   ConstantBuffer<T> AddConstantBuffer()
   {        
-    m_lstCBuffers.push_back(Factory::Create<ConstantBuffer<T>>().cast_release<ConstantBufferBase>());
-  }
+    owner_ptr<ConstantBuffer<T>> pCBuff = Factory::Create<ConstantBuffer<T>>();
+    pCBuff->Configure();
+    m_lstCBuffers.push_back(pCBuff.cast_release<ConstantBufferBase>());
+  }*/
 
   void Setup() const;
 
@@ -60,6 +63,12 @@ public:
 
   int GetRenderStepIdx() const;
 
+  bool GetFloat(const char* _sName, float* pOutValue_) const;
+  bool GetVec4(const char* _sName, float* pOutValue_) const;
+
+  bool SetFloat(const char* _sName, float _fValue);
+  bool SetVec4(const char* _sName, float* _pValue);
+
 private:  
 
 private:
@@ -72,9 +81,9 @@ private:
 
   api::APIRenderState* m_pAPIRenderState;
 
-  std::vector<owner_ptr<Texture2D>> m_lstTextures;
+  //std::vector<owner_ptr<Texture2D>> m_lstTextures;
 
-  std::vector<owner_ptr<ConstantBufferBase>> m_lstCBuffers;
+  std::vector<owner_ptr<ReflectedConstantBuffer>> m_lstCBuffers;
 
   std::string m_sPipelineId;
 

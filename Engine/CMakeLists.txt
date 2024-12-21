@@ -160,7 +160,7 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/DirLight.h" 
 	"Include/Graphics/GeometryRenderStep.h"
 	"Src/Graphics/GeometryRenderStep.cpp"
-	)  
+	 "Include/Graphics/ConstantBufferTypes.h" "Include/Graphics/ReflectedConstantBuffer.h" "Src/Graphics/ReflectedConstantBuffer.cpp" "Src/Graphics/ConstantBufferTypes.cpp")  
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -176,7 +176,7 @@ target_include_directories(${PROJECT_NAME}
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
-set(TARGET_RENDER_API ${RENDER_API_VULKAN})   
+set(TARGET_RENDER_API ${RENDER_API_DX11})   
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
 	RENDER_API=${TARGET_RENDER_API}

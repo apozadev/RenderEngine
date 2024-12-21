@@ -7,12 +7,12 @@ struct VSin
 	float2 uv : TexCoord;
 };
 
-cbuffer global : register(b0)
+cbuffer GlobalBuffer : register(b0)
 {
 	matrix viewproj;
 };
 
-cbuffer model : register(b3)
+cbuffer ModelBuffer : register(b3)
 {
 	matrix model;
 	matrix normal;

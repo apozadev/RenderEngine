@@ -20,3 +20,5 @@ SamplerState texSampler : register(s0);
 #define sampleTex(tex, uv) tex.Sample(texSampler, uv)
 
 #define Texture(name, set, bind) Texture2D name : register(t##bind);
+
+#define CBuffer(name, bind) cbuffer name : register(b##bind)

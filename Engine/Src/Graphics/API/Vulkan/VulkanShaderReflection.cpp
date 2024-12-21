@@ -36,7 +36,7 @@ void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilde
   uint32_t uDescSetCount = 0;
   eResult = spvReflectEnumerateEntryPointDescriptorSets( &oModule, "main", &uDescSetCount, NULL);
   CHECK_REFLECT(eResult == SPV_REFLECT_RESULT_SUCCESS, "[API] Error: Failed to enumerate descriptor sets from shader: ")
-    CHECK_REFLECT(uDescSetCount <= 4u, "[API] Error: the shader has more than 4 descriptor sets : ")
+  CHECK_REFLECT(uDescSetCount <= 4u, "[API] Error: the shader has more than 4 descriptor sets : ")
 
   SpvReflectDescriptorSet* aDescSets[4];// = new SpvReflectDescriptorSet * [uDescSetCount];
 
@@ -59,9 +59,8 @@ void ReflectSetLayouts(const file::File& _oShaderFile, DescriptorSetLayoutBuilde
         oBinding.descriptorType = static_cast<VkDescriptorType>(pDesc->descriptor_type);
         oBinding.descriptorCount = 1;
         oBinding.stageFlags = static_cast<VkShaderStageFlagBits>(oModule.shader_stage);
-        oBinding.pImmutableSamplers = NULL;
-
-        pLayoutBuilder->AddLayoutBinding(std::move(oBinding));
+        oBinding.pImmutableSamplers = NULL;        
+        pLayoutBuilder->AddLayoutBinding(pDesc->name, std::move(oBinding));
       }
     }
   }

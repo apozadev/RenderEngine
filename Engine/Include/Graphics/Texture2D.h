@@ -14,13 +14,13 @@ class Texture2D : public BaseObject
 {
 public:
   
-  void Configure(const std::string& _sFilename, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
-  void Configure(const Image& _rImage, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
-  void Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, int _iBinding, PipelineStage _eStage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u, uint32_t _uUsage = 1u);  
+  void Configure(const std::string& _sFilename, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
+  void Configure(const Image& _rImage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
+  void Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u, uint32_t _uUsage = 1u);
 
   virtual ~Texture2D();
 
-  void SetupRenderSubState(ResourceFrequency _eFrequency) const;
+  void SetupRenderSubState(std::string&& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const;
 
   void SetupAsRenderTargetColor() const;
   void SetupAsRenderTargetDepthStencil() const;
@@ -32,9 +32,7 @@ public:
   void ClearAsColor() const;
   void ClearAsDepthStencil() const;
 
-private:
-
-  int m_iBinding;
+private:  
 
   PipelineStage m_eStage;
 

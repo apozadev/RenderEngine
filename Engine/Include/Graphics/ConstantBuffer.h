@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "Graphics/API/GraphicsAPI.h"
 #include "Core/BaseObject.h"
 
@@ -10,25 +12,21 @@ public:
   
   virtual ~ConstantBufferBase();  
 
-  virtual void SetupRenderSubState(ResourceFrequency _eFrequency) const = 0;
+  virtual void SetupRenderSubState(const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const = 0;
 
   void Bind() const;
 
 protected:  
 
-  void Configure(size_t _uSize, int _iBinding, PipelineStage _eStage);
+  void Configure(size_t _uSize);
 
   void Update(const void* _pData, size_t _uSize) const;
 
-  void SetupRenderSubState(size_t _uSize, ResourceFrequency _eFrequency) const;
+  void SetupRenderSubState(size_t _uSize, const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const;
 
 private:
 
   api::APIConstantBuffer* m_pAPICbuffer;
-
-  int m_iBinding;
-
-  PipelineStage m_eStage;
 };
 
 template <typename T>
@@ -36,14 +34,14 @@ class ConstantBuffer : public ConstantBufferBase
 {  
 public:      
 
-  void Configure(int _iBinding, PipelineStage _eStage)
+  void Configure()
   {
-    ConstantBufferBase::Configure(sizeof(T), _iBinding, _eStage);
+    ConstantBufferBase::Configure(sizeof(T));
   }
 
-  void SetupRenderSubState(ResourceFrequency _eFrequency) const override
+  void SetupRenderSubState(const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const override
   {
-    ConstantBufferBase::SetupRenderSubState(sizeof(T), _eFrequency);
+    ConstantBufferBase::SetupRenderSubState(sizeof(T), _sName, _eStage, _eFrequency);
   }
 
   void Update() const

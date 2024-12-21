@@ -71,6 +71,43 @@ void Pass::Configure(const std::string& _sVSFilename
   }
 
   m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
+
+  // Reflect constant buffers  
+  uint32_t uCBuffCount = api::GetConstantBufferCount(m_pAPIRenderState, PipelineStage::PIXEL);
+
+  for (uint32_t i = 0u; i < uCBuffCount; i++)
+  {
+    bool bValid = true;
+    uint32_t uNumVariables = api::GetConstantBufferMemberCount(m_pAPIRenderState, PipelineStage::PIXEL, i);
+
+    std::vector<ReflectedConstantBuffer::Variable> lstVariables;
+    lstVariables.reserve(uNumVariables);
+
+    for (uint32_t j = 0u; j < uNumVariables; j++)
+    {
+      ReflectedConstantBuffer::Variable oVar = {};
+
+      oVar.m_eType = api::GetConstantBufferMemberType(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
+
+      if (oVar.m_eType == ConstantBufferType::NONE)
+      {
+        bValid = false;
+        break;
+      }
+      oVar.m_sName = api::GetConstantBufferMemberName(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
+
+      lstVariables.push_back(std::move(oVar));      
+    }
+
+    if (bValid)
+    {
+      std::string sName = api::GetConstantBufferName(m_pAPIRenderState, PipelineStage::PIXEL, i);
+
+      owner_ptr<ReflectedConstantBuffer> pCBuffer = Factory::Create<ReflectedConstantBuffer>();
+      pCBuffer->Configure(sName, std::move(lstVariables));
+      m_lstCBuffers.push_back(std::move(pCBuffer));
+    }
+  }
 }
 
 Pass::~Pass()
@@ -79,17 +116,18 @@ Pass::~Pass()
 }
 
 void Pass::Setup() const
-{
+{   
   api::BeginRenderStateSetup(m_pAPIRenderState);
 
-  for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
+  /*for (int i = 0; i < m_lstTextures.size(); i++)
   {
-    pTexture->SetupRenderSubState(ResourceFrequency::MATERIAL);
-  }
+    const owner_ptr<Texture2D>& rTexture = m_lstTextures[i];
+    rTexture->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::MATERIAL);
+  }*/
 
-  for (const owner_ptr<ConstantBufferBase>& pCBuffer : m_lstCBuffers)
+  for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
   {
-    pCBuffer->SetupRenderSubState(ResourceFrequency::MATERIAL);
+    pCBuffer->SetupRenderSubState();
   }
 
   api::EndRenderStateSetup();
@@ -100,13 +138,14 @@ void Pass::Bind() const
 
   api::BindAPIRenderState(m_pAPIRenderState);
 
-  for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
+  /*for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
   {
     pTexture->Bind();
-  }
+  }*/
 
-  for (const owner_ptr<ConstantBufferBase>& pCBuffer : m_lstCBuffers)
+  for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
   {
+    pCBuffer->Update();
     pCBuffer->Bind();
   }
 }
@@ -124,4 +163,56 @@ const std::string& Pass::GetRenderPipelineId() const
 int Pass::GetRenderStepIdx() const
 {
   return m_iStepIdx;
+}
+
+bool Pass::GetFloat(const char* _sName, float* pOutValue_) const 
+{
+  for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
+  {
+    if (pCBuffer->GetFloat(_sName, pOutValue_))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool Pass::GetVec4(const char* _sName, float* pOutValue_) const
+{
+  for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
+  {
+    if (pCBuffer->GetVec4(_sName, pOutValue_))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool Pass::SetFloat(const char* _sName, float _fValue)
+{
+  for (owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
+  {
+    if (pCBuffer->SetFloat(_sName, _fValue))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool Pass::SetVec4(const char* _sName, float* _pValue)
+{
+  for (owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
+  {
+    if (pCBuffer->SetVec4(_sName, _pValue))
+    {
+      return true;
+    }
+  }
+
+  return false;
 }

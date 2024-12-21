@@ -42,7 +42,6 @@ void ModelLoader::LoadModel(const char* _sFilename, Material* _pMaterial, ModelC
   ProcessMaterials(oScene, _pMaterial, sDirectory, pModelComp_);
 
   ProcessNode(oScene->mRootNode, oScene, pModelComp_);
-
 }
 
 void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, ModelComponent* pModelComp_)
@@ -68,7 +67,8 @@ void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, ModelCompon
 }
 
 void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_)
-{
+{  
+
   for (unsigned int i = 0; i < _pAssimpScene->mNumMaterials; i++)
   {
     aiMaterial* aiMat = _pAssimpScene->mMaterials[i];
@@ -96,7 +96,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
           if (oImage.m_pData)
           {
             owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-            pTexture->Configure(oImage, j, PipelineStage::PIXEL);
+            pTexture->Configure(oImage);
             pMatInstance->AddTexture(std::move(pTexture));
           }
         }
@@ -109,7 +109,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
           oImage.m_eFormat = ImageFormat::R8G8B8A8;
 
           owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-          pTexture->Configure(oImage, j, PipelineStage::PIXEL);
+          pTexture->Configure(oImage);
           pMatInstance->AddTexture(std::move(pTexture));          
         }
       }
@@ -118,7 +118,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
 
         //regular file, read it from disk                
         owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-        pTexture->Configure(_sDirectory + str.C_Str(), j, PipelineStage::PIXEL);
+        pTexture->Configure(_sDirectory + str.C_Str());
         pMatInstance->AddTexture(std::move(pTexture));
       }
     }  

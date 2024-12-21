@@ -8,6 +8,7 @@
 #include "Graphics/PipelineStage.h"
 #include "Graphics/BlendEnums.h"
 #include "Graphics/ImageFormat.h"
+#include "Graphics/ResourceBindInfo.h"
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
 #include "Graphics/API/Vulkan/APICamera.h"
@@ -40,6 +41,8 @@ namespace vk
   void CreateInstance();
 
   VkSampleCountFlagBits GetMaxMSAASampleCount();
+
+  uint32_t FindBinding(const APIWindow* _pWindow, const ResourceBindInfo& _oBindInfo, VkDescriptorType _eType);
 
   void CreatePhysicalDevice();
 

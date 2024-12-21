@@ -31,7 +31,7 @@ public:
 private:  
 
   std::vector<owner_ptr<Texture2D>> m_lstTextures;
-  std::vector<ConstantBufferBase*> m_lstCBuffers;
+  //std::vector<ConstantBufferBase*> m_lstCBuffers;
 
   bool m_bSetup;
 

@@ -191,6 +191,54 @@ VkSampleCountFlagBits GetMaxMSAASampleCount()
 
 }
 
+uint32_t FindBinding(const APIWindow* _pWindow, const ResourceBindInfo& _oBindInfo, VkDescriptorType _eType)
+{
+  uint32_t uBinding = 0xFFFFFFFFu;
+
+  switch (_oBindInfo.m_eLevel)
+  {
+  case ResourceFrequency::GLOBAL:
+    uBinding = _pWindow->m_oGlobalLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    break;
+  case ResourceFrequency::MATERIAL:
+    if (s_oGlobalData.m_pUsingRenderState == nullptr)
+    {
+      THROW_GENERIC_EXCEPTION("[API] Tried to set up resource with frequency MATERIAL but BeginRenderStateSetup was not called");
+    }
+    uBinding = s_oGlobalData.m_pUsingRenderState->m_oMaterialLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    break;
+  case ResourceFrequency::RENDER_STEP:
+    uBinding = _pWindow->m_oStepLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    break;
+  case ResourceFrequency::MATERIAL_INSTANCE:
+    uBinding = _pWindow->m_oMatInstanceLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    break;
+  default:
+    break;
+  }
+
+  if (uBinding == 0xFFFFFFFFu)
+  {
+    std::string sMsg = _oBindInfo.m_sName + ": A descriptor with such name was not found in stage ";
+    switch (_oBindInfo.m_eStage)
+    {
+    case PipelineStage::VERTEX:
+      sMsg += "VERTEX";
+      break;
+    case PipelineStage::PIXEL:
+      sMsg += "PIXEL";
+      break;
+    default:
+      sMsg += "INVALID";
+      break;
+    }
+
+    THROW_GENERIC_EXCEPTION(sMsg.c_str());
+  }
+
+  return uBinding;
+}
+
 void CreatePhysicalDevice()
 {
   uint32_t uPhysicalDeviceCount = 0;
@@ -421,7 +469,7 @@ void CreatePipeline(const file::File& _oVSFile,
   VkDescriptorSetLayout aSetLayouts[4] =
   {
     pWindow->m_hGlobalDescSetLayout
-    , pWindow->m_hPassDescSetLayout
+    , pWindow->m_hStepDescSetLayout
     , _pRenderState_->m_hDescSetLayout
     , pWindow->m_hMatInstanceDescSetLayout
   };
@@ -1021,12 +1069,14 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
     oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     oBinding.pImmutableSamplers = NULL;
 
-    _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+    _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("GlobalBuffer", std::move(oBinding));
 
     _pWindow->m_hGlobalDescSetLayout = _pWindow->m_oGlobalLayoutBuilder.Build(_pWindow->m_hDevice);
   }
 
   {
+
+    char aNames[4][7] = { "Input0", "Input1", "Input2", "Input3" };
 
     for (uint32_t i = 0u; i < 4u; i++)
     {
@@ -1037,7 +1087,7 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
       oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
       oBinding.pImmutableSamplers = NULL;
 
-      _pWindow->m_oPassLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+      _pWindow->m_oStepLayoutBuilder.AddLayoutBinding(aNames[i], std::move(oBinding));
     }
 
     VkDescriptorSetLayoutBinding oBinding{};
@@ -1047,12 +1097,15 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
     oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     oBinding.pImmutableSamplers = NULL;
 
-    _pWindow->m_oPassLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+    _pWindow->m_oStepLayoutBuilder.AddLayoutBinding("LightBuffer", std::move(oBinding));
 
-    _pWindow->m_hPassDescSetLayout = _pWindow->m_oPassLayoutBuilder.Build(_pWindow->m_hDevice);
+    _pWindow->m_hStepDescSetLayout = _pWindow->m_oStepLayoutBuilder.Build(_pWindow->m_hDevice);
   }
 
   {
+
+    char aNames[4][9] = { "Texture0", "Texture1", "Texture2", "Texture3" };
+
     for (uint32_t i = 0u; i < 4u; i++)
     {
       VkDescriptorSetLayoutBinding oBinding{};
@@ -1062,7 +1115,7 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
       oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
       oBinding.pImmutableSamplers = NULL;
 
-      _pWindow->m_oMatInstanceLayoutBuilder.AddLayoutBinding(std::move(oBinding));
+      _pWindow->m_oMatInstanceLayoutBuilder.AddLayoutBinding(aNames[i], std::move(oBinding));
     }
 
     _pWindow->m_hMatInstanceDescSetLayout = _pWindow->m_oMatInstanceLayoutBuilder.Build(_pWindow->m_hDevice);

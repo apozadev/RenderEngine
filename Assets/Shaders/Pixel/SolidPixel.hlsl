@@ -10,4 +10,4 @@ vec4 color = vec4(1,1,1,1);
 
 outColor = color * (light + ambientFactor);
 
-PIXEL_MAIN_END
+PIXEL_MAIN_END 
