@@ -48,14 +48,24 @@ public:
   bool SetVar(const char* _sName, float* _pData)
   {
     size_t uOffset = 0u;
-    for (Variable& rVar : m_lstVariables)
+
+    for (unsigned int i = 0u; i < m_lstVariables.size(); i++)
     {
-      size_t uVarSize = GetConstantBufferTypeSize(rVar.m_eType);
+      const Variable& rVar = m_lstVariables[i];
+
+      size_t uVarSize = GetConstantBufferTypeSize(rVar.m_eType);      
 
       if (rVar.m_eType == TYPE && rVar.m_sName == _sName)
-      {                
+      {
         memcpy(static_cast<char*>(m_pData) + uOffset, _pData, uVarSize);
-        return true;        
+        return true;
+      }
+
+      // padding?
+      if (i < m_lstVariables.size() - 1u)
+      {
+        size_t uNextSize = GetConstantBufferTypeSize(m_lstVariables[i + 1u].m_eType);
+        if (uVarSize % uNextSize != 0u) uVarSize += uNextSize - uVarSize % uNextSize;
       }
 
       uOffset += uVarSize;
@@ -68,14 +78,23 @@ public:
   bool GetVar(const char* _sName, float* pOutValue_) const 
   {
     size_t uOffset = 0u;
-    for (const Variable& rVar : m_lstVariables)
+    for (unsigned int i = 0u; i < m_lstVariables.size(); i++)
     {
+      const Variable& rVar = m_lstVariables[i];
+
       size_t uVarSize = GetConstantBufferTypeSize(rVar.m_eType);
 
       if (rVar.m_eType == TYPE && rVar.m_sName == _sName)
       {
         memcpy(pOutValue_, static_cast<char*>(m_pData) + uOffset, uVarSize);
         return true;
+      }
+
+      // padding?
+      if (i < m_lstVariables.size() - 1u)
+      {
+        size_t uNextSize = GetConstantBufferTypeSize(m_lstVariables[i + 1u].m_eType);
+        if (uVarSize % uNextSize != 0u) uVarSize += uNextSize - uVarSize % uNextSize;
       }
 
       uOffset += uVarSize;

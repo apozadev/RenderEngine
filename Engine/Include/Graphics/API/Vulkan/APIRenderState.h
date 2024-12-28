@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "../3rd/spirv-reflect/spirv_reflect.h"
+
 #include "Graphics/API/Vulkan/APIRenderSubState.h"
 #include "Graphics/API/Vulkan/DescriptorUtils.h"
 
@@ -25,6 +27,9 @@ public:
   APIWindow* m_pOwnerWindow;
   
   DescriptorSetLayoutBuilder m_oMaterialLayoutBuilder;  
+
+  SpvReflectShaderModule m_oVertexReflection;
+  SpvReflectShaderModule m_oPixelReflection;
 };
 
 }

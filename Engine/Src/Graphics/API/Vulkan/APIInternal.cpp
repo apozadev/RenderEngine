@@ -6,6 +6,7 @@
 
 #include "Graphics/ResourceFrequency.h"
 #include "Graphics/TextureUsage.h"
+#include "Graphics/API/Vulkan/VulkanAPI.h"
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanShaderReflection.h"
 #include "Graphics/API/Vulkan/VulkanPools.h"
@@ -1534,6 +1535,37 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
     1, &oBarrier);
 
   EndTempCmdBuffer(_pWindow, hCmdBuffer);
+}
+
+void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t uDescSetCount_)
+{
+  const SpvReflectShaderModule* pReflection = nullptr;
+
+  switch (_eStage)
+  {
+  case PipelineStage::VERTEX:
+    pReflection = &_pRenderState->m_oVertexReflection;
+    break;
+  case PipelineStage::PIXEL:
+    pReflection = &_pRenderState->m_oPixelReflection;
+    break;
+  }
+
+  SpvReflectResult eResult = spvReflectEnumerateEntryPointDescriptorSets(&_pRenderState->m_oPixelReflection, "main", &uDescSetCount_, NULL);
+  if (eResult != SPV_REFLECT_RESULT_SUCCESS)
+  {
+    THROW_GENERIC_EXCEPTION("[API] Error: Failed to enumerate descriptor sets from shader: ")
+  }
+  if (uDescSetCount_ > 4u)
+  {
+    THROW_GENERIC_EXCEPTION("[API] Error: the shader has more than 4 descriptor sets : ")
+  }
+
+  eResult = spvReflectEnumerateEntryPointDescriptorSets(&_pRenderState->m_oPixelReflection, "main", &uDescSetCount_, aDescSets_);
+  if (eResult != SPV_REFLECT_RESULT_SUCCESS)
+  {
+    THROW_GENERIC_EXCEPTION("[API] Error: Failed to get descriptor sets from shader")
+  }
 }
 
 } // namespace vk

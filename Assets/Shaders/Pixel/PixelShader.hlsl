@@ -1,9 +1,9 @@
 
 CBuffer(MatBuffer, 2)
 {
-  float4 vTint;
   float fMult;
-}
+  vec4 vTint;
+};
 
 PIXEL_MAIN_BEGIN
 
@@ -26,6 +26,6 @@ PIXEL_MAIN_BEGIN
   outColor = color * vec4((light + ambientFactor), 1); 
   outColor.a = 0.7f; 
 
-  outColor *= vTint * fMult;  
+  outColor *= vTint * fMult;
  
 PIXEL_MAIN_END

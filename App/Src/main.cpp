@@ -22,8 +22,8 @@
 #include <string>
 
 // TODO:
-// Hacer componentes owner_ptr tambien.
-// Sacar reflected cbuffers de los passes
+// Hacer componentes owner_ptr tambien. 
+// Revisar reflected cbuffers en vulkan. (multiples stages)
 
 int main(){
 
@@ -126,7 +126,7 @@ int main(){
   }  
   pMaterial->Setup();
 
-  float aTint[4] = { 0.5f, 1.f, 0.25f, 1.f };
+  float aTint[4] = { 1.f, 1.f, 1.f, 1.f };
   pMaterial->GetPasses()[1]->SetVec4("vTint", aTint);
   pMaterial->GetPasses()[1]->SetFloat("fMult", 1.f);
 

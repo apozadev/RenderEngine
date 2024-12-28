@@ -3,6 +3,8 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
+#include "../3rd/spirv-reflect/spirv_reflect.h"
+
 #include "File/File.h"
 #include "Graphics/RenderStateInfo.h"
 #include "Graphics/PipelineStage.h"
@@ -18,6 +20,7 @@
 #include "Graphics/API/Vulkan/APIRenderSubState.h"
 #include "Graphics/API/Vulkan/APITexture.h"
 #include "Graphics/API/Vulkan/APIRenderTarget.h"
+#include "Graphics/API/Vulkan/DescriptorUtils.h"
 
 struct GLFWwindow;
 
@@ -105,6 +108,8 @@ namespace vk
   void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
 
   void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels);
+
+  void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t uDescSetCount_);
 
 } // namespace vk
 } // namespace api

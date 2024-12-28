@@ -8,6 +8,6 @@
 
 #else
 
-#define VK_CHECK(expr) expr;
+#define DX11_CHECK(expr) expr;
 
 #endif

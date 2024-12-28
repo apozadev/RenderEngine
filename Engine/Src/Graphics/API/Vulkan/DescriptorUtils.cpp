@@ -1,5 +1,7 @@
 #include "Graphics/API/Vulkan/DescriptorUtils.h"
 
+#include "Core/Exception.h"
+
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 
 #include "Graphics/API/Vulkan/APIWindow.h"

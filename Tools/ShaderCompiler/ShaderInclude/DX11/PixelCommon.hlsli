@@ -21,7 +21,7 @@ CBuffer(LightBuffer, 1)
 {
   DirLight aDirLights[5];
   uint uNumLights;
-};
+}
 
 Texture2D Input0 : register(t0);
 Texture2D Input1 : register(t1);

@@ -6,6 +6,8 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
+#include "../3rd/spirv-reflect/spirv_reflect.h"
+
 #include "Core/Exception.h"
 
 #include "Graphics/Window.h"
@@ -691,8 +693,23 @@ namespace vk
     file::File oVSFile(sVSFilename.c_str());
     file::File oPSFile(sPSFilename.c_str());
 
-    ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder);
-    ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder);
+    /*ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder);
+    ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder);*/
+
+    SpvReflectResult eResult = spvReflectCreateShaderModule(oVSFile.GetSize(), static_cast<void*>(oVSFile.GetData()), &(pRenderState->m_oVertexReflection));
+    if (eResult != SPV_REFLECT_RESULT_SUCCESS)
+    {
+      THROW_GENERIC_EXCEPTION("[API] Error: Unable to load vertex shader reflection")
+    }
+
+    eResult = spvReflectCreateShaderModule(oPSFile.GetSize(), static_cast<void*>(oPSFile.GetData()), &(pRenderState->m_oPixelReflection));
+    if (eResult != SPV_REFLECT_RESULT_SUCCESS)
+    {
+      THROW_GENERIC_EXCEPTION("[API] Error: Unable to load pixel shader reflection")
+    }
+    
+    ReflectSetLayouts(pRenderState->m_oVertexReflection, pRenderState->m_oMaterialLayoutBuilder);
+    ReflectSetLayouts(pRenderState->m_oPixelReflection, pRenderState->m_oMaterialLayoutBuilder);
 
     VkDevice hDevice = pRenderState->m_pOwnerWindow->m_hDevice;
     
@@ -800,7 +817,32 @@ namespace vk
 
   uint32_t GetConstantBufferCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
   {
-    return 0u;
+    uint32_t uCBufferCount = 0u;
+
+    uint32_t uDescSetCount = 0u;
+    SpvReflectDescriptorSet* aDescSets[4];
+    
+    GetDescSetReflection(_pAPIRenderState, _eStage, aDescSets, uDescSetCount);
+
+    for (uint32_t i = 0u; i < uDescSetCount; i++)
+    {
+      SpvReflectDescriptorSet* pDescSet = aDescSets[i];
+
+      if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
+      {
+        for (uint32_t j = 0u; j < pDescSet->binding_count; j++)
+        {
+          SpvReflectDescriptorBinding* pDesc = pDescSet->bindings[j];
+
+          if (pDesc->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+          {
+            uCBufferCount++;
+          }
+        }
+      }
+    }
+
+    return uCBufferCount;
   }
 
   uint32_t GetTextureCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
@@ -810,6 +852,38 @@ namespace vk
 
   std::string GetConstantBufferName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
   {
+    uint32_t uDescSetCount = 0u;
+    SpvReflectDescriptorSet* aDescSets[4];
+
+    GetDescSetReflection(_pAPIRenderState, _eStage, aDescSets, uDescSetCount);
+
+    uint32_t uCurrIdx = 0u;
+
+    for (uint32_t i = 0u; i < uDescSetCount; i++)
+    {
+      SpvReflectDescriptorSet* pDescSet = aDescSets[i];
+
+      if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
+      {
+        for (uint32_t j = 0u; j < pDescSet->binding_count; j++)
+        {
+          SpvReflectDescriptorBinding* pDesc = pDescSet->bindings[j];
+
+          if (pDesc->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+          {
+            if (uCurrIdx == _uIdx)
+            {
+              return pDesc->block.type_description->type_name;
+            }
+
+            uCurrIdx++;
+          }
+        }
+      }
+    }
+
+    THROW_GENERIC_EXCEPTION("[API] Constant buffer not found by index");
+
     return "";
   }
 
@@ -820,21 +894,184 @@ namespace vk
 
   uint32_t GetConstantBufferMemberCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
   {
+    uint32_t uDescSetCount = 0u;
+    SpvReflectDescriptorSet* aDescSets[4];
+
+    GetDescSetReflection(_pAPIRenderState, _eStage, aDescSets, uDescSetCount);
+
+    uint32_t uCurrIdx = 0u;
+
+    for (uint32_t i = 0u; i < uDescSetCount; i++)
+    {
+      SpvReflectDescriptorSet* pDescSet = aDescSets[i];
+
+      if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
+      {
+        for (uint32_t j = 0u; j < pDescSet->binding_count; j++)
+        {
+          SpvReflectDescriptorBinding* pDesc = pDescSet->bindings[j];
+
+          if (pDesc->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+          {
+            if (uCurrIdx == _uIdx)
+            {
+              return pDesc->block.member_count;
+            }
+
+            uCurrIdx++;
+          }
+        }
+      }
+    }
+
+    THROW_GENERIC_EXCEPTION("[API] Constant buffer not found by index");
+
     return 0u;
   }
 
   std::string GetConstantBufferMemberName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
   {
+    uint32_t uDescSetCount = 0u;
+    SpvReflectDescriptorSet* aDescSets[4];
+
+    GetDescSetReflection(_pAPIRenderState, _eStage, aDescSets, uDescSetCount);
+
+    uint32_t uCurrIdx = 0u;
+
+    for (uint32_t i = 0u; i < uDescSetCount; i++)
+    {
+      SpvReflectDescriptorSet* pDescSet = aDescSets[i];
+
+      if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
+      {
+        for (uint32_t j = 0u; j < pDescSet->binding_count; j++)
+        {
+          SpvReflectDescriptorBinding* pDesc = pDescSet->bindings[j];
+
+          if (pDesc->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+          {
+            if (uCurrIdx == _uIdx)
+            {
+              if(pDesc->block.member_count > _uMemberIdx)
+              {
+                return pDesc->block.members[_uMemberIdx].name;
+              }
+              break;
+            }
+
+            uCurrIdx++;
+          }
+        }
+      }
+    }
+
+    THROW_GENERIC_EXCEPTION("[API] Constant buffer member not found by index");
+
     return "";
   }
 
   size_t GetConstantBufferMemberSize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
   {
+
+    uint32_t uDescSetCount = 0u;
+    SpvReflectDescriptorSet* aDescSets[4];
+
+    GetDescSetReflection(_pAPIRenderState, _eStage, aDescSets, uDescSetCount);
+
+    uint32_t uCurrIdx = 0u;
+
+    for (uint32_t i = 0u; i < uDescSetCount; i++)
+    {
+      SpvReflectDescriptorSet* pDescSet = aDescSets[i];
+
+      if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
+      {
+        for (uint32_t j = 0u; j < pDescSet->binding_count; j++)
+        {
+          SpvReflectDescriptorBinding* pDesc = pDescSet->bindings[j];
+
+          if (pDesc->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+          {
+            if (uCurrIdx == _uIdx)
+            {
+              if (pDesc->block.member_count > _uMemberIdx)
+              {
+                return pDesc->block.members[_uMemberIdx].padded_size;
+              }
+              break;
+            }
+
+            uCurrIdx++;
+          }
+        }
+      }
+    }
+
+    THROW_GENERIC_EXCEPTION("[API] Constant buffer member not found by index");
+
     return 0u;
   }
 
   ConstantBufferType GetConstantBufferMemberType(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
   {
+
+    uint32_t uDescSetCount = 0u;
+    SpvReflectDescriptorSet* aDescSets[4];
+
+    GetDescSetReflection(_pAPIRenderState, _eStage, aDescSets, uDescSetCount);
+
+    uint32_t uCurrIdx = 0u;
+
+    for (uint32_t i = 0u; i < uDescSetCount; i++)
+    {
+      SpvReflectDescriptorSet* pDescSet = aDescSets[i];
+
+      if (pDescSet->set == static_cast<uint32_t>(ResourceFrequency::MATERIAL))
+      {
+        for (uint32_t j = 0u; j < pDescSet->binding_count; j++)
+        {
+          SpvReflectDescriptorBinding* pDesc = pDescSet->bindings[j];
+
+          if (pDesc->descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+          {
+            if (uCurrIdx == _uIdx)
+            {
+              if (pDesc->block.member_count > _uMemberIdx)
+              {                
+                SpvReflectTypeFlags uTypeFlags = pDesc->block.members[_uMemberIdx].type_description->type_flags;
+                if ((uTypeFlags & SPV_REFLECT_TYPE_FLAG_FLOAT) != 0u)
+                {
+                  switch (pDesc->block.members[_uMemberIdx].type_description->traits.numeric.vector.component_count)
+                  {
+                  case 0u:
+                    return ConstantBufferType::SCALAR;
+                    break;
+                  case 2u:
+                    return ConstantBufferType::VEC2;
+                    break;
+                  case 3u:
+                    return ConstantBufferType::VEC3;
+                    break;
+                  case 4u:
+                    return ConstantBufferType::VEC4;
+                    break;
+                  default:
+                    break;
+                  }
+                }
+              }
+              break;
+            }
+
+            uCurrIdx++;
+          }
+        }
+      }
+    }
+
+    THROW_GENERIC_EXCEPTION("[API] Constant buffer member type invalid ");
+
+
     return ConstantBufferType::NONE;
   }
 
