@@ -65,7 +65,7 @@ namespace vk
 
   void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen);
 
-  void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITexture** _pColorTextures, uint32_t _uNumColorTextures, APITexture* _pDepthTexture, APITexture** _pColorResolveTextures, VkFramebuffer& hFrameBuffer_);
+  void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITexture** _pColorTextures, uint32_t _uNumColorTextures, APITexture* _pDepthTexture, APITexture** _pColorResolveTextures, VkFramebuffer& hFrameBuffer_, uint32_t _uWidth, uint32_t _uHeight);
 
   void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, VkImageView _hColorImageView, VkImageView _hDepthImageView, VkImageView _hResolveImageView, VkFramebuffer& hFrameBuffer_);
 
@@ -109,7 +109,9 @@ namespace vk
 
   void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels);
 
-  void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t uDescSetCount_);
+  void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t& uDescSetCount_);
+
+  void SetupImGui(APIWindow* _pWindow);
 
 } // namespace vk
 } // namespace api

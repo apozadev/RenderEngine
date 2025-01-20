@@ -2,9 +2,11 @@
 
 #define mul(mat, v) (mat * v)
 
-#define sampleTex(tex, uv) texture(tex, uv);
+#define sampleTex(tex, uv) texture(tex, uv)
 
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
+
+#define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name
 #pragma shader_stage(vertex)
 
 layout(location = 0) in vec3 inPosition;
@@ -25,6 +27,7 @@ layout( push_constant ) uniform constants
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;
+layout(location = 3) out vec3 fragWorldPos;
 
 #define VERTEX_MAIN_BEGIN \
     void main() {
@@ -44,12 +47,14 @@ layout(location = 2) out vec2 fragTexCoord;
 #define outNormal   fragNormal
 #define outColor   	fragColor
 #define outUv		fragTexCoord
+#define outWorldPos fragWorldPos
 
 VERTEX_MAIN_BEGIN
 
 	vec4 worldPos = mul(modelMat, vec4(inPos, 1.0));
 	outPos = mul(viewProj, worldPos);
+	outWorldPos = worldPos.xyz;
 	outNormal = normalize(mul(normalMat, vec4(inNormal, 0.0))).xyz;
 	outUv = inUv;
 	
-VERTEX_MAIN_END
+VERTEX_MAIN_END 

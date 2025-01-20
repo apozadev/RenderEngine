@@ -23,7 +23,10 @@ void Job::UpdateRenderKey(const Camera* _pCamera, const Transform* _pCamTransfor
   {
     SET_KEY_LAYER_TRANSLUCENT(m_xKey, m_pPass->GetLayer());
     SET_KEY_PASS_TRANSLUCENT(m_xKey, m_pPass->GetId());
-    SET_KEY_MATINSTANCE_TRANSLUCENT(m_xKey, m_pMaterial->GetId());
+    if (m_pMaterial)
+    {
+      SET_KEY_MATINSTANCE_TRANSLUCENT(m_xKey, m_pMaterial->GetId());
+    }
     SET_KEY_DEPTH_TRANSLUCENT(m_xKey, uDist);
     
     //m_xKey |= (static_cast<RenderKey>(uDist) << (KEY_SIZE - 4 - 16 - 64));
@@ -32,7 +35,10 @@ void Job::UpdateRenderKey(const Camera* _pCamera, const Transform* _pCamTransfor
   {    
     SET_KEY_LAYER(m_xKey, m_pPass->GetLayer());
     SET_KEY_PASS(m_xKey, m_pPass->GetId());
-    SET_KEY_MATINSTANCE(m_xKey, m_pMaterial->GetId());
+    if (m_pMaterial)
+    {
+      SET_KEY_MATINSTANCE(m_xKey, m_pMaterial->GetId());
+    }
     SET_KEY_DEPTH(m_xKey, uDist);
   }  
 }

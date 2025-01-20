@@ -22,11 +22,13 @@ public:
 
   void Unbind() const;
 
+  bool IsBound() const;
+
   void Clear() const;
 
-  const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures();
+  const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures() const;
 
-  Texture2D* GetDepthStencilTexture();
+  Texture2D* GetDepthStencilTexture() const;
 
   uint32_t GetMsaaSamples() const;
 

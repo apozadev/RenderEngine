@@ -39,7 +39,7 @@ void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _u
 
   m_pAPIRenderTarget = api::CreateAPIRenderTarget();
 
-  api::BeginRenderTargetSetup(m_pAPIRenderTarget, _eFormat, ImageFormat::R32, _uMsaaSamples);
+  api::BeginRenderTargetSetup(m_pAPIRenderTarget, _uWidth, _uHeight, _eFormat, ImageFormat::R32, _uMsaaSamples);
 
   for (owner_ptr<Texture2D>& pTexture : m_lstColorTextures)
   {
@@ -76,6 +76,11 @@ void RenderTarget::Unbind() const
   api::UnbindAPIRenderTarget(m_pAPIRenderTarget);
 }
 
+bool RenderTarget::IsBound() const
+{
+  return api::IsAPIRenderTargetBound(m_pAPIRenderTarget);
+}
+
 void RenderTarget::Clear() const
 {
   api::ClearAPIRenderTarget(m_pAPIRenderTarget);
@@ -93,7 +98,7 @@ void RenderTarget::Clear() const
   m_pDepthStencilTexture->ClearAsDepthStencil();
 }
 
-const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures()
+const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures() const
 {
   if (!m_lstColorResolveTextures.empty())
   {
@@ -103,7 +108,7 @@ const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures()
   return m_lstColorTextures;
 }
 
-Texture2D* RenderTarget::GetDepthStencilTexture()
+Texture2D* RenderTarget::GetDepthStencilTexture() const 
 {
   return m_pDepthStencilTexture.get();
 }

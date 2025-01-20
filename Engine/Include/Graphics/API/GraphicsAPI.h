@@ -8,12 +8,12 @@
 #include "Graphics/RenderStateInfo.h"
 #include "Graphics/ConstantBufferTypes.h"
 
-#if RENDER_API == 0
+#if defined RENDER_API_VULKAN
 #define API vk
-#elif RENDER_API == 1
+#elif defined RENDER_API_DX11
 #define API dx11
 #else
-#error "Unknown RENDER_API specified"
+#error "No RENDER_API specified"
 #endif
 
 struct GLFWwindow;
@@ -54,10 +54,11 @@ namespace api
   void SetUsingAPIWindow(APIWindow* _pWindow);
   void OnWindowResize(APIWindow* _pWindow);
   uint32_t GetWindowWidth(APIWindow* _pWindow);
-  uint32_t GetWindowHeight(APIWindow* _pWindow);
+  uint32_t GetWindowHeight(APIWindow* _pWindow);  
   void ClearDefaultRenderTarget(APIWindow* _pWindow);
   void BindDefaultRenderTarget(APIWindow* _pWindow);
   void UnbindDefaultRenderTarget(APIWindow* _pWindow);
+  bool IsDefaultRenderTargetBound(APIWindow* _pWindow);
   void DestroyAPIWindow(APIWindow* _pWindow);
 
   // Camera
@@ -120,7 +121,7 @@ namespace api
 
   APIRenderTarget* CreateAPIRenderTarget();
   void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
   void RenderTargetAddColorTexture(APITexture* _pTexture);
   void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
   void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
@@ -128,12 +129,18 @@ namespace api
   void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget);
   void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget);
   void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+  bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget);
   void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
   // Drawing
 
+  void WaitForNextImage(APIWindow* _pWindow);
   int BeginDraw(APIWindow* _pWindow);
   void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, const void* _pConstantData, uint32_t _uConstantSize);
   void EndDraw(APIWindow* _pWindow);    
+
+  // Misc 
+
+  void ImGuiNewFrame();
 
 }

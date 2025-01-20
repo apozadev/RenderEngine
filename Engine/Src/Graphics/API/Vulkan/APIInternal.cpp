@@ -4,6 +4,10 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
+
 #include "Graphics/ResourceFrequency.h"
 #include "Graphics/TextureUsage.h"
 #include "Graphics/API/Vulkan/VulkanAPI.h"
@@ -935,13 +939,13 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
 
   VK_CHECK(vkCreateRenderPass(_pWindow->m_hDevice, &oRenderPassCreateInfo, NULL, &hRenderPass_))
 
-  s_oVkAttachmentDescriptionPool.ReturnElements(pAttachments);
-  s_oVkAttachmentReferencePool.ReturnElements(pColorAttachmentRefs);
-  s_oVkAttachmentReferencePool.ReturnElements(pColorResolveAttachmentRefs);
+  if(pAttachments) s_oVkAttachmentDescriptionPool.ReturnElements(pAttachments);
+  if(pColorAttachmentRefs) s_oVkAttachmentReferencePool.ReturnElements(pColorAttachmentRefs);
+  if(pColorResolveAttachmentRefs) s_oVkAttachmentReferencePool.ReturnElements(pColorResolveAttachmentRefs);
 
 }
 
-void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITexture** _pColorTextures, uint32_t _uNumColorTextures, APITexture* _pDepthTexture, APITexture** _pColorResolveTextures, VkFramebuffer& hFrameBuffer_)
+void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITexture** _pColorTextures, uint32_t _uNumColorTextures, APITexture* _pDepthTexture, APITexture** _pColorResolveTextures, VkFramebuffer& hFrameBuffer_, uint32_t _uWidth, uint32_t _uHeight)
 {
   VkImageView aAttachments[3];
 
@@ -970,8 +974,8 @@ void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITextur
   oFramebufferInfo.attachmentCount = uAttachmentCount;
   oFramebufferInfo.pAttachments = &aAttachments[0];
   oFramebufferInfo.renderPass = _hRenderPass;
-  oFramebufferInfo.width = _pWindow->m_oExtent.width;
-  oFramebufferInfo.height = _pWindow->m_oExtent.height;
+  oFramebufferInfo.width = _uWidth;
+  oFramebufferInfo.height = _uHeight;
   oFramebufferInfo.layers = 1;
 
   VK_CHECK(vkCreateFramebuffer(_pWindow->m_hDevice, &oFramebufferInfo, NULL, &hFrameBuffer_))
@@ -990,7 +994,7 @@ void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, VkImageVi
   APITexture oDummyDepthTexture = {};
   oDummyDepthTexture.m_hImageView = _hDepthImageView;
 
-  CreateFramebuffer(_pWindow, _hRenderPass, &pDummyColorTexture, 1u, &oDummyDepthTexture, &pDummyColorResolveTexture, hFrameBuffer_);
+  CreateFramebuffer(_pWindow, _hRenderPass, &pDummyColorTexture, 1u, &oDummyDepthTexture, &pDummyColorResolveTexture, hFrameBuffer_, _pWindow->m_oExtent.width, _pWindow->m_oExtent.height);
 }
 
 void CreateCommandBuffers(APIWindow* _pWindow)
@@ -1052,7 +1056,7 @@ void CreateDescriptorPool(APIWindow* _pWindow)
 
   VkDescriptorPoolCreateInfo oPoolInfo{};
   oPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  oPoolInfo.flags = 0u;
+  oPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   oPoolInfo.maxSets = 999u;
   oPoolInfo.poolSizeCount = 2u;
   oPoolInfo.pPoolSizes = aPoolSizes;
@@ -1071,6 +1075,20 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
     oBinding.pImmutableSamplers = NULL;
 
     _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("GlobalBuffer", std::move(oBinding));
+
+    char aNames[4][11] = { "ShadowMap0", "ShadowMap1", "ShadowMap2", "ShadowMap3" };
+
+    for (uint32_t i = 0u; i < 4u; i++)
+    {
+      VkDescriptorSetLayoutBinding oBinding{};
+      oBinding.binding = i + 1u;// static_cast<uint32_t>(ResourceFrequency::RENDER_STEP);
+      oBinding.descriptorCount = 1u;
+      oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+      oBinding.pImmutableSamplers = NULL;
+
+      _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding(aNames[i], std::move(oBinding));
+    }
 
     _pWindow->m_hGlobalDescSetLayout = _pWindow->m_oGlobalLayoutBuilder.Build(_pWindow->m_hDevice);
   }
@@ -1537,7 +1555,7 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
   EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }
 
-void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t uDescSetCount_)
+void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t& uDescSetCount_)
 {
   const SpvReflectShaderModule* pReflection = nullptr;
 
@@ -1566,6 +1584,46 @@ void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eS
   {
     THROW_GENERIC_EXCEPTION("[API] Error: Failed to get descriptor sets from shader")
   }
+}
+
+static void check_vk_result(VkResult err)
+{
+  if (err == 0)
+    return;
+  fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+  if (err < 0)
+    abort();
+}
+
+void SetupImGui(APIWindow* _pWindow)
+{
+  ImGui_ImplGlfw_InitForVulkan(_pWindow->m_pGlfwWindow, true);
+
+  VkSurfaceCapabilitiesKHR oSurfaceCapabilities;
+  VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_oGlobalData.m_hPhysicalDevice, _pWindow->m_hSurface, &oSurfaceCapabilities))
+
+  ImGui_ImplVulkan_InitInfo oImGuiInfo = {};
+  oImGuiInfo.Instance = s_oGlobalData.m_hInstance;
+  oImGuiInfo.PhysicalDevice = s_oGlobalData.m_hPhysicalDevice;
+  oImGuiInfo.Device = _pWindow->m_hDevice;
+  oImGuiInfo.QueueFamily = s_oGlobalData.m_uRenderQueueFamilyIdx;
+  oImGuiInfo.Queue = _pWindow->m_hRenderQueue;
+  oImGuiInfo.PipelineCache = VK_NULL_HANDLE;
+  oImGuiInfo.DescriptorPool = _pWindow->m_hDescPool;
+  oImGuiInfo.Subpass = 0;
+  oImGuiInfo.MinImageCount = oSurfaceCapabilities.minImageCount;
+  oImGuiInfo.ImageCount = _pWindow->m_uSwapchainImageCount;
+  oImGuiInfo.MSAASamples = s_oGlobalData.m_eMaxMsaaSampleCount;
+  oImGuiInfo.Allocator = nullptr;
+  oImGuiInfo.CheckVkResultFn = check_vk_result;
+  ImGui_ImplVulkan_Init(&oImGuiInfo, _pWindow->m_hRenderPass);
+
+  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+  ImGui_ImplVulkan_CreateFontsTexture(hCmdBuffer);
+  EndTempCmdBuffer(_pWindow, hCmdBuffer);
+
+  ImGui_ImplVulkan_DestroyFontUploadObjects();
+  ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
 } // namespace vk

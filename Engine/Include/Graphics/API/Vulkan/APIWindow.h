@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+struct GLFWwindow;
+
 namespace api
 {
 namespace vk 
@@ -61,7 +63,11 @@ namespace vk
     DescriptorSetLayoutBuilder m_oStepLayoutBuilder;
     DescriptorSetLayoutBuilder m_oMatInstanceLayoutBuilder;
 
+    bool m_bDefaultRenderTargetBound = false;
+
     bool m_bResized = false;
+
+    GLFWwindow* m_pGlfwWindow;
   };
 
 }

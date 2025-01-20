@@ -17,11 +17,12 @@ public:
 
   RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget);
 
-  ~RenderStep();
+  virtual ~RenderStep();
 
   void Setup();
 
   virtual void SubmitJob(Job&& _rJob) {};
+  virtual void SubmitJobs(const std::vector<Job>& _rJob) {};
 
   void Execute(const Camera* _pCamera, const Transform* _pViewTransform);  
 

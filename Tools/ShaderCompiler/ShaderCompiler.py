@@ -11,6 +11,8 @@ sVkCommonFile = "/ShaderInclude/Vulkan/Common.glsl"
 sVkVertexCommonFile = "/ShaderInclude/Vulkan/VertexCommon.glsl"
 sVkPixelCommonFile = "/ShaderInclude/Vulkan/PixelCommon.glsl"
 
+sLightingFile = "/ShaderInclude/Lighting.hlsli"
+
 def main():
 
 	iNumArgs = len(sys.argv)  
@@ -36,9 +38,10 @@ def main():
 	elif sType == "p":
 		sVCommonFile = sDx11PixelCommonFile if sAPI == "dx11" else sVkPixelCommonFile
 		sCommon = sCommon + open(sScriptDir + sVCommonFile).read()
+		sCommon = sCommon + open(sScriptDir + sLightingFile).read()
 	else:
 		print("First parameter must be \"p\" or \"v\" !!! \n It's: " + sType)
-		return
+		return	
 	
 	sOutFolder = "DX11" if sAPI == "dx11"  else "VK"
 	sBinExt = ".cso" if sAPI == "dx11"  else ".spv"	

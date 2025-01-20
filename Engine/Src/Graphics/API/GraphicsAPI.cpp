@@ -1,11 +1,10 @@
 #include "Graphics/API/GraphicsAPI.h"
 
-#if RENDER_API == 0
+
+#if defined RENDER_API_VULKAN
 #include "Graphics/API/Vulkan/VulkanAPI.h"
-#elif RENDER_API == 1
+#elif defined RENDER_API_DX11
 #include "Graphics/API/DX11/DX11API.h"
-#else
-#error "Unknown RENDER_API specified"
 #endif
 
 namespace api
@@ -68,6 +67,11 @@ namespace api
   void UnbindDefaultRenderTarget(APIWindow* _pWindow)
   {
     API::UnbindDefaultRenderTarget(_pWindow);
+  }
+
+  bool IsDefaultRenderTargetBound(APIWindow* _pWindow)
+  {
+    return API::IsDefaultRenderTargetBound(_pWindow);
   }
 
   void DestroyAPIWindow(APIWindow* _pWindow)
@@ -165,9 +169,9 @@ namespace api
     API::BindAPIRenderTarget(_pRenderTarget);
   }
 
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
   {
-    API::BeginRenderTargetSetup(_pRenderTarget, _eFormat, _eDepthStencilFormat, _uMsaaSamples);
+    API::BeginRenderTargetSetup(_pRenderTarget, _uWidth, _uHeight, _eFormat, _eDepthStencilFormat, _uMsaaSamples);
   }
 
   void RenderTargetAddColorTexture(APITexture* _pTexture)
@@ -203,6 +207,11 @@ namespace api
   void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
   {
     API::UnbindAPIRenderTarget(_pRenderTarget);
+  }
+
+  bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget)
+  {
+    return API::IsAPIRenderTargetBound(_pRenderTarget);
   }
 
   void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -325,6 +334,11 @@ namespace api
 
   // Drawing
 
+  void WaitForNextImage(APIWindow* _pWindow)
+  {
+    API::WaitForNextImage(_pWindow);
+  }
+
   int BeginDraw(APIWindow* _pWindow)
   {
     return API::BeginDraw(_pWindow);
@@ -339,5 +353,12 @@ namespace api
   {
     API::EndDraw(_pWindow);
   }    
+
+  // Misc 
+
+  void ImGuiNewFrame()
+  {
+    API::ImGuiNewFrame();
+  }
 
 }

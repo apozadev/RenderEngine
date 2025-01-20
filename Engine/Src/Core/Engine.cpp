@@ -28,6 +28,8 @@ int Engine::Initialize(int _iWidth, int _iHeight, const char* _sTitle)
 
   Renderer::GetInstance()->InitializePostWindow();
 
+  m_pfPostUpdateCallback = nullptr;
+
   return 0;
 }
 
@@ -69,6 +71,11 @@ int Engine::Run()
         for (Scene& rScene : m_lstScenes)
         {
           rScene.Update(m_fDt);
+        }
+
+        if (m_pfPostUpdateCallback != nullptr)
+        {
+          m_pfPostUpdateCallback(m_fDt);
         }
 
         Renderer::GetInstance()->Draw();

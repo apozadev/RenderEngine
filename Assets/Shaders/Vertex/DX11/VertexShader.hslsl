@@ -5,6 +5,7 @@ struct VSout
 	float4 pos : SV_Position;
 	float2 uv : TEXCOORD;
 	float3 normal : NORMAL;
+	float3 worldPos : WORLDPOS;
 };
 
 SamplerState texSampler : register(s0);
@@ -58,15 +59,17 @@ cbuffer ModelBuffer : register(b3)
 #define inColor		input.c
 #define inUv			input.uv
 
-#define outPos		vso.pos
-#define outNormal vso.normal
-#define outUv			vso.uv
+#define outPos			vso.pos
+#define outNormal		vso.normal
+#define outUv				vso.uv
+#define outWorldPos	vso.worldPos
 
 VERTEX_MAIN_BEGIN
 
 	vec4 worldPos = mul(modelMat, vec4(inPos, 1.0));
 	outPos = mul(viewProj, worldPos);
+	outWorldPos = worldPos.xyz;
 	outNormal = normalize(mul(normalMat, vec4(inNormal, 0.0))).xyz;
 	outUv = inUv;
 	
-VERTEX_MAIN_END
+VERTEX_MAIN_END 

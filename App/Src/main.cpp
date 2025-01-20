@@ -23,7 +23,8 @@
 
 // TODO:
 // Hacer componentes owner_ptr tambien. 
-// Revisar reflected cbuffers en vulkan. (multiples stages)
+// Camara de sombras no ve mallas. ajustar posición de luces.
+// dx11 msg hook arreglar userptr
 
 int main(){
 
@@ -163,8 +164,9 @@ int main(){
   pGridEntity->GetMutableLocalTransform().SetPos({ 0.f, 0.f, -10.f });  
   pGridEntity->GetMutableLocalTransform().SetScale({ 99.f, 99.f, 99.f });
 
-  pLightEntity->AddComponent<DirLightComponent>();
+  //pLightEntity->AddComponent<DirLightComponent>();
   pLightEntity2->AddComponent<DirLightComponent>()->SetColor({5.5f, 0.5f, 0.3f});
+  pLightEntity2->GetMutableLocalTransform().Translate({ 0.f, 0.f, -20.f });
   pLightEntity2->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 1.f, 0.f, 0.f }));
 
   pScene->Build();

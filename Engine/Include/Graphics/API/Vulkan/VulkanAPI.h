@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef RENDER_API_VULKAN
+
 #include <inttypes.h>
 
 #include "Graphics/ImageFormat.h"
@@ -50,6 +52,8 @@ namespace vk
 	
 	void UnbindDefaultRenderTarget(APIWindow* _pWindow);
 
+	bool IsDefaultRenderTargetBound(APIWindow* _pWindow);
+
 	void DestroyAPIWindow(APIWindow* _pAPIWindow);
 
 	// Camera
@@ -92,7 +96,7 @@ namespace vk
 
 	APIRenderTarget* CreateAPIRenderTarget();
 
-	void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
+	void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
 
 	void RenderTargetAddColorTexture(APITexture* _pTexture);
 
@@ -109,6 +113,8 @@ namespace vk
 	void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
 	void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
+	bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget);
 
 	void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);	
 
@@ -162,7 +168,7 @@ namespace vk
 
 	// Drawing
 
-	void WaitForEndFrame(APIWindow* _pWindow);
+	void WaitForNextImage(APIWindow* _pWindow);
 
 	int BeginDraw(APIWindow* _pWindow);
 
@@ -170,5 +176,11 @@ namespace vk
 
 	void EndDraw(APIWindow* _pWindow);
 
+	// Misc
+
+	void ImGuiNewFrame();
+
 }
 }
+
+#endif

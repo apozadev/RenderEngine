@@ -23,6 +23,6 @@ vec2 c = smoothstep(lineWidth, lineWidth*0.5, abs(newUv - halfCell));
 
 float lineAlpha = max(min(c.x + c.y, 1) / fade, 0);
 
-outColor = vec4(1, 1, 1, lineAlpha);
+outColor = vec4(1, 1, 1, lineAlpha); 
 
 PIXEL_MAIN_END

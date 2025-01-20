@@ -142,6 +142,8 @@ namespace dx11
       return D3D11_BLEND_SRC1_ALPHA;
     case BLEND_INV_SRC1_ALPHA:
       return D3D11_BLEND_INV_SRC1_ALPHA;
+    default:
+      return D3D11_BLEND_ZERO;
     }
   }
 

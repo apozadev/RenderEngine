@@ -20,8 +20,8 @@ public:
 
   void Initialize()
   {
-    m_pData = reinterpret_cast<Entry*>(malloc(sizeof(T) * SIZE));
-    memset(m_pData, 0, sizeof(T) * SIZE);
+    m_pData = reinterpret_cast<Entry*>(malloc(sizeof(Entry) * SIZE));
+    memset(m_pData, 0, sizeof(Entry) * SIZE);
     m_uCurrIdx = 0u;
   }
 

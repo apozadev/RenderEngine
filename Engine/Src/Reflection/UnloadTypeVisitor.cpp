@@ -19,7 +19,7 @@ namespace reflection
       UnloadMembers(type->parentTypeDesc);
     }
 
-    int memberCount = type->members.size();
+    int memberCount = static_cast<int>(type->members.size());
     for (int i = 0; i < memberCount; i++)
     {
       m_pObj = type->members[i].getAddress(pObj);

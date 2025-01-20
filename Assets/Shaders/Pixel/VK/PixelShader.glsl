@@ -2,7 +2,7 @@
 
 #define mul(mat, v) (mat * v)
 
-#define sampleTex(tex, uv) texture(tex, uv);
+#define sampleTex(tex, uv) texture(tex, uv)
 
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
 
@@ -12,6 +12,7 @@
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragNormal;
 layout(location = 2) in vec2 fragTexCoord;
+layout(location = 3) in vec3 fragWorldPos;
 
 layout(location = 0) out vec4 outColor;
 
@@ -22,8 +23,15 @@ struct DirLightData {
 
 layout(set = 1, binding = 4) uniform LightBuffer {
     DirLightData aDirLights[5];
+    mat4 mLightViewProj[5];
     uint uNumLights;
+    uint uNumShadows;
 };
+
+//Texture(ShadowMap0, 0, 1)
+//Texture(ShadowMap1, 0, 2)
+//Texture(ShadowMap2, 0, 3)
+//Texture(ShadowMap3, 0, 4)
 
 Texture(Input0, 1, 0)
 Texture(Input1, 1, 1)
@@ -40,16 +48,59 @@ Texture(Texture3, 3, 3)
 
 #define PIXEL_MAIN_END } 
 
-#define inPos     fragColor
-#define inUv      fragTexCoord
-#define inNormal  fragNormal
+#define inPos       fragColor
+#define inUv        fragTexCoord
+#define inNormal    fragNormal
+#define inWorldPos  fragWorldPos
 
 #define ddx(x)	dFdx(x)
 #define ddy(x)	dFdy(x)
 
 #define DirLightDir(i) aDirLights[i].vDirLightDir
 #define DirLightColor(i) aDirLights[i].vDirLightColor
+#define DirLightViewProj(i) mLightViewProj[i]
 #define DirLightCount uNumLights
+#define DirLightShadowCount uNumShadows
+
+float ShadowFactor(vec4 vLightViewProjPos, uint idx)
+{
+  float fShadow = 0;
+
+  /*vec3 vProjCoords = vLightViewProjPos.xyz;
+  vProjCoords.x = (vLightViewProjPos.x / vLightViewProjPos.w) * 0.5 + 0.5f;
+  vProjCoords.y = 1 - ((vLightViewProjPos.y / vLightViewProjPos.w) * 0.5 + 0.5f);
+  vProjCoords.z = vLightViewProjPos.z / vLightViewProjPos.w;
+
+  if (vProjCoords.x > 1 || vProjCoords.x < 0 || vProjCoords.y > 1 || vProjCoords.y < 0)
+  {
+    return 1;
+  }
+
+  for (uint i = 0; i < DirLightShadowCount; i++)
+  { 
+    if (i == idx)
+    {
+      float fMapDepth = sampleTex(ShadowMap0, vProjCoords.xy).r;
+      float fCurrShadow = 1 - step(fMapDepth, vProjCoords.z);
+      fShadow = min(fShadow, fCurrShadow);
+    }
+  }*/
+
+  return fShadow;
+}
+
+vec3 LambertDirLighting(vec4 vWorldPos, vec3 vNormal)
+{
+  vec3 vLight = vec3(0, 0, 0);
+
+  for (uint i = 0; i < DirLightCount; i++)
+  {
+    vec4 vLightViewProjPos = mul(DirLightViewProj(i), vWorldPos);
+    vLight += DirLightColor(i).xyz * max(0, dot(DirLightDir(i).xyz, normalize(vNormal))) * ShadowFactor(vLightViewProjPos, i);
+  }
+
+  return vLight;
+}
 
 CBuffer(MatBuffer, 2)
 {
@@ -61,23 +112,13 @@ PIXEL_MAIN_BEGIN
 
   vec3 ambientFactor = vec3(0.3, 0.3, 0.3);  
 
-  vec3 light = vec3(0, 0, 0);
-
-  for (uint i = 0; i < DirLightCount; i++)
-  {
-    light += DirLightColor(i).xyz * max(0, dot(DirLightDir(i).xyz, normalize(inNormal))); 
-  }
+  vec3 light = LambertDirLighting(vec4(inWorldPos, 1), inNormal);
 
   vec4 color = sampleTex(Texture0, inUv);
-
-  /*if (light < 0.5)  
-  {
-    color = sampleTex(gbuffTex, inUv);
-  }  */
-
-  outColor = color * vec4((light + ambientFactor), 1); 
+  
+  outColor = color * vec4(light + ambientFactor, 1); 
   outColor.a = 0.7f; 
 
-  outColor *= vTint * fMult;
+  outColor *= vTint * fMult; 
  
 PIXEL_MAIN_END

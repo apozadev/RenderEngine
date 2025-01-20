@@ -18,6 +18,7 @@ layout( push_constant ) uniform constants
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;
+layout(location = 3) out vec3 fragWorldPos;
 
 #define VERTEX_MAIN_BEGIN \
     void main() {
@@ -37,3 +38,4 @@ layout(location = 2) out vec2 fragTexCoord;
 #define outNormal   fragNormal
 #define outColor   	fragColor
 #define outUv		fragTexCoord
+#define outWorldPos fragWorldPos

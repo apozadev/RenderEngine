@@ -2,6 +2,9 @@
 
 #include "Core/Component.h"
 #include "Graphics/DirLight.h"
+#include "Graphics/RenderTarget.h"
+#include "Graphics/Pass.h"
+#include "Graphics/Camera.h"
 #include "Memory/PtrTypes.h"
 
 #include <glm/vec3.hpp>
@@ -24,5 +27,9 @@ protected:
 private:
 
   DirLight m_oDirLight;
+
+  owner_ptr<RenderTarget> m_pShadowMap;
+  owner_ptr<Camera> m_pCamera;
+  owner_ptr<Pass> m_pShadowPass;
 
 };

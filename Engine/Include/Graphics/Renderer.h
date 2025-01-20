@@ -4,6 +4,7 @@
 #include <string>
 
 #include "glm/vec4.hpp"
+#include "glm/mat4x4.hpp"
 #include "Core/Singleton.h"
 #include "Graphics/RenderPipeline.h"
 #include "Graphics/ResourceFrequency.h"
@@ -14,6 +15,7 @@ class MaterialInstance;
 class Transform;
 class Window;
 class Camera;
+class RenderTarget;
 struct DirLight;
 struct RenderPipelineConfig;
 
@@ -33,8 +35,10 @@ class Renderer : public Singleton<Renderer>
   struct alignas(16) LightData
   {
     DirLightData m_aLights[MAX_LIGHTS];
+    glm::mat4 m_aLightViews[MAX_LIGHTS];
     unsigned int m_uNumLights;
-    float pad0, pad1, pad2;
+    unsigned int m_uNumShadows;
+    float pad0, pad1;
   };
 
 public:  
@@ -43,6 +47,14 @@ public:
   {
     Camera* m_pCamera;
     const Transform* m_pTransform;
+  };
+
+  struct ShadowView
+  {
+    Camera* m_pCamera;
+    const Transform* m_pTransform;
+    const RenderTarget* m_pShadowMap;
+    const Pass* m_pPass;
   };
 
   Renderer();
@@ -58,14 +70,16 @@ public:
   void Setup();
 
   void SubmitCamera(Camera* _pCamera, const Transform* _pTransform);
-  void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform);
-  void SubmitDirLight(DirLight* _pDirLight, const Transform* _pTransform);
+  void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform, bool _bCastShadow);
+  void SubmitDirLight(DirLight* _pDirLight, Camera* _pCamera, const Transform* _pTransform, const RenderTarget* _pShadowMap, const Pass* _pPass);
 
   void OnWindowResize();
 
   RenderPipeline* GetRenderPipeline(std::string _sPipelineId);
 
   void SetupSubStateLightCBuffers(ResourceFrequency _eFrequency);
+
+  void SetupSubStateShadowMaps(ResourceFrequency _eFrequency);
   
   void Draw();  
 
@@ -75,5 +89,9 @@ private:
 
   std::vector<RenderPipeline> m_lstRenderPipelines;  
 
-  owner_ptr<ConstantBuffer<LightData>> m_pLightCBuff;
+  owner_ptr<ConstantBuffer<LightData>> m_pLightCBuff;  
+
+  std::vector<ShadowView> m_lstShadowViews;  
+
+  std::vector<Job> m_lstShadowJobs;    
 };

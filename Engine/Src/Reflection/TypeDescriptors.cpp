@@ -43,7 +43,7 @@ namespace reflection {
   
   int TypeDescriptor_Struct::getFirstMemberIdx() const {
     if (!parentTypeDesc) return 0;
-    return parentTypeDesc->getFirstMemberIdx() + parentTypeDesc->members.size();
+    return parentTypeDesc->getFirstMemberIdx() + static_cast<int>(parentTypeDesc->members.size());
   }
 
   bool TypeDescriptor_Struct::CanUpCast(const TypeDescriptor_Struct* type) const {

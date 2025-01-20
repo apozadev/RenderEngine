@@ -19,8 +19,10 @@ struct DirLight
 
 CBuffer(LightBuffer, 1)
 {
-  DirLight aDirLights[5];
+  DirLight aDirLights[5];  
+  mat4 mLightViewProj[5];
   uint uNumLights;
+  uint uNumShadows;
 }
 
 Texture2D Input0 : register(t0);
@@ -33,9 +35,15 @@ Texture2D Texture1 : register(t5);
 Texture2D Texture2 : register(t6);
 Texture2D Texture3 : register(t7);
 
-#define inPos     __input.pos
-#define inUv      __input.uv
-#define inNormal  __input.normal
+Texture2D ShadowMap0 : register(t8);
+Texture2D ShadowMap1 : register(t9);
+Texture2D ShadowMap2 : register(t10);
+Texture2D ShadowMap3 : register(t11);
+
+#define inPos       __input.pos
+#define inUv        __input.uv
+#define inNormal    __input.normal
+#define inWorldPos  __input.worldPos
 
 #define outColor  o.color
 
@@ -45,3 +53,6 @@ Texture2D Texture3 : register(t7);
 #define DirLightDir(i) aDirLights[i].vDirLightDir
 #define DirLightColor(i) aDirLights[i].vDirLightColor
 #define DirLightCount uNumLights
+#define DirLightViewProj(i) mLightViewProj[i]
+#define DirLightCount uNumLights
+#define DirLightShadowCount uNumShadows

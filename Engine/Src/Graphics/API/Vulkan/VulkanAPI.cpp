@@ -1,3 +1,6 @@
+
+#ifdef RENDER_API_VULKAN
+
 #include "Graphics/API/Vulkan/VulkanAPI.h"
 
 #include <vector>
@@ -7,6 +10,10 @@
 #include <vulkan/vulkan.h>
 
 #include "../3rd/spirv-reflect/spirv_reflect.h"
+
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
 
 #include "Core/Exception.h"
 
@@ -22,7 +29,6 @@ namespace api
 {
 namespace vk
 {
-
   // General
 
   void InitializeAPI()
@@ -44,10 +50,16 @@ namespace vk
 
     CreateInstance();
     CreatePhysicalDevice();    
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls    
   }
 
   void ShutDownAPI()
-  {    
+  {        
 
     s_oRenderStatePool.Clear();
     s_oRenderSubStatePool.Clear();
@@ -77,6 +89,8 @@ namespace vk
   {
     APIWindow* pWindow = new APIWindow();
 
+    pWindow->m_pGlfwWindow = _pGlfwWindow;
+
     CreateLogicalDevice(pWindow);
     RetrieveQueues(pWindow);
     CreateSurface(pWindow, _pGlfwWindow);
@@ -103,6 +117,10 @@ namespace vk
     }
 
     pWindow->m_uCurrFrameIdx = 0u;
+
+    // ImGui stuff
+
+    SetupImGui(pWindow);
 
     return pWindow;
 
@@ -182,18 +200,36 @@ namespace vk
 
     const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
 
-    vkCmdBeginRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);    
+
+    _pWindow->m_bDefaultRenderTargetBound = true;
   }
 
   void UnbindDefaultRenderTarget(APIWindow* _pWindow)
   {
+    
     const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
 
-    vkCmdEndRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx]);
+    // Record dear imgui primitives into command buffer
+    ImGui::Render();
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), _pWindow->m_pCmdBuffers[uFrameIdx]);
+
+    vkCmdEndRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx]);    
+
+    _pWindow->m_bDefaultRenderTargetBound = false;
+  }
+
+  bool IsDefaultRenderTargetBound(APIWindow* _pWindow)
+  {
+    return _pWindow->m_bDefaultRenderTargetBound;
   }
 
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     const uint32_t uNumImages = _pWindow->m_uSwapchainImageCount;
 
@@ -581,12 +617,14 @@ namespace vk
     return pRenderTarget;
   }
 
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
   {
     s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;    
-    s_oGlobalData.m_oRenderTargetBuilder.SetColorFormat(GetVKFormat(_eFormat));
-    s_oGlobalData.m_oRenderTargetBuilder.SetDepthStencilFormat(GetVKFormat(_eDepthStencilFormat));
-    s_oGlobalData.m_oRenderTargetBuilder.SetMsaaSamples(_uMsaaSamples);
+    s_oGlobalData.m_oRenderTargetBuilder.m_eColorFormat = GetVKFormat(_eFormat);
+    s_oGlobalData.m_oRenderTargetBuilder.m_eDepthStencilFormat = GetVKFormat(_eDepthStencilFormat);
+    s_oGlobalData.m_oRenderTargetBuilder.m_uMsaaSamples = _uMsaaSamples;
+    s_oGlobalData.m_oRenderTargetBuilder.m_uWidth = _uWidth;
+    s_oGlobalData.m_oRenderTargetBuilder.m_uHeight = _uHeight;
   }
 
   void RenderTargetAddColorTexture(APITexture* _pTexture)
@@ -629,11 +667,15 @@ namespace vk
     aClearColors[1].depthStencil = { 1.0f, 0 };
     aClearColors[2].color = { {0.0f, 0.0f, 0.0f, 1.0f} };*/
 
+    VkExtent2D oExtent = {};
+    oExtent.width = _pRenderTarget->m_uWidth;
+    oExtent.height = _pRenderTarget->m_uHeight;
+
     VkRenderPassBeginInfo oRenderPassBeginInfo{};
     oRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     oRenderPassBeginInfo.renderPass = _pRenderTarget->m_hRenderPass;
     oRenderPassBeginInfo.framebuffer = _pRenderTarget->m_hFrameBuffer;
-    oRenderPassBeginInfo.renderArea.extent = pWindow->m_oExtent;
+    oRenderPassBeginInfo.renderArea.extent = oExtent;
     oRenderPassBeginInfo.renderArea.offset = { 0,0 };
     oRenderPassBeginInfo.clearValueCount = 0u;//3u;
     oRenderPassBeginInfo.pClearValues = nullptr;//aClearColors;
@@ -641,6 +683,8 @@ namespace vk
     const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
 
     vkCmdBeginRenderPass(pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    s_oGlobalData.m_pBoundRenderTarget = _pRenderTarget;
   }
 
   void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -650,6 +694,13 @@ namespace vk
     const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
 
     vkCmdEndRenderPass(pWindow->m_pCmdBuffers[uFrameIdx]);
+
+    s_oGlobalData.m_pBoundRenderTarget = nullptr;
+  }
+
+  bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget)
+  {
+    return s_oGlobalData.m_pBoundRenderTarget == _pRenderTarget;
   }
 
   void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -754,7 +805,7 @@ namespace vk
     APIRenderState* pRenderState = s_oGlobalData.m_pUsingRenderState;
     APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-    const uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;    
 
     s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pRenderState->m_pDescSets, uNumImages, &pRenderState->m_oMaterialLayoutBuilder);
     s_oGlobalData.m_oDescSetUpdater.Clear();
@@ -1120,10 +1171,10 @@ namespace vk
 
   void BeginSubStateSetup(APIRenderSubState* _pSubState)
   {
-    if (s_oGlobalData.m_pUsingSubState != nullptr)
+    /*if (s_oGlobalData.m_pUsingSubState != nullptr)
     {
       THROW_GENERIC_EXCEPTION("[API] EndSubStateSetup was not called before a new BeginSubStateSetup call")
-    }
+    }*/
 
     s_oGlobalData.m_pUsingSubState = _pSubState;
     s_oGlobalData.m_pUsingWindow = _pSubState->m_pOwnerWindow;    
@@ -1132,20 +1183,31 @@ namespace vk
   void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo)
   {    
 
-    APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-
-    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;    
+    APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;    
 
     uint32_t uBinding = FindBinding(pWindow, _oBindInfo, VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
-    for (int i = 0; i < uNumImages; i++)
-    {            
+    if (s_oGlobalData.m_bRenderBegan)
+    {
       VkDescriptorBufferInfo oBufferInfo{};
-      oBufferInfo.buffer = _pCBuffer->m_pUniformBuffers[i];
+      oBufferInfo.buffer = _pCBuffer->m_pUniformBuffers[pWindow->m_uCurrFrameIdx];
       oBufferInfo.offset = 0;
       oBufferInfo.range = _uSize;
 
-      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, i, _oBindInfo.m_eStage);
+      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, pWindow->m_uCurrFrameIdx, _oBindInfo.m_eStage);
+    }
+    else
+    {
+      uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+      for (int i = 0; i < uNumImages; i++)
+      {
+        VkDescriptorBufferInfo oBufferInfo{};
+        oBufferInfo.buffer = _pCBuffer->m_pUniformBuffers[i];
+        oBufferInfo.offset = 0;
+        oBufferInfo.range = _uSize;
+
+        s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, i, _oBindInfo.m_eStage);
+      }
     }
   }
 
@@ -1154,18 +1216,30 @@ namespace vk
 
     APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
+    uint32_t uNumImages = s_oGlobalData.m_bRenderBegan ? 1u : pWindow->m_uSwapchainImageCount;
 
     uint32_t uBinding = FindBinding(pWindow, _oBindInfo, VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
-    for (int i = 0; i < uNumImages; i++)
+    if (s_oGlobalData.m_bRenderBegan)
     {
       VkDescriptorImageInfo oImageInfo{};
       oImageInfo.sampler = _pTexture->m_hSampler;
       oImageInfo.imageView = _pTexture->m_hImageView;
       oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, i, _oBindInfo.m_eStage);
+      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, pWindow->m_uCurrFrameIdx, _oBindInfo.m_eStage);
+    }
+    else
+    {
+      for (int i = 0; i < uNumImages; i++)
+      {
+        VkDescriptorImageInfo oImageInfo{};
+        oImageInfo.sampler = _pTexture->m_hSampler;
+        oImageInfo.imageView = _pTexture->m_hImageView;
+        oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, i, _oBindInfo.m_eStage);
+      }
     }
   }
 
@@ -1176,7 +1250,7 @@ namespace vk
 
     APIWindow* pWindow = pSubState->m_pOwnerWindow;
 
-    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;        
+    uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
 
     DescriptorSetLayoutBuilder* pLayoutBuilder = nullptr;
 
@@ -1191,7 +1265,7 @@ namespace vk
     case ResourceFrequency::RENDER_STEP:
       pLayoutBuilder = &pWindow->m_oStepLayoutBuilder;
       break;
-    }
+    }        
 
     s_oGlobalData.m_oDescSetUpdater.Update(pWindow->m_hDevice, pSubState->m_pDescSets, uNumImages, pLayoutBuilder);
 
@@ -1212,19 +1286,23 @@ namespace vk
 
   void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState)
   {
-    /*APIWindow* pWindow = _pAPIRenderSubState->m_pRenderState->m_pOwnerWindow;
+    APIWindow* pWindow = _pAPIRenderSubState->m_pOwnerWindow;
 
-    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_hInFlightFence, VK_TRUE, UINT64_MAX))
+    const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
+
+    VK_CHECK(vkWaitForFences(pWindow->m_hDevice, 1, &pWindow->m_pInFlightFences[uFrameIdx], VK_TRUE, UINT64_MAX))
 
     uint32_t uNumImages = pWindow->m_uSwapchainImageCount;
-    vkFreeDescriptorSets(pWindow->m_hDevice, pWindow->m_hDescPool, uNumImages, _pAPIRenderSubState->m_pDescSets);*/
+    vkFreeDescriptorSets(pWindow->m_hDevice, pWindow->m_hDescPool, uNumImages, _pAPIRenderSubState->m_pDescSets);
+
+    s_oVkDescriptorSetPool.ReturnElements(_pAPIRenderSubState->m_pDescSets);
 
     s_oRenderSubStatePool.ReturnElement(_pAPIRenderSubState);
   }
 
   // Drawing
 
-  void WaitForEndFrame(APIWindow* _pWindow)
+  void WaitForNextImage(APIWindow* _pWindow)
   {
     VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, _pWindow->m_uSwapchainImageCount, _pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
   }
@@ -1245,8 +1323,12 @@ namespace vk
 
     if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
     {
-      _pWindow->m_bResized = false;      
+      _pWindow->m_bResized = false;     
+      ImGui::EndFrame();
       RecreateSwapchain(_pWindow);      
+      ImGui_ImplVulkan_Shutdown();
+      ImGui_ImplGlfw_Shutdown();
+      SetupImGui(_pWindow);
       return 1;
     }
     else if (hResult != VK_SUCCESS)
@@ -1266,6 +1348,8 @@ namespace vk
     VK_CHECK(vkBeginCommandBuffer(_pWindow->m_pCmdBuffers[uFrameIdx], &oCommandBufferBeginInfo))   
 
     s_oGlobalData.m_pUsingWindow = _pWindow;
+
+    s_oGlobalData.m_bRenderBegan = true;
 
     return 0;
   }
@@ -1336,5 +1420,16 @@ namespace vk
     _pWindow->m_uCurrFrameIdx = (_pWindow->m_uCurrFrameIdx + 1u) % _pWindow->m_uSwapchainImageCount;
   }
 
+  // Misc
+
+  void ImGuiNewFrame()
+  {
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+  }
+
 }
 }
+
+#endif

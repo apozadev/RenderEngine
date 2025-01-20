@@ -1,6 +1,6 @@
 #pragma once
 
-#if RENDER_API == 1
+#ifdef RENDER_API_DX11
 
 #include <inttypes.h>
 
@@ -49,9 +49,11 @@ namespace api
 
 		void ClearDefaultRenderTarget(APIWindow* _pWindow);
 
-		void BindDefaultRenderTarget(APIWindow* _pWindow);
+		void BindDefaultRenderTarget(APIWindow* _pWindow);		
 
 		void UnbindDefaultRenderTarget(APIWindow* _pWindow);
+
+		bool IsDefaultRenderTargetBound(APIWindow* _pWindow);
 
 		void DestroyAPIWindow(APIWindow* _pAPIWindow);
 
@@ -99,7 +101,7 @@ namespace api
 
 		APIRenderTarget* CreateAPIRenderTarget();
 
-		void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
+		void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
 
 		void RenderTargetAddColorTexture(APITexture* _pTexture);
 
@@ -116,6 +118,8 @@ namespace api
 		void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
 		void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+
+		bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget);
 
 		void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);
 
@@ -169,11 +173,17 @@ namespace api
 
 		// Drawing
 
+		void WaitForNextImage(APIWindow* _pWindow);
+
 		int BeginDraw(APIWindow* _pWindow);
 
 		void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize);
 
 		void EndDraw(APIWindow* _pWindow);
+
+		// Misc
+
+		void ImGuiNewFrame();
 
 	}
 }

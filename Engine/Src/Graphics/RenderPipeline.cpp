@@ -43,10 +43,39 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
     pRenderTarget->Clear();
   }
 
-  for (owner_ptr<RenderStep>& rStep : m_lstRenderSteps)
-  {                
-    rStep->Execute(_pCamera, _pViewTransform);
+  const RenderTarget* pLastRT = nullptr;
+  bool bLastRtIsDefault = false;
+
+  for (unsigned int i = 0u; i < m_lstRenderSteps.size(); i++)
+  {    
+
+    owner_ptr<RenderStep>& pStep = m_lstRenderSteps[i];
+
+    // Unbind last RT if necessary
+    /*if (pLastRT != pStep->GetRenderTarget() && pLastRT != nullptr)
+    {
+      pLastRT->Unbind();
+    }
+    else if (bLastRtIsDefault && pStep->GetRenderTarget() != nullptr)
+    {
+      Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
+    }*/
+    
+    pStep->Execute(_pCamera, _pViewTransform);    
+
+    pLastRT = pStep->GetRenderTarget();
+    bLastRtIsDefault = pLastRT == nullptr;    
   }
+
+  // Unbind last RT
+  /*if (pLastRT != nullptr)
+  {
+    pLastRT->Unbind();
+  }
+  else if (bLastRtIsDefault)
+  {
+    Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
+  }*/
 }
 
 void RenderPipeline::GenerateFromConfig()

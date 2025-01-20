@@ -29,9 +29,11 @@ public:
   //Camera(Camera&& _oOther);
   ~Camera();  
 
-  void Configure(const std::string& _sRenderPipelineId);
+  void Configure(const std::string& _sRenderPipelineId, bool _bOrtho = false);
 
   void UpdateTransform(const Transform& _oParentTransform);
+
+  void PreRenderSetup();
 
   void Bind() const;  
 
@@ -51,4 +53,6 @@ private:
   owner_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
 
   std::string m_sRenderPipelineId;
+
+  bool m_bOrtho;
 };

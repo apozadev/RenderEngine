@@ -84,11 +84,17 @@ void RenderStep::Bind() const
 
   if (m_pRenderTarget)
   {
-    m_pRenderTarget->Bind();
+    //if (!m_pRenderTarget->IsBound())
+    {
+      m_pRenderTarget->Bind();
+    }
   }
   else
   {
-    Engine::GetInstance()->GetWindow()->BindDefaultRenderTarget();
+    //if (!Engine::GetInstance()->GetWindow()->IsDefaultRenderTargetBound())
+    {
+      Engine::GetInstance()->GetWindow()->BindDefaultRenderTarget();
+    }
   }
 
   for (RenderTarget* _pInput : m_lstInputs)

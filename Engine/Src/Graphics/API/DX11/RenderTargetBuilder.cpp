@@ -6,35 +6,6 @@ namespace api
 {
 namespace dx11
 {
-  void RenderTargetBuilder::AddColorTexture(APITexture* _pTexture)
-  {
-    m_lstColorTextures.push_back(_pTexture);
-  }
-
-  void RenderTargetBuilder::SetDepthTexture(APITexture* _pTexture)
-  {
-    m_pDepthStencilTexture = _pTexture;
-  }
-
-  void RenderTargetBuilder::AddResolveColorTexture(APITexture* _pTexture)
-  {
-    m_lstColorResolveTextures.push_back(_pTexture);
-  }
-
-  void RenderTargetBuilder::SetColorFormat(DXGI_FORMAT _eFormat)
-  {
-    m_eColorFormat = _eFormat;
-  }
-
-  void RenderTargetBuilder::SetDepthStencilFormat(DXGI_FORMAT _eFormat)
-  {
-    m_eDepthStencilFormat = _eFormat;
-  }
-
-  void RenderTargetBuilder::SetMsaaSamples(uint32_t _uSamples)
-  {
-    m_uMsaaSamples = _uSamples;
-  }
 
   void RenderTargetBuilder::Build(APIRenderTarget* pRenderTarget_)
   {

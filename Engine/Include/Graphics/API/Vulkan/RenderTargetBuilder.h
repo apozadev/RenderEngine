@@ -32,21 +32,6 @@ namespace vk
       m_lstColorResolveTextures.push_back(_pTexture);
     }
 
-    void SetColorFormat(VkFormat _eFormat)
-    {
-      m_eColorFormat = _eFormat;
-    }
-
-    void SetDepthStencilFormat(VkFormat _eFormat)
-    {
-      m_eDepthStencilFormat = _eFormat;
-    }
-
-    void SetMsaaSamples(uint32_t _uSamples)
-    {
-      m_uMsaaSamples = _uSamples;
-    }
-
     void Build(APIRenderTarget* pRenderTarget_);
 
     void Clear()
@@ -56,12 +41,17 @@ namespace vk
       m_pDepthStencilTexture = nullptr;      
     }
 
-  private:
+  public:
 
     VkFormat m_eColorFormat;
+
     VkFormat m_eDepthStencilFormat;
 
     uint32_t m_uMsaaSamples;
+
+    uint32_t m_uWidth, m_uHeight;
+
+  private:    
 
     std::vector<APITexture*> m_lstColorTextures;
     std::vector<APITexture*> m_lstColorResolveTextures;

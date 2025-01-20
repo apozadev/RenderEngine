@@ -44,6 +44,11 @@ uint8_t Window::GetId() const
   return m_uId;
 }
 
+void Window::WaitForNextImage()
+{
+  api::WaitForNextImage(m_pAPIWindow);
+}
+
 int Window::BeginDraw() 
 { 
 
@@ -99,6 +104,11 @@ void Window::BindDefaultRenderTarget() const
 void Window::UnbindDefaultRenderTarget() const
 {
   api::UnbindDefaultRenderTarget(m_pAPIWindow);
+}
+
+bool Window::IsDefaultRenderTargetBound() const
+{
+  return api::IsDefaultRenderTargetBound(m_pAPIWindow);
 }
 
 uint32_t Window::GetMsaaSamples() const

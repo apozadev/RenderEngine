@@ -160,10 +160,27 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/DirLight.h" 
 	"Include/Graphics/GeometryRenderStep.h"
 	"Src/Graphics/GeometryRenderStep.cpp"
-	 "Include/Graphics/ConstantBufferTypes.h" 
-	 "Include/Graphics/ReflectedConstantBuffer.h"
-	 "Src/Graphics/ReflectedConstantBuffer.cpp" 
-	 "Src/Graphics/ConstantBufferTypes.cpp")  
+	"Include/Graphics/ConstantBufferTypes.h" 
+	"Include/Graphics/ReflectedConstantBuffer.h"
+	"Src/Graphics/ReflectedConstantBuffer.cpp" 
+	"Src/Graphics/ConstantBufferTypes.cpp"
+	"../imgui/imgui.h"
+    "../imgui/imgui.cpp"
+    "../imgui/imgui_internal.h"    
+    "../imgui/imgui_draw.cpp"    
+    "../imgui/imgui_tables.cpp"    
+    "../imgui/imgui_widgets.cpp"    
+    "../imgui/imstb_rectpack.h"    
+    "../imgui/imstb_textedit.h"    
+    "../imgui/imstb_truetype.h"    
+    "../imgui/backends/imgui_impl_vulkan.h"
+    "../imgui/backends/imgui_impl_vulkan.cpp"
+    "../imgui/backends/imgui_impl_win32.h"
+    "../imgui/backends/imgui_impl_win32.cpp"
+	"../imgui/backends/imgui_impl_dx11.h"
+	"../imgui/backends/imgui_impl_dx11.cpp"
+    "../imgui/backends/imgui_impl_glfw.h"
+    "../imgui/backends/imgui_impl_glfw.cpp") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -173,17 +190,17 @@ target_include_directories(${PROJECT_NAME}
 	"${CMAKE_SOURCE_DIR}/glfw/include"
 	"${CMAKE_SOURCE_DIR}/glm"
 	"${CMAKE_SOURCE_DIR}/stb"
+	"${CMAKE_SOURCE_DIR}/imgui"
 	"${CMAKE_SOURCE_DIR}/assimp/include"	
  )
 
-set(RENDER_API_VULKAN 0)
-set(RENDER_API_DX11 1)
+if(${TARGET_RENDER_API} MATCHES ${RENDER_API_VULKAN})
+	target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_VULKAN) 
+else()
+target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_DX11) 
+endif()
 
-set(TARGET_RENDER_API ${RENDER_API_VULKAN})   
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE 
-	RENDER_API=${TARGET_RENDER_API}
-	CURR_WORKING_DIR=${CMAKE_SOURCE_DIR})
+target_compile_definitions(${PROJECT_NAME} PRIVATE CURR_WORKING_DIR=${CMAKE_SOURCE_DIR}) 
 
  # Shader stuff
 

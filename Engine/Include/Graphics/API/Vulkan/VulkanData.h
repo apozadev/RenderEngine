@@ -63,7 +63,9 @@ namespace vk
 
     APIRenderState* m_pUsingRenderState = nullptr;
     APIRenderSubState* m_pUsingSubState = nullptr;
-    APIRenderTarget* m_pUsingRenderTarget = nullptr;          
+    APIRenderTarget* m_pUsingRenderTarget = nullptr;
+
+    APIRenderTarget* m_pBoundRenderTarget = nullptr;    
 
     DescriptorSetUpdater m_oDescSetUpdater;
 
@@ -71,6 +73,8 @@ namespace vk
 
     uint32_t m_uAPIMinorVersion;
     uint32_t m_uAPIMayorVersion;
+
+    bool m_bRenderBegan = false;
 
   };
 }

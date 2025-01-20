@@ -19,48 +19,50 @@ public:
 
   T* PullElements(size_t _uCount)
   {
-
-    size_t uCandidateIdx = SIZE;
-
-    for (size_t i = 0u; i < SIZE;)
+    if (_uCount > 0u)
     {
-      size_t uIdx = (i + m_uCurrIdx) % SIZE;    
+      size_t uCandidateIdx = SIZE;
 
-      if (uIdx < uCandidateIdx)
+      for (size_t i = 0u; i < SIZE;)
       {
-        uCandidateIdx = SIZE;
-      }
+        size_t uIdx = (i + m_uCurrIdx) % SIZE;
 
-      if (uCandidateIdx >= SIZE)
-      {
-        if (m_pArraySizes[uIdx] == 0u)
+        if (uIdx < uCandidateIdx)
         {
-          uCandidateIdx = uIdx;
+          uCandidateIdx = SIZE;
+        }
+
+        if (uCandidateIdx >= SIZE)
+        {
+          if (m_pArraySizes[uIdx] == 0u)
+          {
+            uCandidateIdx = uIdx;
+          }
+        }
+
+        if (uCandidateIdx < SIZE
+          && m_pArraySizes[uIdx] == 0u
+          && uIdx - uCandidateIdx >= _uCount - 1u)
+        {
+          m_uCurrIdx = uIdx + 1;
+          m_pArraySizes[uCandidateIdx] = _uCount;
+          return &m_pData[uCandidateIdx];
+        }
+
+        if (m_pArraySizes[uIdx] == 0)
+        {
+          i++;
+        }
+        else
+        {
+          i += m_pArraySizes[uIdx];
         }
       }
-      
-      if(uCandidateIdx < SIZE
-        && m_pArraySizes[uIdx] == 0u
-        && uIdx - uCandidateIdx >= _uCount-1u)
-      {
-        m_uCurrIdx = uIdx+1;
-        m_pArraySizes[uCandidateIdx] = _uCount;
-        return &m_pData[uCandidateIdx];
-      }
 
-      if (m_pArraySizes[uIdx] == 0)
-      {
-        i++;
-      }
-      else
-      {
-        i += m_pArraySizes[uIdx];
-      } 
+      THROW_GENERIC_EXCEPTION("Pool not big enough")
     }
 
-    THROW_GENERIC_EXCEPTION("Pool not big enough")
-
-      return nullptr;
+    return nullptr;
   }
 
   void ReturnElements(T* _pElement)

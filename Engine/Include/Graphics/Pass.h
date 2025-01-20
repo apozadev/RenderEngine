@@ -13,7 +13,7 @@
 #include "Memory/Factory.h"
 #include "Core/BaseObject.h"
 
-class Resource;
+class RenderTarget;
 
 class Pass : public BaseObject
 {
@@ -21,6 +21,17 @@ class Pass : public BaseObject
 public:    
 
   ~Pass();
+
+  void Configure(const std::string& _sVSFilename
+    , const std::string& _sPSFilename
+    , bool _bBlendEnabled
+    , BlendOp _eBlendOp
+    , BlendFactor _eSrcBlendFactor
+    , BlendFactor _eDstBlendFactor
+    , bool _bDepthWrite
+    , bool _bDepthRead
+    , const RenderTarget* _pRenderTarget
+    , uint16_t _uLayer);
 
   void Configure(const std::string& _sVSFilename
     , const std::string& _sPSFilename
@@ -80,6 +91,7 @@ private:
   uint16_t m_uLayer;
 
   api::APIRenderState* m_pAPIRenderState;
+  api::APIRenderState* m_pShadowAPIRenderState; 
 
   //std::vector<owner_ptr<Texture2D>> m_lstTextures;
 
@@ -87,6 +99,6 @@ private:
 
   std::string m_sPipelineId;
 
-  int m_iStepIdx;
+  int m_iStepIdx;  
 
 };

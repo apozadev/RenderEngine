@@ -20,6 +20,8 @@ public:
 
   uint8_t GetId() const;
 
+  void WaitForNextImage();
+
   int BeginDraw();
   void EndDraw() const;  
 
@@ -35,6 +37,7 @@ public:
 
   void BindDefaultRenderTarget() const;
   void UnbindDefaultRenderTarget() const;
+  bool IsDefaultRenderTargetBound() const;
 
   uint32_t GetMsaaSamples() const;
 

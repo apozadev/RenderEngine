@@ -1,6 +1,6 @@
 #pragma once
 
-#if RENDER_API == 1
+#ifdef RENDER_API_DX11
 
 #include "Graphics/API/DX11/DX11API.h"
 
@@ -12,6 +12,10 @@
 #include "GLFW/glfw3.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
+
+#include "imgui.h"
+#include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_dx11.h"
 
 #include "Core/Exception.h"
 #include "File/FileUtils.h"
@@ -35,10 +39,79 @@
 
 namespace wrl = Microsoft::WRL;
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+#define CUSTOM_PROP_NAME "CustomWndProcData"
+
 namespace api
 {
   namespace dx11
-  {
+  {    
+
+    // Define the user data structure
+    struct WndProcData
+    {
+      WNDPROC originalWndProc;  // The original WndProc
+    };
+
+    // Forward declaration of the custom WndProc
+    LRESULT CALLBACK CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    void HookGLFWWndProc(GLFWwindow* window)
+    {
+      // Get the Win32 window handle from the GLFW window
+      HWND hwnd = glfwGetWin32Window(window);
+
+      // Allocate and set the WndProc data
+      WndProcData* data = new WndProcData();
+      data->originalWndProc = (WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
+
+      // Set the custom data as a property of the window
+      SetProp(hwnd, CUSTOM_PROP_NAME, (HANDLE)data);
+
+      // Hook the new WndProc
+      SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)CustomWndProc);
+    }
+
+    void RestoreOriginalWndProc(GLFWwindow* window)
+    {
+      // Get the Win32 window handle from the GLFW window
+      HWND hwnd = glfwGetWin32Window(window);
+
+      // Retrieve the custom WndProc data
+      WndProcData* data = (WndProcData*)GetProp(hwnd, CUSTOM_PROP_NAME);
+
+      if (data)
+      {
+        // Restore the original WndProc
+        SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)data->originalWndProc);
+
+        // Clean up the custom data
+        RemoveProp(hwnd, CUSTOM_PROP_NAME);
+        delete data;
+      }
+    }
+
+    LRESULT CALLBACK CustomWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    {
+      // Retrieve the custom WndProc data
+      WndProcData* data = (WndProcData*)GetProp(hWnd, CUSTOM_PROP_NAME);
+
+      // Forward the event to ImGui's WndProc handler
+      if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+      {
+        return true;
+      }
+
+      // Call the original WndProc
+      if (data && data->originalWndProc)
+      {
+        return CallWindowProc(data->originalWndProc, hWnd, msg, wParam, lParam);
+      }
+
+      // Default processing if no original WndProc exists
+      return DefWindowProc(hWnd, msg, wParam, lParam);
+    }
     
     // General
 
@@ -64,11 +137,24 @@ namespace api
       lstTextures.push_back(GlobalLayout::Resource{ "Texture0", 4u, PipelineStage::PIXEL });
       lstTextures.push_back(GlobalLayout::Resource{ "Texture1", 5u, PipelineStage::PIXEL });
       lstTextures.push_back(GlobalLayout::Resource{ "Texture2", 6u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Texture3", 7u, PipelineStage::PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Texture3", 7u, PipelineStage::PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap0", 8u, PipelineStage::PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap1", 9u, PipelineStage::PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap2", 10u, PipelineStage::PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap3", 11u, PipelineStage::PIXEL });      
+
+      IMGUI_CHECKVERSION();
+      ImGui::CreateContext();
+
+      ImGuiIO& io = ImGui::GetIO(); (void)io;
+      io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls  
     }
 
     void ShutDownAPI()
     {
+
+      ImGui::DestroyContext();
+
       s_oRenderStatePool.Clear();
       s_oConstantBufferPool.Clear();
       s_oMeshPool.Clear();
@@ -87,6 +173,8 @@ namespace api
     {
 
       APIWindow* pWindow = new APIWindow();  
+
+      pWindow->m_pGlfwWindow = _pGlfwWindow;
 
       pWindow->m_hWnd = glfwGetWin32Window(_pGlfwWindow);
 
@@ -107,6 +195,20 @@ namespace api
 
       // Default to triangle list just in case
       pWindow->m_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+      // ImGui stuff
+      IMGUI_CHECKVERSION();
+      ImGui::CreateContext();
+
+      ImGui::StyleColorsDark(); 
+
+      ImGui_ImplWin32_Init(glfwGetWin32Window(_pGlfwWindow));
+      ImGui_ImplDX11_Init(pWindow->m_pDevice.Get(), pWindow->m_pContext.Get()); 
+
+      ImGui::GetIO().DisplaySize.x = static_cast<float>(pWindow->m_uWidth);
+      ImGui::GetIO().DisplaySize.y = static_cast<float>(pWindow->m_uHeight);
+
+      HookGLFWWndProc(_pGlfwWindow);      
 
       return pWindow;
     }
@@ -146,16 +248,33 @@ namespace api
     void BindDefaultRenderTarget(APIWindow* _pWindow)
     {      
       _pWindow->m_pContext->OMSetRenderTargets(1, _pWindow->m_pRtv.GetAddressOf(), _pWindow->m_pDsv.Get());
+      s_oGlobalData.m_bIsDefaultRenderTargetBound = true;
     }
 
     void UnbindDefaultRenderTarget(APIWindow* _pWindow)
     {
+
+      ImGui::Render();
+      ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
       ID3D11RenderTargetView* pNullView =  nullptr;      
       _pWindow->m_pContext->OMSetRenderTargets(1, &pNullView, nullptr);
+      s_oGlobalData.m_bIsDefaultRenderTargetBound = false;      
+    }
+
+    bool IsDefaultRenderTargetBound(APIWindow* _pWindow)
+    {
+      return s_oGlobalData.m_bIsDefaultRenderTargetBound;
     }
 
     void DestroyAPIWindow(APIWindow* _pAPIWindow)
     {
+
+      RestoreOriginalWndProc(_pAPIWindow->m_pGlfwWindow);
+
+      ImGui_ImplDX11_Shutdown();
+      ImGui_ImplWin32_Shutdown();            
+
       _pAPIWindow->m_pRtv = nullptr;
       _pAPIWindow->m_pDsv = nullptr;
       _pAPIWindow->m_pColorTexture = nullptr;
@@ -455,11 +574,13 @@ namespace api
       return pRenderTarget;
     }
 
-    void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
+    void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
     {
-      s_oGlobalData.m_oRenderTargetBuilder.SetColorFormat(GetDXGIFormat(_eFormat));
-      s_oGlobalData.m_oRenderTargetBuilder.SetDepthStencilFormat(GetDXGIFormat(_eDepthStencilFormat));
-      s_oGlobalData.m_oRenderTargetBuilder.SetMsaaSamples(_uMsaaSamples);
+      s_oGlobalData.m_oRenderTargetBuilder.m_uWidth = _uWidth;
+      s_oGlobalData.m_oRenderTargetBuilder.m_uHeight = _uHeight;
+      s_oGlobalData.m_oRenderTargetBuilder.m_eColorFormat = GetDXGIFormat(_eFormat);
+      s_oGlobalData.m_oRenderTargetBuilder.m_eDepthStencilFormat = GetDXGIFormat(_eDepthStencilFormat);
+      s_oGlobalData.m_oRenderTargetBuilder.m_uMsaaSamples = _uMsaaSamples;
       s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
     }
 
@@ -481,6 +602,7 @@ namespace api
     void EndRenderTargetSetup()
     {
       s_oGlobalData.m_oRenderTargetBuilder.Build(s_oGlobalData.m_pUsingRenderTarget);
+      s_oGlobalData.m_oRenderTargetBuilder.Clear();
     }
 
     void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -503,9 +625,20 @@ namespace api
     }
 
     void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
-    {
-      
+    {   
+
       s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
+
+      /*if (_pRenderTarget->m_lstRtv.size() > 0u)
+      {
+        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
+      }
+      else
+      {
+        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(0u, nullptr, _pRenderTarget->m_pDsv.Get());
+      }*/
+
+      s_oGlobalData.m_pBoundRenderTarget = _pRenderTarget;
     }
 
     void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -515,9 +648,26 @@ namespace api
 
     void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
     {
+
       const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
-      
       s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
+
+      /*if (_pRenderTarget->m_lstRtv.size() > 0u)
+      {
+        const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
+        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
+      }
+      else
+      {
+        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(0u, nullptr, nullptr);
+      }*/
+
+      s_oGlobalData.m_pBoundRenderTarget = nullptr;
+    }
+
+    bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget)
+    {
+      return s_oGlobalData.m_pBoundRenderTarget == _pRenderTarget;
     }
     
     void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
@@ -979,7 +1129,7 @@ namespace api
           if (oBindDesc.Type == D3D_SIT_CBUFFER && _oBindInfo.m_sName == oBindDesc.Name)
           {
             _pCBuffer->m_slot = oBindDesc.BindPoint;
-            break;
+            return;
           }
         }
         
@@ -992,10 +1142,12 @@ namespace api
             && rGlobalCBuff.m_eStage == _oBindInfo.m_eStage)
           {
             _pCBuffer->m_slot = rGlobalCBuff.m_uBinding;
-            break;
+            return;
           }
         }
       }
+
+      THROW_GENERIC_EXCEPTION("[API] Cbuffer name not found")
     }
 
     void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
@@ -1027,10 +1179,13 @@ namespace api
             && rGlobalTexture.m_eStage == _oBindInfo.m_eStage)
           {
             _pTexture->m_uSlot = rGlobalTexture.m_uBinding;
-            break;
+            return;
           }
         }
       }
+
+      THROW_GENERIC_EXCEPTION("[API] Texture name not found")
+
     }
 
     void EndSubStateSetup(ResourceFrequency _eFrequency)
@@ -1046,6 +1201,11 @@ namespace api
     }
 
     // Drawing
+
+    void WaitForNextImage(APIWindow* _pWindow)
+    {
+      // We are not really using this feature
+    }
 
     int BeginDraw(APIWindow* _pWindow)
     {
@@ -1087,6 +1247,15 @@ namespace api
 
       DX11_CHECK(_pWindow->m_pSwapchain->Present(1u, 0u))
 
+    }
+
+    // Misc
+
+    void ImGuiNewFrame()
+    {
+      ImGui_ImplDX11_NewFrame();
+      ImGui_ImplWin32_NewFrame();
+      ImGui::NewFrame();
     }
 
   }

@@ -35,6 +35,7 @@ cbuffer ModelBuffer : register(b3)
 #define inColor		input.c
 #define inUv			input.uv
 
-#define outPos		vso.pos
-#define outNormal vso.normal
-#define outUv			vso.uv
+#define outPos			vso.pos
+#define outNormal		vso.normal
+#define outUv				vso.uv
+#define outWorldPos	vso.worldPos

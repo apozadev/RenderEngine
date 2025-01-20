@@ -17,10 +17,14 @@ public:
   int Initialize(int _iWidth, int _iHeight, const char* _sTitle);
   int Run();
   int ScheduleShutDown(); 
+
+  void SetPostUpdateCallback(void (*_pfPostUpdateCallback) (float)) { m_pfPostUpdateCallback = _pfPostUpdateCallback; }
   
   Window* GetWindow() const { return m_pWindow.get(); }
 
   Scene* CreateScene();  
+
+  std::vector<Scene>& GetScenes() { return m_lstScenes; }
 
   bool IsRunning() { return m_bRunning; }
 
@@ -33,6 +37,8 @@ private:
   float m_fTargetFPS;
   float m_fGameTime;
   float m_fDt;    
+
+  void (*m_pfPostUpdateCallback) (float);
 
   std::vector<Scene> m_lstScenes;
   std::unique_ptr<Window> m_pWindow;

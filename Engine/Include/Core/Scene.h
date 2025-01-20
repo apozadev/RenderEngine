@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include "Core/Entity.h"
+#include "Memory/PtrTypes.h"
 
 class Window;
 
@@ -29,12 +30,14 @@ public:
     return m_lstEntities[_rEntity->m_lstChildren[_uChildIdx]].get();
   }  
 
+  std::vector<owner_ptr<Entity>>& GetEntities() { return m_lstEntities; }
+
   Scene& operator=(Scene&& _rScene);
 
 private:    
 
-  uint32_t BuildTraverse(std::unique_ptr<Entity>& _rEntity, std::vector<std::unique_ptr<Entity>>& _lstNewScene);
+  uint32_t BuildTraverse(owner_ptr<Entity>& _rEntity, std::vector<owner_ptr<Entity>>& _lstNewScene);
 
-  std::vector<std::unique_ptr<Entity>> m_lstEntities;    
+  std::vector<owner_ptr<Entity>> m_lstEntities;    
 
 };

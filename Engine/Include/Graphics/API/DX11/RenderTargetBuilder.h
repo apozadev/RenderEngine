@@ -18,28 +18,26 @@ namespace api
     {
     public:
 
-      void AddColorTexture(APITexture* _pTexture);
+      void AddColorTexture(APITexture* _pTexture){ m_lstColorTextures.push_back(_pTexture); }
 
-      void SetDepthTexture(APITexture* _pTexture);
+      void SetDepthTexture(APITexture* _pTexture){ m_pDepthStencilTexture = _pTexture; }
 
-      void AddResolveColorTexture(APITexture* _pTexture);
-
-      void SetColorFormat(DXGI_FORMAT _eFormat);
-
-      void SetDepthStencilFormat(DXGI_FORMAT _eFormat);
-
-      void SetMsaaSamples(uint32_t _uSamples);
+      void AddResolveColorTexture(APITexture* _pTexture){ m_lstColorResolveTextures.push_back(_pTexture); }           
 
       void Build(APIRenderTarget* pRenderTarget_);
 
       void Clear();
 
-    private:
+    public:
 
       DXGI_FORMAT m_eColorFormat;
       DXGI_FORMAT m_eDepthStencilFormat;
 
       uint32_t m_uMsaaSamples;
+
+      uint32_t m_uWidth, m_uHeight;
+
+    private:
 
       std::vector<APITexture*> m_lstColorTextures;
       std::vector<APITexture*> m_lstColorResolveTextures;

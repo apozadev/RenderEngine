@@ -3,6 +3,7 @@
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragNormal;
 layout(location = 2) in vec2 fragTexCoord;
+layout(location = 3) in vec3 fragWorldPos;
 
 layout(location = 0) out vec4 outColor;
 
@@ -13,8 +14,15 @@ struct DirLightData {
 
 layout(set = 1, binding = 4) uniform LightBuffer {
     DirLightData aDirLights[5];
+    mat4 mLightViewProj[5];
     uint uNumLights;
+    uint uNumShadows;
 };
+
+//Texture(ShadowMap0, 0, 1)
+//Texture(ShadowMap1, 0, 2)
+//Texture(ShadowMap2, 0, 3)
+//Texture(ShadowMap3, 0, 4)
 
 Texture(Input0, 1, 0)
 Texture(Input1, 1, 1)
@@ -31,13 +39,16 @@ Texture(Texture3, 3, 3)
 
 #define PIXEL_MAIN_END } 
 
-#define inPos     fragColor
-#define inUv      fragTexCoord
-#define inNormal  fragNormal
+#define inPos       fragColor
+#define inUv        fragTexCoord
+#define inNormal    fragNormal
+#define inWorldPos  fragWorldPos
 
 #define ddx(x)	dFdx(x)
 #define ddy(x)	dFdy(x)
 
 #define DirLightDir(i) aDirLights[i].vDirLightDir
 #define DirLightColor(i) aDirLights[i].vDirLightColor
+#define DirLightViewProj(i) mLightViewProj[i]
 #define DirLightCount uNumLights
+#define DirLightShadowCount uNumShadows

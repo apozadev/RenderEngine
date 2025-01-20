@@ -51,7 +51,7 @@ namespace reflection {
       int i = 0;
       for (; i < GetPtrInfoVector().size(); i++) {
         ReflectionPtrInfo& ptrInfo = GetPtrInfoVector()[i];
-        int offset = pendingPtr.id - ptrInfo.id;
+        int offset = static_cast<int>(pendingPtr.id - ptrInfo.id);
         if (offset >= 0 && offset < ptrInfo.size) {
           *pendingPtr.pPtr = (char*)ptrInfo.ptr + offset;
           break;

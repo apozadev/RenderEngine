@@ -10,7 +10,10 @@ namespace vk
   {
     CreateRenderPass(pRenderTarget_->m_pOwnerWindow, m_lstColorTextures.size(), m_eColorFormat, true, m_eDepthStencilFormat, m_uMsaaSamples, pRenderTarget_->m_hRenderPass, true);
 
-    CreateFramebuffer(pRenderTarget_->m_pOwnerWindow, pRenderTarget_->m_hRenderPass, m_lstColorTextures.data(), m_lstColorTextures.size(), m_pDepthStencilTexture, m_lstColorResolveTextures.data(), pRenderTarget_->m_hFrameBuffer);
+    CreateFramebuffer(pRenderTarget_->m_pOwnerWindow, pRenderTarget_->m_hRenderPass, m_lstColorTextures.data(), m_lstColorTextures.size(), m_pDepthStencilTexture, m_lstColorResolveTextures.data(), pRenderTarget_->m_hFrameBuffer, m_uWidth, m_uHeight);
+
+    pRenderTarget_->m_uWidth = m_uWidth;
+    pRenderTarget_->m_uHeight = m_uHeight;
   }
 
 }

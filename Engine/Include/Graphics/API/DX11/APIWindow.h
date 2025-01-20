@@ -3,6 +3,8 @@
 #include <d3d11.h>
 #include <wrl.h>
 
+struct GLFWwindow;
+
 namespace api
 {
   namespace dx11
@@ -31,6 +33,8 @@ namespace api
       DXGI_FORMAT m_eSwapchainFormat;
 
       bool m_bResize = false;
+
+      GLFWwindow* m_pGlfwWindow;
     };
 
   }

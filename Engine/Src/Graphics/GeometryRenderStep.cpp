@@ -7,9 +7,10 @@
 #include "Graphics/Mesh.h"
 #include "Graphics/Renderer.h"
 
-GeometryRenderStep::GeometryRenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent)
+GeometryRenderStep::GeometryRenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps)
   : RenderStep(std::move(_lstInputs), _pRenderTarget)
   , m_bOrderTranslucent(_bOrderTranslucent)
+  ,m_bUseShadowMaps(_bUseShadowMaps)
 {
 }
 
@@ -17,12 +18,25 @@ void GeometryRenderStep::SetupInternal()
 {
   RenderStep::SetupInternal();
 
-  Renderer::GetInstance()->SetupSubStateLightCBuffers(ResourceFrequency::RENDER_STEP);
+  if (m_bUseShadowMaps)
+  {
+    Renderer::GetInstance()->SetupSubStateLightCBuffers(ResourceFrequency::RENDER_STEP);
+  }
 }
 
 void GeometryRenderStep::SubmitJob(Job&& _rJob)
 {
   m_lstJobs.push_back(std::move(_rJob));
+}
+
+void GeometryRenderStep::SubmitJobs(const std::vector<Job>& _rJobs)
+{
+  size_t uCurrSize = m_lstJobs.size();
+  m_lstJobs.resize(uCurrSize + _rJobs.size());
+  for (size_t i = uCurrSize; i < m_lstJobs.size(); i++)
+  {
+    m_lstJobs[i] = _rJobs[i-uCurrSize];
+  }
 }
 
 void GeometryRenderStep::Prepare(const Camera* _pCamera, const Transform* _pViewTransform)
@@ -59,7 +73,7 @@ void GeometryRenderStep::ExecuteInternal(const Camera* _pCamera, const Transform
 
     rJob.m_pMesh->UpdateTransform(*rJob.m_pMeshTransform);
 
-    rJob.m_pMaterial->Bind();
+    if(rJob.m_pMaterial) rJob.m_pMaterial->Bind();
 
     rJob.m_pMesh->Draw();
   }

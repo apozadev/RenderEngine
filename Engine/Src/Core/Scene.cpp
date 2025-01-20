@@ -2,6 +2,7 @@
 #include "Core/Exception.h"
 #include "Core/Engine.h"
 #include "Math/Utils.h"
+#include "Memory/Factory.h"
 
 #include <stack>
 #include <cstdint>
@@ -35,7 +36,7 @@ Entity* Scene::AddEntity(Entity* _pParent)
 
   if (uParentId  == _MAX_UINT32 || uParentId < m_lstEntities.size())
   {    
-    m_lstEntities.push_back(std::make_unique<Entity>());
+    m_lstEntities.push_back(Factory::Create<Entity>());
 
     Entity* pEntity = m_lstEntities.back().get();
 
@@ -63,7 +64,7 @@ Entity* Scene::AddEntity(Entity* _pParent)
 void Scene::Build()
 {
   // create new vector for ordered entities
-  std::vector<std::unique_ptr<Entity>> lstNewScene;
+  std::vector<owner_ptr<Entity>> lstNewScene;
   lstNewScene.reserve(m_lstEntities.size());
   
   // Traverse top-level entities (depth first) and fill new vector
@@ -84,12 +85,12 @@ void Scene::Build()
   m_lstEntities.swap(lstNewScene);
 }
 
-uint32_t Scene::BuildTraverse(std::unique_ptr<Entity>& _pEntity, std::vector<std::unique_ptr<Entity>>& _lstNewScene)
+uint32_t Scene::BuildTraverse(owner_ptr<Entity>& _pEntity, std::vector<owner_ptr<Entity>>& _lstNewScene)
 {
   uint32_t uCurrId = _lstNewScene.size();
 
   _lstNewScene.push_back(std::move(_pEntity ));
-  std::unique_ptr<Entity>& rNewEntity = _lstNewScene[uCurrId];
+  owner_ptr<Entity>& rNewEntity = _lstNewScene[uCurrId];
 
   for (std::unique_ptr<Component>& pComponent : rNewEntity->m_lstComponents)
   {

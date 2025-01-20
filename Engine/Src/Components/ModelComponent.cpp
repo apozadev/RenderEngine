@@ -46,6 +46,6 @@ void ModelComponent::Update(float _fTimeStep)
 {
   for (MeshMaterialPair& rMeshMat : m_lstMeshes)
   {    
-    Renderer::GetInstance()->SubmitMesh(rMeshMat.m_pMesh.get(), m_lstMaterials[rMeshMat.m_uMatIdx].get(), &m_pEntity->GetGlobalTransform());
+    Renderer::GetInstance()->SubmitMesh(rMeshMat.m_pMesh.get(), m_lstMaterials[rMeshMat.m_uMatIdx].get(), &m_pEntity->GetGlobalTransform(), true);
   }
 }

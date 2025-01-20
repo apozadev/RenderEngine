@@ -6,6 +6,7 @@
 
 #include "Core/Engine.h"
 #include "Graphics/Window.h"
+#include "Graphics/Renderer.h"
 #include "Graphics/RenderPipeline.h"
 #include "Graphics/RenderPipelineConfig.h"
 
@@ -13,18 +14,16 @@
 
 #include "Math/Transform.h"
 
-void Camera::Configure(const std::string&  _sRenderPipelineId)
+void Camera::Configure(const std::string&  _sRenderPipelineId, bool _bOrtho)
 {
+  m_bOrtho = _bOrtho;
+
   m_pAPICamera = api::CreateAPICamera();
 
   m_pCBuffer = Factory::Create<ConstantBuffer<GlobalBufferData>>();
   m_pCBuffer->Configure();
 
-  m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::GLOBAL);
-
-  api::BeginSubStateSetup(m_pSubState);
-  m_pCBuffer->SetupRenderSubState("GlobalBuffer", PipelineStage::VERTEX, ResourceFrequency::GLOBAL);
-  api::EndSubStateSetup(ResourceFrequency::GLOBAL);
+  m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::GLOBAL);  
 
   m_sRenderPipelineId = _sRenderPipelineId;
 }
@@ -50,15 +49,24 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
   const Window* pWindow = Engine::GetInstance()->GetWindow();
 
   glm::mat4x4 mView = glm::inverse(_oParentTransform.GetMatrix());
-  oData.m_mViewProj = glm::perspective(45.f, (float)pWindow->GetWidth() / pWindow->GetHeight(), m_fNear, m_fFar) * mView;
+  glm::mat4x4 mProj =  m_bOrtho? glm::orthoRH(-5.f, 5.f, -5.f, 5.f, 0.1f, 100.f) : glm::perspective(45.f, (float)pWindow->GetWidth() / pWindow->GetHeight(), m_fNear, m_fFar);
+  oData.m_mViewProj =  mProj * mView;
   
   m_pCBuffer->SetData(&oData);
 
   m_pCBuffer->Update();
 }
 
-void Camera::Bind() const
+void Camera::PreRenderSetup()
 {
+  api::BeginSubStateSetup(m_pSubState);
+  m_pCBuffer->SetupRenderSubState("GlobalBuffer", PipelineStage::VERTEX, ResourceFrequency::GLOBAL);
+  Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);
+  api::EndSubStateSetup(ResourceFrequency::GLOBAL);
+}
+
+void Camera::Bind() const
+{  
   api::BindAPICamera(m_pAPICamera);
   api::BindAPIRenderSubState(m_pSubState, ResourceFrequency::GLOBAL);
   m_pCBuffer->Bind();  

@@ -15,6 +15,8 @@ namespace vk
     VkFramebuffer m_hFrameBuffer;
 
     APIWindow* m_pOwnerWindow;
+
+    uint32_t m_uWidth, m_uHeight;
   };
 
 }
