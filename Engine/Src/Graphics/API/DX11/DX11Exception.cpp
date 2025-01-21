@@ -28,7 +28,7 @@ namespace api
 
 		const char* DX11Exception::GetType() const noexcept
 		{
-			return "Vulkan Exception";
+			return "DX11 Exception";
 		}
 
 	}

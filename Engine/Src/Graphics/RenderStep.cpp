@@ -84,14 +84,14 @@ void RenderStep::Bind() const
 
   if (m_pRenderTarget)
   {
-    //if (!m_pRenderTarget->IsBound())
+    if (!m_pRenderTarget->IsBound())
     {
       m_pRenderTarget->Bind();
     }
   }
   else
   {
-    //if (!Engine::GetInstance()->GetWindow()->IsDefaultRenderTargetBound())
+    if (!Engine::GetInstance()->GetWindow()->IsDefaultRenderTargetBound())
     {
       Engine::GetInstance()->GetWindow()->BindDefaultRenderTarget();
     }
@@ -113,13 +113,13 @@ void RenderStep::Unbind() const
     _pInput->GetColorTextures()[0]->Unbind();
   }
 
-  if (m_pRenderTarget)
+ /* if (m_pRenderTarget)
   {
     m_pRenderTarget->Unbind();
   }
   else
   {
     Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
-  }  
+  }  */
 }
 

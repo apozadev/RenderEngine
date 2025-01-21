@@ -183,8 +183,7 @@ namespace api
       pWindow->m_eSwapchainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;      
       
       PollWindowSize(pWindow);
-      CreateDeviceAndSwapChain(pWindow);
-      CreateSwapchainViewsAndViewport(pWindow);      
+      CreateDeviceAndSwapChain(pWindow);      
       
       if (s_oGlobalData.m_uMaxMsaaSamples < 1u)
       {
@@ -208,7 +207,17 @@ namespace api
       ImGui::GetIO().DisplaySize.x = static_cast<float>(pWindow->m_uWidth);
       ImGui::GetIO().DisplaySize.y = static_cast<float>(pWindow->m_uHeight);
 
-      HookGLFWWndProc(_pGlfwWindow);      
+      HookGLFWWndProc(_pGlfwWindow);    
+
+      D3D11_VIEWPORT oViewport;
+      oViewport.Width = static_cast<FLOAT>(pWindow->m_uWidth);
+      oViewport.Height = static_cast<FLOAT>(pWindow->m_uHeight);
+      oViewport.MinDepth = 0.0f;
+      oViewport.MaxDepth = 1.0f;
+      oViewport.TopLeftX = 0.0f;
+      oViewport.TopLeftY = 0.0f;
+
+      pWindow->m_pContext->RSSetViewports(1, &oViewport);
 
       return pWindow;
     }
@@ -319,9 +328,9 @@ namespace api
 
     void BindAPICamera(APICamera* _pCamera)
     {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
+      //APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-      pWindow->m_pContext->RSSetViewports(1u, &_pCamera->m_oViewport);
+      //pWindow->m_pContext->RSSetViewports(1u, &_pCamera->m_oViewport);
     }
 
     void DestroyAPICamera(APICamera* _pCamera)
@@ -1212,9 +1221,31 @@ namespace api
 
       if (_pWindow->m_bResize)
       {
+        ImGui_ImplDX11_InvalidateDeviceObjects();
+
         ResizeSwapchain(_pWindow);
+
+        ImGui_ImplDX11_CreateDeviceObjects();
+
+        ImGui::EndFrame();
+
+        ImGui::GetIO().DisplaySize.x = static_cast<float>(_pWindow->m_uWidth);
+        ImGui::GetIO().DisplaySize.y = static_cast<float>(_pWindow->m_uHeight);
+
         _pWindow->m_bResize = false;
-      }      
+
+        return 1;
+      }  
+
+      D3D11_VIEWPORT oViewport;
+      oViewport.Width = static_cast<FLOAT>(_pWindow->m_uWidth);
+      oViewport.Height = static_cast<FLOAT>(_pWindow->m_uHeight);
+      oViewport.MinDepth = 0.0f;
+      oViewport.MaxDepth = 1.0f;
+      oViewport.TopLeftX = 0.0f;
+      oViewport.TopLeftY = 0.0f;
+
+      _pWindow->m_pContext->RSSetViewports(1, &oViewport);
       
       return 0;
     }
@@ -1244,6 +1275,8 @@ namespace api
       DX11_CHECK(_pWindow->m_pSwapchain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
       
       _pWindow->m_pContext->ResolveSubresource(pBackBuffer, 0u, _pWindow->m_pColorTexture.Get(), 0u, _pWindow->m_eSwapchainFormat);
+
+      pBackBuffer->Release();
 
       DX11_CHECK(_pWindow->m_pSwapchain->Present(1u, 0u))
 

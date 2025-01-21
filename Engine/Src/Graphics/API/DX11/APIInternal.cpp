@@ -283,9 +283,14 @@ namespace dx11
   {
     PollWindowSize(_pWindow);
 
-    _pWindow->m_pSwapchain->ResizeBuffers(_pWindow->m_uNumSwapchainImages, _pWindow->m_uWidth, _pWindow->m_uHeight, _pWindow->m_eSwapchainFormat, 0u);
+    _pWindow->m_pRtv = nullptr;
+    _pWindow->m_pDsv = nullptr;
+    _pWindow->m_pColorTexture = nullptr;
+    _pWindow->m_pDSTexture = nullptr;
 
-    CreateSwapchainViewsAndViewport(_pWindow);
+    DX11_CHECK(_pWindow->m_pSwapchain->ResizeBuffers(_pWindow->m_uNumSwapchainImages, _pWindow->m_uWidth, _pWindow->m_uHeight, _pWindow->m_eSwapchainFormat, 0u))    
+
+    CreateWindowRenderTarget(_pWindow, s_oGlobalData.m_uMaxMsaaSamples);            
   }
 
 }

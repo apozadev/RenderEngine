@@ -52,14 +52,14 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
     owner_ptr<RenderStep>& pStep = m_lstRenderSteps[i];
 
     // Unbind last RT if necessary
-    /*if (pLastRT != pStep->GetRenderTarget() && pLastRT != nullptr)
+    if (pLastRT != pStep->GetRenderTarget() && pLastRT != nullptr)
     {
       pLastRT->Unbind();
     }
     else if (bLastRtIsDefault && pStep->GetRenderTarget() != nullptr)
     {
       Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
-    }*/
+    }
     
     pStep->Execute(_pCamera, _pViewTransform);    
 
@@ -68,14 +68,14 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
   }
 
   // Unbind last RT
-  /*if (pLastRT != nullptr)
+  if (pLastRT != nullptr)
   {
     pLastRT->Unbind();
   }
   else if (bLastRtIsDefault)
   {
     Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
-  }*/
+  }
 }
 
 void RenderPipeline::GenerateFromConfig()
