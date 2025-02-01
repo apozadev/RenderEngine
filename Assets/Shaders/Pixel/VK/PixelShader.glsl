@@ -78,6 +78,7 @@ float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 
   float fBias = 0.00002f;
 
+  [loop]
   for (uint i = 0; i < DirLightShadowCount; i++)
   { 
     if (i == idx)
@@ -169,4 +170,4 @@ PIXEL_MAIN_BEGIN
 
   outColor *= vTint * fMult; 
  
-PIXEL_MAIN_END 
+PIXEL_MAIN_END

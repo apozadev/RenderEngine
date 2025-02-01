@@ -92,5 +92,5 @@ glm::mat4x4 Camera::GetProjMatrix()
     fAspect = (float)pWindow->GetWidth() / pWindow->GetHeight();
   }
 
-  return m_bOrtho ? glm::orthoRH(-5.f, 5.f, -5.f, 5.f, 0.1f, 100.f) : glm::perspective(45.f, fAspect, m_fNear, m_fFar);
+  return m_bOrtho ? glm::orthoZO(-5.f, 5.f, -5.f, 5.f, 0.1f, 100.f) : glm::perspective(45.f, fAspect, m_fNear, m_fFar);
 }

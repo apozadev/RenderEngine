@@ -78,7 +78,7 @@ float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 
   float fBias = 0.00002f;
 
-  //[loop]
+  [loop]
   for (uint i = 0; i < DirLightShadowCount; i++)
   { 
     if (i == idx)
@@ -181,4 +181,4 @@ vec3 ambientFactor = vec3(0.3, 0.3, 0.3);
 
 outColor = outColor * (vec4(LambertDirLighting(vec4(inWorldPos, 1), inNormal) + ambientFactor, 1));
 
-PIXEL_MAIN_END 
+PIXEL_MAIN_END
