@@ -29,7 +29,7 @@ public:
   //Camera(Camera&& _oOther);
   ~Camera();  
 
-  void Configure(const std::string& _sRenderPipelineId, bool _bOrtho = false);
+  void Configure(const std::string& _sRenderPipelineId, bool _bOrtho = false, float _fAspect = -1.f);
 
   void UpdateTransform(const Transform& _oParentTransform);
 
@@ -41,8 +41,10 @@ public:
 
   const std::string& GetRenderPipelineId() const;
 
+  glm::mat4x4 GetProjMatrix();
+
   float m_fNear = 0.1f;
-  float m_fFar = 100.f;
+  float m_fFar = 100.f;  
 
 private:
 
@@ -55,4 +57,6 @@ private:
   std::string m_sRenderPipelineId;
 
   bool m_bOrtho;
+
+  float m_fAspect = -1.f;
 };

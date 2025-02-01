@@ -25,7 +25,8 @@
 
 // TODO:
 // Hacer componentes owner_ptr tambien. 
-// Camara de sombras no ve mallas. ajustar posición de luces.
+// shadowmap desajustado. poner aspect ratio como miembro de camera
+// 
 
 void PostUpdateCallback(float _fDt)
 {
@@ -92,7 +93,9 @@ int main()
     Entity* pCameraEntity = pScene->AddEntity();
 
     pCameraEntity->AddComponent<CameraComponent>();
-    pCameraEntity->GetMutableLocalTransform().SetPos({ 0.f, 2.f, 0.f });
+    //pCameraEntity->GetMutableLocalTransform().SetPos({ 0.f, 2.f, 0.f });
+    pCameraEntity->GetMutableLocalTransform().Translate({ 0.f, 7.f, 0.f });
+    pCameraEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(-0.785f, glm::vec3{ 1.f, 0.f, 0.f }));
 
     /*pCameraEntity->GetMutableLocalTransform().SetPos({ 0.f, 2.f, -20.f });
     pCameraEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 0.f, 1.f, 0.f }));*/
@@ -146,8 +149,8 @@ int main()
       owner_ptr<Pass> pPass0 = Factory::Create<Pass>();
       pPass0->Configure(
         "Assets/Shaders/Vertex/VertexShader.hlsl"
-        , "Assets/Shaders/Pixel/GridPixel.hlsl"
-        , true
+        , "Assets/Shaders/Pixel/GridSolidPixel.hlsl"
+        , false
         , BlendOp::BLEND_OP_ADD
         , BlendFactor::BLEND_SRC_ALPHA
         , BlendFactor::BLEND_INV_SRC_ALPHA
@@ -165,7 +168,7 @@ int main()
     pModelEntity2->AddComponent<ModelComponent>("Assets/Models/demon.fbx", pMaterial);
     pGridEntity->AddComponent<ModelComponent>("quad", pGridMaterial);
 
-    pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f,0.f, -10.f });
+    pModelEntity1->GetMutableLocalTransform().SetPos({ 0.f, 0.f, -10.f });
 
     pModelEntity2->GetMutableLocalTransform().SetPos({ 2.f,0.f, -10.f });
     pModelEntity2->GetMutableLocalTransform().SetScale({ 0.015f, 0.015f, 0.015f });
@@ -175,9 +178,9 @@ int main()
     pGridEntity->GetMutableLocalTransform().SetScale({ 99.f, 99.f, 99.f });
 
     //pLightEntity->AddComponent<DirLightComponent>();
-    pLightEntity2->AddComponent<DirLightComponent>()->SetColor({ 5.5f, 0.5f, 0.3f });
-    pLightEntity2->GetMutableLocalTransform().Translate({ 0.f, 0.f, -20.f });
-    //pLightEntity2->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 0.f, 1.f, 0.f }));
+    pLightEntity2->AddComponent<DirLightComponent>()->SetColor({ 1.f, 1.f, 1.f });
+    pLightEntity2->GetMutableLocalTransform().Translate({ 0.f, 7.f, 0.f });
+    pLightEntity2->GetMutableLocalTransform().SetRot(glm::angleAxis(-0.785f, glm::vec3{ 1.f, 0.f, 0.f }));
 
     pScene->Build();
 

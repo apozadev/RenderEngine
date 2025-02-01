@@ -18,6 +18,8 @@ namespace dx11
     std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> m_lstResolveRtv;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDsv;    
 
+    int m_iWidth, m_iHeight;
+
     unsigned int m_uSampleCount = 1u;
                  
   };

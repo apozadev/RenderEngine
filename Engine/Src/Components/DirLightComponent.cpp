@@ -23,8 +23,10 @@ DirLightComponent::DirLightComponent()
     , 0);
   m_pShadowPass->Setup();
 
+  float fAspect = (float)m_pShadowMap->GetDepthStencilTexture()->GetWidth() / (float)m_pShadowMap->GetDepthStencilTexture()->GetHeight();
+
   m_pCamera = Factory::Create<Camera>();
-  m_pCamera->Configure("", true);
+  m_pCamera->Configure("", false, fAspect);
 }
 
 DirLightComponent::~DirLightComponent() 

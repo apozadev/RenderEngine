@@ -109,7 +109,7 @@ void Renderer::SubmitDirLight(DirLight* _pDirLight, Camera* _pCamera, const Tran
     m_pLightCBuff->GetData()->m_aLights[m_pLightCBuff->GetData()->m_uNumLights] = oData;
 
     glm::mat4& mLightView = m_pLightCBuff->GetData()->m_aLightViews[m_pLightCBuff->GetData()->m_uNumShadows];
-    mLightView = glm::orthoLH(-50.f, 50.f, -50.f, 50.f, 0.1f, 200.f) * glm::inverse(_pTransform->GetMatrix());
+    mLightView = _pCamera->GetProjMatrix() * glm::inverse(_pTransform->GetMatrix());
 
     m_lstShadowViews.push_back({ _pCamera, _pTransform, _pShadowMap ,_pPass });
 
@@ -176,7 +176,7 @@ void Renderer::Draw()
       rCamView.m_pCamera->PreRenderSetup();
     }
 
-    /*std::vector<owner_ptr<GeometryRenderStep>> lstShadowSteps(m_lstShadowViews.size());
+    std::vector<owner_ptr<GeometryRenderStep>> lstShadowSteps(m_lstShadowViews.size());
 
     for (const ShadowView& rShadowView : m_lstShadowViews)
     {
@@ -198,7 +198,7 @@ void Renderer::Draw()
       rShadowView.m_pShadowMap->Unbind();
 
       lstShadowSteps.push_back(std::move(pShadowStep));
-    }*/
+    }
 
 
     m_pLightCBuff->Update();
@@ -224,6 +224,11 @@ void Renderer::Draw()
       }
 
     }    
+
+    for (const ShadowView& rShadowView : m_lstShadowViews)
+    {
+      rShadowView.m_pShadowMap->GetDepthStencilTexture()->Unbind();
+    }
 
     Engine::GetInstance()->GetWindow()->EndDraw();
   }

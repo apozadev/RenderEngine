@@ -78,9 +78,9 @@ def main():
 		
 		if sAPI == "dx11":
 			sCompilerTypeFlag = "vs_5_0" if sType == "v" else "ps_5_0"
-			os.system("fxc -E main -T " + sCompilerTypeFlag + " -Fo " + sCompilerOutputFilename + " " + sOutFilename)
+			os.system("fxc -Zi -E main -T " + sCompilerTypeFlag + " -Fo " + sCompilerOutputFilename + " " + sOutFilename)
 		else:
-			os.system(os.environ["VULKAN_SDK"] + "/Bin/glslc.exe " + sOutFilename + " -o " + sCompilerOutputFilename)
+			os.system(os.environ["VULKAN_SDK"] + "/Bin/glslc.exe -g " + sOutFilename + " -o " + sCompilerOutputFilename)
 
 		# if os.path.exists(sOutDir):
 		# 	shutil.rmtree(sOutDir)		

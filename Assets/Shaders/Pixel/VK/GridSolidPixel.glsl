@@ -64,7 +64,7 @@ Texture(Texture3, 3, 3)
 
 float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 {
-  float fShadow = 0;
+  float fShadow = 1;
 
   vec3 vProjCoords = vLightViewProjPos.xyz;
   vProjCoords.x = (vLightViewProjPos.x / vLightViewProjPos.w) * 0.5 + 0.5f;
@@ -76,15 +76,16 @@ float ShadowFactor(vec4 vLightViewProjPos, uint idx)
     return 1;
   }
 
+  float fBias = 0.00002f;
+
+  //[loop]
   for (uint i = 0; i < DirLightShadowCount; i++)
   { 
     if (i == idx)
     {
-      /*float fMapDepth = sampleTex(ShadowMap0, vProjCoords.xy).r;
+      float fMapDepth = sampleTex(ShadowMap0, vProjCoords.xy).r + fBias;
       float fCurrShadow = 1 - step(fMapDepth, vProjCoords.z);
-      fShadow = min(fShadow, fCurrShadow);*/
-
-      fShadow += sampleTex(ShadowMap0, vProjCoords.xy).r;
+      fShadow = min(fShadow, fCurrShadow);      
     }
   }
 
@@ -104,15 +105,80 @@ vec3 LambertDirLighting(vec4 vWorldPos, vec3 vNormal)
   return vLight;
 }
 
+/*
+float ShadowFactor(vec4 vLightViewProjPos, uint idx)
+{
+  float fShadow = 0;
+
+  vec3 vProjCoords = vLightViewProjPos.xyz;
+  vProjCoords.x = (vLightViewProjPos.x / vLightViewProjPos.w) * 0.5 + 0.5f;
+  vProjCoords.y = 1 - ((vLightViewProjPos.y / vLightViewProjPos.w) * 0.5 + 0.5f);
+  vProjCoords.z = vLightViewProjPos.z / vLightViewProjPos.w;
+
+  if (vProjCoords.x > 1 || vProjCoords.x < 0 || vProjCoords.y > 1 || vProjCoords.y < 0)
+  {
+    return 1;
+  }
+
+  //for (uint i = 0; i < DirLightShadowCount; i++)
+  //{ 
+  //  if (i == idx)
+  //  {
+  //    float fMapDepth = sampleTex(ShadowMap0, vProjCoords.xy).r;
+  //    float fCurrShadow = 1 - step(fMapDepth, vProjCoords.z);
+  //    fShadow = min(fShadow, fCurrShadow);
+  //  }
+  //}
+
+return vProjCoords.z;
+}
+
+vec3 LambertDirLighting(vec4 vWorldPos, vec3 vNormal)
+{
+  vec3 vLight = vec3(0, 0, 0);
+
+  //for (uint i = 0; i < DirLightCount; i++)
+  //{
+  //  vec4 vLightViewProjPos = mul(DirLightViewProj(i), vWorldPos);
+  //  vLight += DirLightColor(i).xyz * max(0, dot(DirLightDir(i).xyz, normalize(vNormal))) * ShadowFactor(vLightViewProjPos, i);
+  //}
+
+  float t = ShadowFactor(vLightViewProjPos, i);
+
+  vLight = vec3(1, 0, 0) * t + vec3(0, 1, 0) * (1 - t);
+
+  return vLight;
+}
+*/
+
+vec2 mod2(vec2 x, vec2 y)
+{
+  return x - y * floor(x / y);
+}
+
 PIXEL_MAIN_BEGIN
 
-vec3 lightDir = vec3(0, 0, 1);
-float ambientFactor = 0.3;
+float scale = 99.0;
+vec2 cellSize = vec2(1.0, 1.0) / scale;
+vec2 halfCell = cellSize * 0.5;
+vec2 lineWidth = vec2(0.0001, 0.0001) / scale;
 
-float light = max(0, dot(lightDir, normalize(inNormal)));
+vec2 diff = fwidth(inUv);
 
-vec4 color = vec4(1,1,1,1);
+float fade = length(diff) * scale * scale;
 
-outColor = color * (light + ambientFactor); 
+lineWidth += diff * 0.8;
 
-PIXEL_MAIN_END
+vec2 newUv = mod2(inUv, cellSize);
+
+vec2 c = smoothstep(lineWidth, lineWidth * 0.5, abs(newUv - halfCell));
+
+float lineAlpha = 1 - max(min(c.x + c.y, 1) / fade, 0);
+
+outColor = vec4(lineAlpha, lineAlpha, lineAlpha, 1);
+
+vec3 ambientFactor = vec3(0.3, 0.3, 0.3);
+
+outColor = outColor * (vec4(LambertDirLighting(vec4(inWorldPos, 1), inNormal) + ambientFactor, 1));
+
+PIXEL_MAIN_END 

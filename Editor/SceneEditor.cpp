@@ -33,6 +33,12 @@ void ViewScene(Scene* _pScene)
         rTr.SetRot(glm::quat(vRot));
       }
 
+      glm::vec3 vScl = rTr.GetScale();
+      if (ImGui::InputFloat3(UNIQUE_LABEL("Scl", pEntity.get()), &vScl.x))
+      {
+        rTr.SetScale(vScl);
+      }
+
       ImGui::TreePop();
     }
   }

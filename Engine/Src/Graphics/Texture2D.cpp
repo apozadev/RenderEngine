@@ -10,16 +10,25 @@ void Texture2D::Configure(const std::string& _sFilename, unsigned int _uMipLevel
 {
   const Image& rImage = ImageManager::GetInstance()->LoadImage(_sFilename, true);  
   m_pAPITexture = api::CreateAPITexture(rImage.m_pData, rImage.m_iWidth, rImage.m_iHeight, rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);    
+
+  m_iWidth = rImage.m_iWidth;
+  m_iHeight = rImage.m_iHeight;
 }
 
 void Texture2D::Configure(const Image& _rImage, unsigned int _uMipLevels, unsigned int _uMsaaSamples)  
 {  
   m_pAPITexture = api::CreateAPITexture(_rImage.m_pData, _rImage.m_iWidth, _rImage.m_iHeight, _rImage.m_eFormat, _uMipLevels, _uMsaaSamples, TextureUsage::SHADER_RESOURCE);  
+
+  m_iWidth = _rImage.m_iWidth;
+  m_iHeight = _rImage.m_iHeight;
 }
 
 void Texture2D::Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, unsigned int _uMipLevels, unsigned int _uMsaaSamples, uint32_t _uUsage)  
 {
   m_pAPITexture = api::CreateAPITexture(nullptr, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage);
+
+  m_iWidth = static_cast<int>(_uWidth);
+  m_iHeight = static_cast<int>(_uHeight);
 }
 
 Texture2D::~Texture2D()

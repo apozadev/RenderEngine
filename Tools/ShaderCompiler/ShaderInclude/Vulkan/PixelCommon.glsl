@@ -19,10 +19,10 @@ layout(set = 1, binding = 4) uniform LightBuffer {
     uint uNumShadows;
 };
 
-//Texture(ShadowMap0, 0, 1)
-//Texture(ShadowMap1, 0, 2)
-//Texture(ShadowMap2, 0, 3)
-//Texture(ShadowMap3, 0, 4)
+Texture(ShadowMap0, 0, 1)
+Texture(ShadowMap1, 0, 2)
+Texture(ShadowMap2, 0, 3)
+Texture(ShadowMap3, 0, 4)
 
 Texture(Input0, 1, 0)
 Texture(Input1, 1, 1)

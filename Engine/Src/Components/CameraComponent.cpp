@@ -86,8 +86,8 @@ void CameraComponent::PreTransformUpdate(float _fTimeStep)
 
   if (pWindow->IsMousePressed(0))
   {        
-    float fDeltaX = dMousePosX - static_cast<float>(m_fLastMousePosX);
-    float fDeltaY = dMousePosY - static_cast<float>(m_fLastMousePosY);            
+    float fDeltaX = static_cast<float>(dMousePosX) - m_fLastMousePosX;
+    float fDeltaY = static_cast<float>(dMousePosY) - m_fLastMousePosY;            
 
     m_fYaw -= fRotSpeed * fDeltaY * _fTimeStep;    
     m_fPitch -= fRotSpeed * fDeltaX * _fTimeStep;    

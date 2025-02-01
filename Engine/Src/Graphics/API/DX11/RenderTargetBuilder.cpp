@@ -40,6 +40,9 @@ namespace dx11
 
       DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilView(m_pDepthStencilTexture->m_pTexture.Get(), &descDSV, pRenderTarget_->m_pDsv.ReleaseAndGetAddressOf()));
     }
+
+    pRenderTarget_->m_iWidth = static_cast<int>(m_uWidth);
+    pRenderTarget_->m_iHeight = static_cast<int>(m_uHeight);
   }
 
   void RenderTargetBuilder::Clear()

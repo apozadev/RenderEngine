@@ -32,10 +32,15 @@ public:
   void ClearAsColor() const;
   void ClearAsDepthStencil() const;
 
+  int GetWidth() const { return m_iWidth; };
+  int GetHeight() const { return m_iHeight; };
+
 private:  
 
   PipelineStage m_eStage;
 
   api::APITexture* m_pAPITexture;
+
+  int m_iWidth = 0, m_iHeight = 0;
 
 };

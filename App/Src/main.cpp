@@ -166,8 +166,8 @@ int main(){
 
   //pLightEntity->AddComponent<DirLightComponent>();
   pLightEntity2->AddComponent<DirLightComponent>()->SetColor({5.5f, 0.5f, 0.3f});
-  pLightEntity2->GetMutableLocalTransform().Translate({ 0.f, 0.f, -20.f });
-  pLightEntity2->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 1.f, 0.f, 0.f }));
+  pLightEntity2->GetMutableLocalTransform().Translate({ 0.f, 2.f, 0.f });
+  //pLightEntity2->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 1.f, 0.f, 0.f }));
 
   pScene->Build();
 

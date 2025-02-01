@@ -202,6 +202,22 @@ namespace vk
 
     vkCmdBeginRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);    
 
+    VkViewport oViewport{};
+    oViewport.x = 0.0f;
+    oViewport.y = (float)_pWindow->m_oExtent.height;
+    oViewport.width = (float)_pWindow->m_oExtent.width;
+    oViewport.height = -(float)_pWindow->m_oExtent.height;
+    oViewport.minDepth = 0.0f;
+    oViewport.maxDepth = 1.0f;
+
+    vkCmdSetViewport(_pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oViewport);
+
+    VkRect2D oScissor{};
+    oScissor.offset = { 0, 0 };
+    oScissor.extent = _pWindow->m_oExtent;
+
+    vkCmdSetScissor(_pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oScissor);
+
     _pWindow->m_bDefaultRenderTargetBound = true;
   }
 
@@ -684,6 +700,22 @@ namespace vk
 
     vkCmdBeginRenderPass(pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+    VkViewport oViewport{};
+    oViewport.x = 0.0f;
+    oViewport.y = (float)oExtent.height;
+    oViewport.width = (float)oExtent.width;
+    oViewport.height = -(float)oExtent.height;
+    oViewport.minDepth = 0.0f;
+    oViewport.maxDepth = 1.0f;
+
+    vkCmdSetViewport(pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oViewport);
+
+    VkRect2D oScissor{};
+    oScissor.offset = { 0, 0 };
+    oScissor.extent = oExtent;
+
+    vkCmdSetScissor(pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oScissor);
+
     s_oGlobalData.m_pBoundRenderTarget = _pRenderTarget;
   }
 
@@ -824,23 +856,7 @@ namespace vk
 
     const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
 
-    vkCmdBindPipeline(pWindow->m_pCmdBuffers[uFrameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hGraphicsPipeline);
-
-    VkViewport oViewport{};
-    oViewport.x = 0.0f;
-    oViewport.y = (float)pWindow->m_oExtent.height;
-    oViewport.width = (float)pWindow->m_oExtent.width;
-    oViewport.height = -(float)pWindow->m_oExtent.height;
-    oViewport.minDepth = 0.0f;
-    oViewport.maxDepth = 1.0f;
-
-    vkCmdSetViewport(pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oViewport);
-
-    VkRect2D oScissor{};
-    oScissor.offset = { 0, 0 };
-    oScissor.extent = pWindow->m_oExtent;
-
-    vkCmdSetScissor(pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oScissor);
+    vkCmdBindPipeline(pWindow->m_pCmdBuffers[uFrameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hGraphicsPipeline);        
 
     vkCmdBindDescriptorSets(pWindow->m_pCmdBuffers[uFrameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, _pAPIRenderState->m_hPipelineLayout, static_cast<uint32_t>(ResourceFrequency::MATERIAL), 1, &_pAPIRenderState->m_pDescSets[uFrameIdx], 0, NULL);
 

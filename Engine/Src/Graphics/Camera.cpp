@@ -14,9 +14,11 @@
 
 #include "Math/Transform.h"
 
-void Camera::Configure(const std::string&  _sRenderPipelineId, bool _bOrtho)
+void Camera::Configure(const std::string&  _sRenderPipelineId, bool _bOrtho, float _fAspect)
 {
   m_bOrtho = _bOrtho;
+
+  m_fAspect = _fAspect;
 
   m_pAPICamera = api::CreateAPICamera();
 
@@ -44,13 +46,10 @@ Camera::~Camera()
 
 void Camera::UpdateTransform(const Transform& _oParentTransform)
 {
-  GlobalBufferData oData{};
+  GlobalBufferData oData{};  
 
-  const Window* pWindow = Engine::GetInstance()->GetWindow();
-
-  glm::mat4x4 mView = glm::inverse(_oParentTransform.GetMatrix());
-  glm::mat4x4 mProj =  m_bOrtho? glm::orthoRH(-5.f, 5.f, -5.f, 5.f, 0.1f, 100.f) : glm::perspective(45.f, (float)pWindow->GetWidth() / pWindow->GetHeight(), m_fNear, m_fFar);
-  oData.m_mViewProj =  mProj * mView;
+  glm::mat4x4 mView = glm::inverse(_oParentTransform.GetMatrix());  
+  oData.m_mViewProj = GetProjMatrix() * mView;
   
   m_pCBuffer->SetData(&oData);
 
@@ -80,4 +79,18 @@ uint64_t Camera::GetKey() const
 const std::string& Camera::GetRenderPipelineId() const
 {
   return m_sRenderPipelineId;
+}
+
+glm::mat4x4 Camera::GetProjMatrix()
+{
+  const Window* pWindow = Engine::GetInstance()->GetWindow();
+
+  float fAspect = m_fAspect;
+
+  if (fAspect < 0.f)
+  {
+    fAspect = (float)pWindow->GetWidth() / pWindow->GetHeight();
+  }
+
+  return m_bOrtho ? glm::orthoRH(-5.f, 5.f, -5.f, 5.f, 0.1f, 100.f) : glm::perspective(45.f, fAspect, m_fNear, m_fFar);
 }

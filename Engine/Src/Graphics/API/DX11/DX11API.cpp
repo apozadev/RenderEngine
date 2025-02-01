@@ -257,6 +257,17 @@ namespace api
     void BindDefaultRenderTarget(APIWindow* _pWindow)
     {      
       _pWindow->m_pContext->OMSetRenderTargets(1, _pWindow->m_pRtv.GetAddressOf(), _pWindow->m_pDsv.Get());
+
+      D3D11_VIEWPORT oViewport;
+      oViewport.Width = static_cast<FLOAT>(_pWindow->m_uWidth);
+      oViewport.Height = static_cast<FLOAT>(_pWindow->m_uHeight);
+      oViewport.MinDepth = 0.0f;
+      oViewport.MaxDepth = 1.0f;
+      oViewport.TopLeftX = 0.0f;
+      oViewport.TopLeftY = 0.0f;
+
+      s_oGlobalData.m_pUsingWindow->m_pContext->RSSetViewports(1, &oViewport);
+
       s_oGlobalData.m_bIsDefaultRenderTargetBound = true;
     }
 
@@ -635,17 +646,24 @@ namespace api
 
     void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
     {   
-
-      s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
-
-      /*if (_pRenderTarget->m_lstRtv.size() > 0u)
+      if (_pRenderTarget->m_lstRtv.size() > 0u)
       {
         s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
       }
       else
       {
         s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(0u, nullptr, _pRenderTarget->m_pDsv.Get());
-      }*/
+      }
+
+      D3D11_VIEWPORT oViewport;
+      oViewport.Width = static_cast<FLOAT>(_pRenderTarget->m_iWidth);
+      oViewport.Height = static_cast<FLOAT>(_pRenderTarget->m_iHeight);
+      oViewport.MinDepth = 0.0f;
+      oViewport.MaxDepth = 1.0f;
+      oViewport.TopLeftX = 0.0f;
+      oViewport.TopLeftY = 0.0f;
+
+      s_oGlobalData.m_pUsingWindow->m_pContext->RSSetViewports(1, &oViewport);
 
       s_oGlobalData.m_pBoundRenderTarget = _pRenderTarget;
     }
@@ -658,10 +676,10 @@ namespace api
     void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
     {
 
-      const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
-      s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
+      //const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
+      //s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
 
-      /*if (_pRenderTarget->m_lstRtv.size() > 0u)
+      if (_pRenderTarget->m_lstRtv.size() > 0u)
       {
         const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
         s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
@@ -669,7 +687,7 @@ namespace api
       else
       {
         s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(0u, nullptr, nullptr);
-      }*/
+      }
 
       s_oGlobalData.m_pBoundRenderTarget = nullptr;
     }
@@ -1235,17 +1253,7 @@ namespace api
         _pWindow->m_bResize = false;
 
         return 1;
-      }  
-
-      D3D11_VIEWPORT oViewport;
-      oViewport.Width = static_cast<FLOAT>(_pWindow->m_uWidth);
-      oViewport.Height = static_cast<FLOAT>(_pWindow->m_uHeight);
-      oViewport.MinDepth = 0.0f;
-      oViewport.MaxDepth = 1.0f;
-      oViewport.TopLeftX = 0.0f;
-      oViewport.TopLeftY = 0.0f;
-
-      _pWindow->m_pContext->RSSetViewports(1, &oViewport);
+      }        
       
       return 0;
     }
