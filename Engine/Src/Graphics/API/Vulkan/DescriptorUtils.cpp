@@ -5,6 +5,7 @@
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 
 #include "Graphics/API/Vulkan/APIWindow.h"
+#include "Graphics/API/Vulkan/APITexture.h"
 #include "Graphics/API/Vulkan/APIRenderState.h"
 #include "Graphics/API/Vulkan/APIInternal.h"
 
@@ -170,6 +171,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
 
   std::vector<VkWriteDescriptorSet> lstWriteDescSets;
   
+  // CBuffer descriptors
   for (const SetBoundBufferInfoList& lstSetBufferInfo : m_lstSetBufferInfos)
   { 
     VkDescriptorSetLayoutBinding oBinding{};
@@ -201,6 +203,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     lstWriteDescSets.push_back(std::move(oUboWriteDescSet));    
   }  
      
+  // Texture descriptors
   for (const SetBoundImgInfoList& lstSetImageInfo : m_lstSetImageInfos)
   {      
 
@@ -231,7 +234,59 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
 
     lstWriteDescSets.push_back(std::move(oImageWriteDescSet));
   }
-  
+
+  // Check for missing image descriptors
+
+  std::vector<VkDescriptorImageInfo> lstDummyImageInfos;
+  lstDummyImageInfos.reserve(_pLayoutBuilder->GetDescriptors().size() * _uCount);
+
+  if (s_oGlobalData.m_pUsingWindow != nullptr)
+  {
+    for (const VkDescriptorSetLayoutBinding& rBinding : _pLayoutBuilder->GetDescriptors())
+    {
+      if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == rBinding.descriptorType)
+      {
+        bool bFound = false;
+        for (const SetBoundImgInfoList& lstSetImageInfo : m_lstSetImageInfos)
+        {
+          if (lstSetImageInfo.m_uBinding == rBinding.binding
+            && lstSetImageInfo.m_lstImgInfos.size() == rBinding.descriptorCount
+            && GetVkStageFlag(lstSetImageInfo.m_eStage) == rBinding.stageFlags)
+          {
+            bFound = true;
+            break;
+          }
+        }
+
+        // Add dummy texture if necessary (once per swapchain image)
+        if (!bFound)
+        {
+          for (uint32_t i = 0u; i < _uCount; i++)
+          {
+            if (!s_oGlobalData.m_bRenderBegan || i == s_oGlobalData.m_pUsingWindow->m_uCurrFrameIdx)
+            {
+              auto& oInfo = lstDummyImageInfos.emplace_back();
+              oInfo.imageView = s_oGlobalData.m_pUsingWindow->m_pDummyTexture->m_hImageView;
+              oInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+              oInfo.sampler = s_oGlobalData.m_pUsingWindow->m_pDummyTexture->m_hSampler;
+
+              VkWriteDescriptorSet oImageWriteDescSet{};
+              oImageWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+              oImageWriteDescSet.dstSet = _pDescSets[i];
+              oImageWriteDescSet.dstBinding = rBinding.binding;
+              oImageWriteDescSet.dstArrayElement = 0;
+              oImageWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+              oImageWriteDescSet.descriptorCount = rBinding.descriptorCount;
+              oImageWriteDescSet.pBufferInfo = NULL;
+              oImageWriteDescSet.pImageInfo = &oInfo;
+
+              lstWriteDescSets.push_back(std::move(oImageWriteDescSet));
+            }
+          }
+        }
+      }
+    }
+  }
 
   if (!lstWriteDescSets.empty())
   {

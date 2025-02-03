@@ -1569,7 +1569,7 @@ void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eS
     break;
   }
 
-  SpvReflectResult eResult = spvReflectEnumerateEntryPointDescriptorSets(&_pRenderState->m_oPixelReflection, "main", &uDescSetCount_, NULL);
+  SpvReflectResult eResult = spvReflectEnumerateEntryPointDescriptorSets(pReflection, "main", &uDescSetCount_, NULL);
   if (eResult != SPV_REFLECT_RESULT_SUCCESS)
   {
     THROW_GENERIC_EXCEPTION("[API] Error: Failed to enumerate descriptor sets from shader: ")
@@ -1579,7 +1579,7 @@ void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eS
     THROW_GENERIC_EXCEPTION("[API] Error: the shader has more than 4 descriptor sets : ")
   }
 
-  eResult = spvReflectEnumerateEntryPointDescriptorSets(&_pRenderState->m_oPixelReflection, "main", &uDescSetCount_, aDescSets_);
+  eResult = spvReflectEnumerateEntryPointDescriptorSets(pReflection, "main", &uDescSetCount_, aDescSets_);
   if (eResult != SPV_REFLECT_RESULT_SUCCESS)
   {
     THROW_GENERIC_EXCEPTION("[API] Error: Failed to get descriptor sets from shader")

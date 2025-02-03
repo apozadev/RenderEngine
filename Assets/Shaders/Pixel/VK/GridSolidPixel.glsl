@@ -64,8 +64,6 @@ Texture(Texture3, 3, 3)
 
 float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 {
-  float fShadow = 1;
-
   vec3 vProjCoords = vLightViewProjPos.xyz;
   vProjCoords.x = (vLightViewProjPos.x / vLightViewProjPos.w) * 0.5 + 0.5f;
   vProjCoords.y = 1 - ((vLightViewProjPos.y / vLightViewProjPos.w) * 0.5 + 0.5f);
@@ -74,20 +72,31 @@ float ShadowFactor(vec4 vLightViewProjPos, uint idx)
   if (vProjCoords.x > 1 || vProjCoords.x < 0 || vProjCoords.y > 1 || vProjCoords.y < 0)
   {
     return 1;
+  }  
+
+  float fMapDepth = 0;
+
+  if (idx == 0)
+  {
+    fMapDepth = sampleTex(ShadowMap0, vProjCoords.xy).r;
+  }
+  else if (idx == 1)
+  {
+    fMapDepth = sampleTex(ShadowMap1, vProjCoords.xy).r;
+  }
+  else if (idx == 2)
+  {
+    fMapDepth = sampleTex(ShadowMap2, vProjCoords.xy).r;
+  }
+  else if (idx == 3)
+  {
+    fMapDepth = sampleTex(ShadowMap3, vProjCoords.xy).r;
   }
 
   float fBias = 0.00002f;
 
-  [loop]
-  for (uint i = 0; i < DirLightShadowCount; i++)
-  { 
-    if (i == idx)
-    {
-      float fMapDepth = sampleTex(ShadowMap0, vProjCoords.xy).r + fBias;
-      float fCurrShadow = 1 - step(fMapDepth, vProjCoords.z);
-      fShadow = min(fShadow, fCurrShadow);      
-    }
-  }
+  float fShadow = step(fMapDepth + fBias, vProjCoords.z);
+  fShadow = 1 - max(0, min(1, fShadow));
 
   return fShadow;
 }
@@ -181,4 +190,4 @@ vec3 ambientFactor = vec3(0.3, 0.3, 0.3);
 
 outColor = outColor * (vec4(LambertDirLighting(vec4(inWorldPos, 1), inNormal) + ambientFactor, 1));
 
-PIXEL_MAIN_END
+PIXEL_MAIN_END 

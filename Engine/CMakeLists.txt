@@ -197,7 +197,7 @@ target_include_directories(${PROJECT_NAME}
 if(${TARGET_RENDER_API} MATCHES ${RENDER_API_VULKAN})
 	target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_VULKAN) 
 else()
-target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_DX11)
+target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_DX11) 
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE CURR_WORKING_DIR=${CMAKE_SOURCE_DIR}) 

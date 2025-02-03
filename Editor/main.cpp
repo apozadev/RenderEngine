@@ -95,7 +95,7 @@ int main()
     pCameraEntity->AddComponent<CameraComponent>();
     //pCameraEntity->GetMutableLocalTransform().SetPos({ 0.f, 2.f, 0.f });
     pCameraEntity->GetMutableLocalTransform().Translate({ 0.f, 7.f, 0.f });
-    pCameraEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(-0.785f, glm::vec3{ 1.f, 0.f, 0.f }));
+    //pCameraEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(-0.785f, glm::vec3{ 1.f, 0.f, 0.f }));
 
     /*pCameraEntity->GetMutableLocalTransform().SetPos({ 0.f, 2.f, -20.f });
     pCameraEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(3.14159f, glm::vec3{ 0.f, 1.f, 0.f }));*/
@@ -103,8 +103,9 @@ int main()
     Entity* pModelEntity1 = pScene->AddEntity();
     Entity* pModelEntity2 = pScene->AddEntity();
     Entity* pGridEntity = pScene->AddEntity();
-    //Entity* pLightEntity = pScene->AddEntity();
+    Entity* pLightEntity = pScene->AddEntity();
     Entity* pLightEntity2 = pScene->AddEntity();
+    Entity* pLightEntity3 = pScene->AddEntity();
 
     Material* pMaterial = MaterialLibrary::GetInstance()->CreateMaterial();
     {
@@ -177,10 +178,17 @@ int main()
     pGridEntity->GetMutableLocalTransform().SetPos({ 0.f, 0.f, -10.f });
     pGridEntity->GetMutableLocalTransform().SetScale({ 99.f, 99.f, 99.f });
 
-    //pLightEntity->AddComponent<DirLightComponent>();
-    pLightEntity2->AddComponent<DirLightComponent>()->SetColor({ 1.f, 1.f, 1.f });
+    pLightEntity->AddComponent<DirLightComponent>()->SetColor({ 0.3f, 0.7f, 0.3f });
+    pLightEntity->GetMutableLocalTransform().Translate({ -5.f, 7.f, 0.f });
+    pLightEntity->GetMutableLocalTransform().SetRot(glm::angleAxis(-0.785f, glm::normalize(glm::vec3{ 1.f, 1.f, 0.f })));
+
+    pLightEntity2->AddComponent<DirLightComponent>()->SetColor({ 0.7f, 0.3f, 0.3f });
     pLightEntity2->GetMutableLocalTransform().Translate({ 0.f, 7.f, 0.f });
     pLightEntity2->GetMutableLocalTransform().SetRot(glm::angleAxis(-0.785f, glm::vec3{ 1.f, 0.f, 0.f }));
+
+    pLightEntity3->AddComponent<DirLightComponent>()->SetColor({ 0.3f, 0.3f, 0.7f });
+    pLightEntity3->GetMutableLocalTransform().Translate({ 5.f, 7.f, -5.f });    
+    pLightEntity3->GetMutableLocalTransform().SetRot(glm::quat(glm::vec3(-0.6f, 0.5f, 0.f)));
 
     pScene->Build();
 

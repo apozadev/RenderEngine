@@ -8,6 +8,8 @@ namespace api
 {
 namespace vk 
 {
+
+  struct APITexture;
   
   struct APIWindow
   {  
@@ -62,6 +64,8 @@ namespace vk
     DescriptorSetLayoutBuilder m_oGlobalLayoutBuilder;
     DescriptorSetLayoutBuilder m_oStepLayoutBuilder;
     DescriptorSetLayoutBuilder m_oMatInstanceLayoutBuilder;
+
+    APITexture* m_pDummyTexture;
 
     bool m_bDefaultRenderTargetBound = false;
 

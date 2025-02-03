@@ -32,6 +32,8 @@ namespace vk
 
     void Clear() { m_lstDescriptors.clear();}
 
+    const std::vector<VkDescriptorSetLayoutBinding>& GetDescriptors() { return m_lstDescriptors; }
+
   private:
 
     std::vector<VkDescriptorSetLayoutBinding> m_lstDescriptors;

@@ -118,6 +118,10 @@ namespace vk
 
     pWindow->m_uCurrFrameIdx = 0u;
 
+    // Create dummy texture
+    uint8_t aDummyBuffer[4] = { 255u, 20u, 0u, 255u};    
+    pWindow->m_pDummyTexture = CreateAPITexture((const char*)(&aDummyBuffer[0]), 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE);
+
     // ImGui stuff
 
     SetupImGui(pWindow);
@@ -524,12 +528,17 @@ namespace vk
 
       CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight);
 
+
+      // When we generate mipmaps, we also do the transition layout
       if (_uMipLevels > 1u)
       {
         GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels);
       }
-
-      //TransitionImageLayoutOffline(pWindow, pTexture->m_hImage, eVkFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+      // If no mipmaps, perform layout transition
+      else
+      {
+        TransitionImageLayoutOffline(pWindow, pTexture->m_hImage, pTexture->m_eFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+      }
 
       DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
 
