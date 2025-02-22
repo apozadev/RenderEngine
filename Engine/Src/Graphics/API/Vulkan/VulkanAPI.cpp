@@ -23,7 +23,7 @@
 #include "Graphics/API/Vulkan/VulkanMacros.h"
 #include "Graphics/API/Vulkan/VulkanShaderReflection.h"
 #include "Graphics/API/Vulkan/VulkanPools.h"
-#include "File/File.h"
+#include "File/InFile.h"
 
 namespace api
 {
@@ -254,6 +254,8 @@ namespace vk
     const uint32_t uNumImages = _pWindow->m_uSwapchainImageCount;
 
     VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, uNumImages, _pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
+
+    DestroyAPITexture(_pWindow->m_pDummyTexture);
 
     vkDestroyRenderPass(_pWindow->m_hDevice, _pWindow->m_hRenderPass, NULL);
 
@@ -782,8 +784,8 @@ namespace vk
     std::string sVSFilename = _oInfo.m_sVSFilename.substr(0, _oInfo.m_sVSFilename.find_last_of('.')) + ".spv";
     std::string sPSFilename = _oInfo.m_sPSFilename.substr(0, _oInfo.m_sPSFilename.find_last_of('.')) + ".spv";    
 
-    file::File oVSFile(sVSFilename.c_str());
-    file::File oPSFile(sPSFilename.c_str());
+    file::InFile oVSFile(sVSFilename.c_str());
+    file::InFile oPSFile(sPSFilename.c_str());
 
     /*ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder);
     ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder);*/

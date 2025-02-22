@@ -2,7 +2,7 @@
 
 class BaseObject {
 public:
-  virtual void Setup() {};
+  virtual void Configure() {};
   virtual void Reconfigure() {};
 private:
   bool m_initialized = false;

@@ -3,9 +3,14 @@
 #include <string>
 
 #include "Graphics/BlendEnums.h"
+#include "Core/BaseObject.h"
+#include "Reflection/ReflectionMacros.h"
 
-struct RenderStateInfo
+struct RenderStateInfo : public BaseObject
 {
+
+  REFLECT_BASE()
+
   uint32_t m_uMeshConstantSize;
 
   std::string m_sPSFilename;

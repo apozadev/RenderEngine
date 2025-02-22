@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Component.h"
+#include "Core/ComponentDesc.h"
 #include "Graphics/DirLight.h"
 #include "Graphics/RenderTarget.h"
 #include "Graphics/Pass.h"
@@ -13,6 +14,9 @@ class DirLightComponent : public Component
 {
 
 public:
+
+  REFLECT()
+
   DirLightComponent();
   ~DirLightComponent();
 
@@ -33,3 +37,6 @@ private:
   owner_ptr<Pass> m_pShadowPass;
 
 };
+
+DECLARE_COMPONENT_DESC_BEGIN(DirLightComponentDesc, DirLightComponent)
+DECLARE_COMPONENT_DESC_END(DirLightComponentDesc)

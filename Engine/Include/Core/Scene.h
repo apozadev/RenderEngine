@@ -32,6 +32,8 @@ public:
 
   std::vector<owner_ptr<Entity>>& GetEntities() { return m_lstEntities; }
 
+  const std::vector<owner_ptr<Entity>>& GetEntities() const { return m_lstEntities; }
+
   Scene& operator=(Scene&& _rScene);
 
 private:    

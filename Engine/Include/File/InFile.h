@@ -4,11 +4,11 @@
 
 namespace file
 {
-  class File
+  class InFile
   {
   public:
-    File(const char* _sFilename, bool _bRelativePath = true);
-    ~File();
+    InFile(const char* _sFilename, bool _bRelativePath = true);
+    ~InFile();
 
     const std::string& GetFilename() const { return m_sFilename; }
     char* GetData() const { return m_pData; }

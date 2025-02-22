@@ -21,7 +21,7 @@ namespace reflection
 
   void CopyTypeVisitor::Visit(const TypeDescriptor_Struct* type)
   {
-    void* pObjSrc = m_pObjSrc;
+    const void* pObjSrc = m_pObjSrc;
     void* pObjDst = m_pObjDst;
 
     size_t memberCount = type->members.size();
@@ -35,68 +35,62 @@ namespace reflection
 
   void CopyTypeVisitor::Visit(const TypeDescriptor_StdVector* type)
   {
-    //void* pObjSrc = m_pObjSrc;
-    //void* pObjDst = m_pObjDst;
+    owner_ptr<void>* ppObjSrc = (owner_ptr<void>*)m_pObjSrc;    
+    owner_ptr<void>* ppObjDst = (owner_ptr<void>*)m_pObjDst;    
 
-    //size_t srcSize = type->getSize(pObjSrc);
-    //size_t dstSize = srcSize;
+    size_t srcSize = type->getSize(ppObjSrc->get());
+    size_t dstSize = srcSize;
 
-    //// We must check for ignored items
-    //for (size_t i = 0; i < srcSize; i++) {
-    //  void* pItem = type->getItem(pObjSrc, i);
-    //  if (type->itemType->GetDynamic(pItem)->create == nullptr) {
-    //    dstSize--;
-    //  }
-    //}
+    // We must check for ignored items
+    /*for (size_t i = 0; i < srcSize; i++) {
+      void* pItem = type->getItem(pObjSrc, i);
+      if (type->itemType->getDynamic(pItem)->create == nullptr) {
+        dstSize--;
+      }
+    }*/
 
-    //type->resize(pObjDst, dstSize);
+    type->resize(ppObjDst->get(), dstSize);
 
-    //for (size_t i = 0; i < srcSize; i++) {
-    //  m_pObjSrc = type->getItem(pObjSrc, i);
-    //  if (type->itemType->GetDynamic(m_pObjSrc)->create == nullptr) {
-    //    continue;
-    //  }
-    //  m_pObjDst = type->getItem(pObjDst, i);
-    //  type->itemType->Accept(this);
-    //}
+    for (size_t i = 0; i < srcSize; i++) {
+      m_pObjSrc = type->getItem(ppObjSrc->get(), i);
+      m_pObjDst = type->getItem(ppObjDst->get(), i);
+      type->itemType->Accept(this);
+    }
   }
 
   void CopyTypeVisitor::Visit(const TypeDescriptor_Owner_Ptr* type)
   {
-    //  void** ppObjSrc = (void**)m_pObjSrc;
-    //  void** ppObjDst = (void**)m_pObjDst;
+      owner_ptr<void>* ppObjSrc = (owner_ptr<void>*)m_pObjSrc;
+      owner_ptr<void>* ppObjDst = (owner_ptr<void>*)m_pObjDst;
 
-    //  const TypeDescriptor* dynamicTypeSrc = type->GetDynamic(ppObjSrc);
+      const TypeDescriptor* dynamicTypeSrc = type->getDynamicType(ppObjSrc);
 
-    //  // TypeDescriptor_Ignored does not have these function pointers assigned
-    //  if (dynamicTypeSrc->create == nullptr) {
-    //    return;
-    //  }
+      // TypeDescriptor_Ignored does not have these function pointers assigned
+      if (dynamicTypeSrc->create == nullptr) {
+        return;
+      }
 
-    //  if (*ppObjDst != nullptr) {
-    //    const TypeDescriptor* dynamicTypeDst= type->GetDynamic(ppObjDst);
-    //    // TODO: This is a memory leak, think of something
-    //    if (dynamicTypeDst->destroy) {
-    //      dynamicTypeDst->destroy(*ppObjDst);
-    //    }
-    //  }
+      if (ppObjDst->get() != nullptr) {
+        const TypeDescriptor* dynamicTypeDst = type->getDynamicType(ppObjDst->get());
+        // TODO: This is a memory leak, think of something
+        ppObjDst->reset();
+      }
 
-    //  *ppObjDst = dynamicTypeSrc->create();
+      *ppObjDst = dynamicTypeSrc->create();
 
-    //  m_pObjSrc = *ppObjSrc;
-    //  m_pObjDst = *ppObjDst;
-    //  dynamicTypeSrc->Accept(this);
-    //}
+      m_pObjSrc = ppObjSrc->get();
+      m_pObjDst = ppObjDst->get();
+      dynamicTypeSrc->Accept(this);
+  }
 
-    //void CopyTypeVisitor::Visit(const reflection::TypeDescriptor_Asset_Ptr* type) {
-    //  void** ppObjSrc = type->getPPtr(m_pObjSrc);
-    //  void** ppObjDst = type->getPPtr(m_pObjDst);
-    //  //const TypeDescriptor* dynamicType = type->GetDynamic(ppObjSrc);         
-  //  type->setFilename(m_pObjDst, type->getFilename(m_pObjSrc));
-  //  *type->getPPtr(m_pObjDst) = *type->getPPtr(m_pObjSrc);
-  //  //*ppObjDst = PrefabManager::GetInstance()->LoadPrefab(filename.c_str(), dynamicType);    
-  //}
+  void CopyTypeVisitor::Visit(const reflection::TypeDescriptor_Asset_Ptr* type) {
+    /*const void** ppObjSrc = type->getPPtrConst(m_pObjSrc);
+    void** ppObjDst = type->getPPtr(m_pObjDst);
+    const TypeDescriptor* dynamicType = type->GetDynamic(ppObjSrc);         
+    type->setFilename(m_pObjDst, type->getFilename(m_pObjSrc));
+    *type->getPPtr(m_pObjDst) = *type->getPPtr(m_pObjSrc);*/
+    //*ppObjDst = PrefabManager::GetInstance()->LoadPrefab(filename.c_str(), dynamicType);    
+  }
 
   }
 
-}

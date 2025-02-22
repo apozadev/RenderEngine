@@ -92,7 +92,7 @@ uint32_t Scene::BuildTraverse(owner_ptr<Entity>& _pEntity, std::vector<owner_ptr
   _lstNewScene.push_back(std::move(_pEntity ));
   owner_ptr<Entity>& rNewEntity = _lstNewScene[uCurrId];
 
-  for (std::unique_ptr<Component>& pComponent : rNewEntity->m_lstComponents)
+  for (owner_ptr<Component>& pComponent : rNewEntity->m_lstComponents)
   {
     pComponent->m_pEntity = rNewEntity.get();
   }

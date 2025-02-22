@@ -5,7 +5,7 @@
 
 #include "../3rd/spirv-reflect/spirv_reflect.h"
 
-#include "File/File.h"
+#include "File/InFile.h"
 #include "Graphics/RenderStateInfo.h"
 #include "Graphics/PipelineStage.h"
 #include "Graphics/BlendEnums.h"
@@ -49,7 +49,7 @@ namespace vk
 
   void CreatePhysicalDevice();
 
-  void CreatePipeline(const file::File& _oVSFile, const file::File& _oPSFile, const RenderStateInfo& _oInfo, VkRenderPass _hRenderPass, VkSampleCountFlagBits _uMsaaSamples, APIRenderState* _pRenderState_);
+  void CreatePipeline(const file::InFile& _oVSFile, const file::InFile& _oPSFile, const RenderStateInfo& _oInfo, VkRenderPass _hRenderPass, VkSampleCountFlagBits _uMsaaSamples, APIRenderState* _pRenderState_);
 
   void CreateLogicalDevice(APIWindow* _pWindow);
 

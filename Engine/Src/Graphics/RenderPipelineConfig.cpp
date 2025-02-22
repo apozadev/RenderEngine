@@ -1,0 +1,35 @@
+#include "Graphics/RenderPipelineConfig.h"
+
+#include "Reflection/ReflectionImplMacros.h"
+
+REFLECT_STRUCT_BASE_BEGIN(RenderTargetConfig)
+REFLECT_STRUCT_MEMBER(m_sId)
+REFLECT_STRUCT_MEMBER(m_iWidth)
+REFLECT_STRUCT_MEMBER(m_iHeight)
+REFLECT_STRUCT_MEMBER(m_uNumColorTextures)
+REFLECT_STRUCT_MEMBER(m_eFormat)
+REFLECT_STRUCT_MEMBER(m_uMipLevels)
+REFLECT_STRUCT_MEMBER(m_uMsaaSamples)
+REFLECT_STRUCT_MEMBER(m_bHasDepthStencil)
+REFLECT_STRUCT_END(RenderTargetConfig)
+
+REFLECT_STRUCT_BASE_BEGIN(RenderStepInputConfig)
+REFLECT_STRUCT_MEMBER(m_sTargetId)
+REFLECT_STRUCT_MEMBER(m_iImageIdx)
+REFLECT_STRUCT_END(RenderStepInputConfig)
+
+REFLECT_STRUCT_BASE_BEGIN(RenderStepConfig)
+REFLECT_STRUCT_MEMBER(m_lstInputs)
+REFLECT_STRUCT_MEMBER(m_sRenderTargetId)
+REFLECT_STRUCT_MEMBER(m_bOrderTranslucent)
+REFLECT_STRUCT_END(RenderStepConfig)
+
+REFLECT_STRUCT_BASE_BEGIN(RenderPipelineConfig)
+REFLECT_STRUCT_MEMBER(m_sId)
+REFLECT_STRUCT_MEMBER(m_lstSteps)
+REFLECT_STRUCT_MEMBER(m_lstRenderTargets)
+REFLECT_STRUCT_END(RenderPipelineConfig)
+
+IMPLEMENT_REFLECTION_VECTOR(RenderStepInputConfig)
+IMPLEMENT_REFLECTION_VECTOR(RenderStepConfig)
+IMPLEMENT_REFLECTION_VECTOR(RenderTargetConfig)

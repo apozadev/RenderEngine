@@ -2,6 +2,12 @@
 
 #include <unordered_map>
 #include <vector>
+
+#include "File/FileUtils.h"
+#include "Reflection/SerializationTypeVisitor.h"
+#include "Reflection/DeserializationTypeVisitor.h"
+#include "rapidxml/rapidxml_ext.hpp"
+#include "rapidxml/rapidxml.hpp"
   
 namespace reflection {
 
@@ -14,6 +20,40 @@ namespace reflection {
 
   class ReflectionHelper {
   public:
+
+    template <typename T>
+    static void Serialize(const char* _sFilename, T* _pObj)
+    {
+      rapidxml::xml_document<> oDoc;
+
+      reflection::SerializationTypeVisitor oVisitor(_pObj, &oDoc);
+      T::GetReflection().Accept(&oVisitor);
+
+      std::ofstream myfile;      
+      myfile.open((file::GetWorkingDirectory() +  _sFilename).c_str());
+      myfile << oDoc;
+      myfile.close();
+
+      reflection::ReflectionHelper::ClearTrackedStrings();
+    }
+
+    template <typename T>
+    static void Deserialize(const char* _sFilename, T* _pObj)
+    {
+      const reflection::TypeDescriptor_Struct* pTypeDesc = _pObj->GetReflectionDynamic();
+
+      rapidxml::file<> oXmlFile((file::GetWorkingDirectory() + _sFilename).c_str());
+      rapidxml::xml_document<> oDoc;
+      oDoc.parse<0>(oXmlFile.data());
+
+      const rapidxml::xml_node<>* pNodeElem = oDoc.first_node(pTypeDesc->name);
+
+      reflection::DeserializationTypeVisitor oVisitor(_pObj, pNodeElem);
+      pTypeDesc->Accept(&oVisitor);
+
+      reflection::ConfigureTypeVisitor oSetupVisitor(_pObj);
+      pTypeDesc->Accept(&oSetupVisitor);
+    }
 
     static void RegisterTypeDesc(TypeDescriptor* typeDesc);
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Reflection/ReflectionMacros.h"
+
 enum class ImageFormat
 {
   R32,
@@ -24,3 +26,5 @@ inline size_t GetImageFormatSize(ImageFormat _eFormat)
 
   return 0;
 }
+
+DECLARE_REFLECTION_ENUM(ImageFormat)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Component.h"
+#include "Core/ComponentDesc.h"
 #include "Graphics/Camera.h"
 #include "Memory/PtrTypes.h"
 
@@ -8,9 +9,11 @@ class Window;
 
 class CameraComponent : public Component
 {
-
 public:
-  CameraComponent();     
+
+  REFLECT()
+
+  CameraComponent();       
 
 protected:
 
@@ -33,3 +36,6 @@ private:
   float m_fPitch;
 
 };
+
+DECLARE_COMPONENT_DESC_BEGIN(CameraComponentDesc,CameraComponent)
+DECLARE_COMPONENT_DESC_END(CameraComponentDesc)

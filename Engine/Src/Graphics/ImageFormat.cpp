@@ -1,0 +1,10 @@
+#include "Graphics/ImageFormat.h"
+
+#include "Reflection/ReflectionImplMacros.h"
+
+REFLECT_ENUM_BEGIN(ImageFormat)
+REFLECT_ENUM_VALUE(R32)
+REFLECT_ENUM_VALUE(R8G8B8)
+REFLECT_ENUM_VALUE(R8G8B8A8)
+REFLECT_ENUM_VALUE(COUNT)
+REFLECT_ENUM_END(ImageFormat)

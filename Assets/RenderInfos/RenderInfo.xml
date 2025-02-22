@@ -1,0 +1,38 @@
+<RenderPipelineConfig>
+	<m_sId>TEST</m_sId>
+	<m_lstSteps>
+		<RenderStepConfig>
+			<m_lstInputs/>
+			<m_sRenderTargetId>GBUFFER</m_sRenderTargetId>
+			<m_bOrderTranslucent>false</m_bOrderTranslucent>
+		</RenderStepConfig>
+		<RenderStepConfig>
+			<m_lstInputs>
+				<RenderStepInputConfig>
+					<m_sTargetId>GBUFFER</m_sTargetId>
+					<m_iImageIdx>0</m_iImageIdx>
+				</RenderStepInputConfig>
+			</m_lstInputs>
+			<m_sRenderTargetId>DEFAULT</m_sRenderTargetId>
+			<m_bOrderTranslucent>false</m_bOrderTranslucent>
+		</RenderStepConfig>
+		<RenderStepConfig>
+			<m_lstInputs/>
+			<m_sRenderTargetId>DEFAULT</m_sRenderTargetId>
+			<m_bOrderTranslucent>true</m_bOrderTranslucent>
+		</RenderStepConfig>
+	</m_lstSteps>
+	<m_lstRenderTargets>
+		<RenderTargetConfig>
+			<m_sId>GBUFFER</m_sId>
+			<m_iWidth>-1</m_iWidth>
+			<m_iHeight>-1</m_iHeight>
+			<m_uNumColorTextures>1</m_uNumColorTextures>
+			<m_eFormat>R8G8B8A8</m_eFormat>
+			<m_uMipLevels>1</m_uMipLevels>
+			<m_uMsaaSamples>1</m_uMsaaSamples>
+			<m_bHasDepthStencil>true</m_bHasDepthStencil>
+		</RenderTargetConfig>
+	</m_lstRenderTargets>
+</RenderPipelineConfig>
+

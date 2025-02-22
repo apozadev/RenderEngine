@@ -89,7 +89,7 @@ namespace reflection
 
     if (!m_varName)
     {
-      std::string* name = new std::string(concreteType->getFullName() + "*");
+      std::string* name = new std::string(concreteType->getFullName() + "_Ptr");
       ReflectionHelper::TrackString(name);
       m_varName = name->c_str();
     }

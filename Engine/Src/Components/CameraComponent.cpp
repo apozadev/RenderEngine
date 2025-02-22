@@ -8,6 +8,7 @@
 #include "Components/CameraComponent.h"
 #include "Math/Utils.h"
 #include "Memory/Factory.h"
+#include "Reflection/ReflectionImplMacros.h"
 
 CameraComponent::CameraComponent()  
 {  
@@ -106,3 +107,9 @@ void CameraComponent::Update(float _fTimeStep)
   m_pCamera->UpdateTransform(m_pEntity->GetGlobalTransform());
   Renderer::GetInstance()->SubmitCamera(m_pCamera.get(), &m_pEntity->GetGlobalTransform());
 }
+
+REFLECT_STRUCT_BEGIN(CameraComponent, Component)
+REFLECT_STRUCT_END(CameraComponent)
+
+IMPLEMENT_COMPONENT_DESC_BEGIN(CameraComponentDesc)
+IMPLEMENT_COMPONENT_DESC_END(CameraComponentDesc)

@@ -8,6 +8,8 @@
 #include "Graphics/API/GraphicsAPI.h"
 #include "Core/BaseObject.h"
 
+#include "Reflection/ReflectionMacros.h"
+
 class Window;
 
 class MaterialInstance;
@@ -24,6 +26,8 @@ class Mesh : public BaseObject
   friend class GeometryRenderStep;
 
 public:      
+
+  REFLECT_BASE()
   
   ~Mesh();
 
@@ -48,3 +52,5 @@ private:
   MeshConstant m_oConstant;
 
 };
+
+DECLARE_REFLECTION_POINTER(Mesh)

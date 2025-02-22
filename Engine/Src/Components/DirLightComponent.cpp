@@ -2,6 +2,7 @@
 #include "Core/Entity.h"
 #include "Graphics/Renderer.h"
 #include "Memory/Factory.h"
+#include "Reflection/ReflectionImplMacros.h"
 
 DirLightComponent::DirLightComponent()
 {
@@ -46,3 +47,9 @@ void DirLightComponent::Update(float _fTimeStep)
   m_pCamera->UpdateTransform(m_pEntity->GetGlobalTransform());
   Renderer::GetInstance()->SubmitDirLight(&m_oDirLight, m_pCamera.get(), &m_pEntity->GetGlobalTransform(), m_pShadowMap.get(), m_pShadowPass.get());
 }
+
+REFLECT_STRUCT_BEGIN(DirLightComponent, Component)
+REFLECT_STRUCT_END(DirLightComponent)
+
+IMPLEMENT_COMPONENT_DESC_BEGIN(DirLightComponentDesc)
+IMPLEMENT_COMPONENT_DESC_END(DirLightComponentDesc)

@@ -6,7 +6,7 @@ namespace reflection {
 
   class CopyTypeVisitor : public reflection::TypeVisitor {
   public:
-    CopyTypeVisitor(void* pObjDst, void* pObjSrc) : m_pObjDst(pObjDst), m_pObjSrc(pObjSrc) {}
+    CopyTypeVisitor(void* pObjDst, const void* pObjSrc) : m_pObjDst(pObjDst), m_pObjSrc(pObjSrc) {}
     void Visit(const reflection::TypeDescriptor* type);
     void Visit(const reflection::TypeDescriptor_Struct* type);
     void Visit(const reflection::TypeDescriptor_StdVector* type);
@@ -15,6 +15,6 @@ namespace reflection {
     void Visit(const reflection::TypeDescriptor_Asset_Ptr* type);
   private:
     void* m_pObjDst;
-    void* m_pObjSrc;
+    const void* m_pObjSrc;
   };
 }

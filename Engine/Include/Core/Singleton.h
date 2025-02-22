@@ -6,6 +6,7 @@ template <class T>
 class Singleton
 {
 public:
+
   static T* GetInstance()
   {
     static T* m_instance;
@@ -15,4 +16,13 @@ public:
     }
     return m_instance;
   }
+
+protected:
+
+  Singleton() = default;
+  Singleton(Singleton&) = delete;
+  Singleton(Singleton&&) = delete;
+
+  const Singleton& operator=(const Singleton&) = delete;
+
 };

@@ -3,12 +3,14 @@
 #include "Graphics/ResourceBindInfo.h"
 #include "Core/Exception.h"
 
+#include "Reflection/ReflectionImplMacros.h"
+
 namespace matinstance_internal
 {
   static uint16_t s_uNextId = 0u;
 }
 
-void MaterialInstance::Setup(Material* _pMaterial)
+void MaterialInstance::SetupSubState(const Material* _pMaterial)
 {    
 
   static const char s_aNames[4][9] = { "Texture0", "Texture1", "Texture2", "Texture3" };
@@ -60,3 +62,11 @@ void MaterialInstance::Bind() const
     pCBuffer->Bind();
   }*/
 }
+
+REFLECT_STRUCT_BASE_BEGIN(MaterialInstance)
+//REFLECT_STRUCT_MEMBER(m_lstTextures)
+REFLECT_STRUCT_END(MaterialInstance)
+
+IMPLEMENT_REFLECTION_POINTER(MaterialInstance)
+
+IMPLEMENT_REFLECTION_VECTOR(owner_ptr<MaterialInstance>)

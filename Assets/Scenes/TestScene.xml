@@ -1,0 +1,36 @@
+<SceneDesc>
+<Entities>
+	<EntityDesc>
+		<vPos>
+			<x>0</x><y>0</y><z>0</z>
+		</vPos>
+		<vRot>
+			<x>0</x><y>0</y><z>0</z>
+		</vRot>
+		<vScl>
+			<x>1</x><y>1</y><z>1</z>
+		</vScl>
+		<Components>
+			<ComponentDesc Type="CameraComponentDesc">
+			</ComponentDesc>
+		</Components>
+	</EntityDesc>
+	<EntityDesc>
+		<vPos>
+			<x>0</x><y>0</y><z>-10</z>
+		</vPos>
+		<vRot>
+			<x>0</x><y>0</y><z>0</z>
+		</vRot>
+		<vScl>
+			<x>1</x><y>1</y><z>1</z>
+		</vScl>
+		<Components>
+			<ComponentDesc Type="ModelComponentDesc">
+				<m_sModelFilename>Assets/Models/cyborg/cyborg.obj</m_sModelFilename>
+				<m_sMaterialFilename>Assets/Materials/TestMaterial.xml</m_sMaterialFilename>
+			</ComponentDesc>
+		</Components>
+	</EntityDesc>
+</Entities>
+</SceneDesc>

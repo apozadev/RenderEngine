@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Reflection/ReflectionMacros.h"
+
 enum BlendFactor
 {
   BLEND_ZERO,
@@ -29,3 +31,7 @@ enum BlendOp
   BLEND_OP_MIN,
   BLEND_OP_MAX
 };
+
+DECLARE_REFLECTION_ENUM(BlendFactor)
+
+DECLARE_REFLECTION_ENUM(BlendOp)

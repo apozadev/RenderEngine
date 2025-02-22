@@ -18,10 +18,10 @@
 #include "assimp/Importer.hpp"
 
 void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, ModelComponent* pModelComp_);
-void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_);
+void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_);
 void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, ModelComponent* pModelComp_);
 
-void ModelLoader::LoadModel(const char* _sFilename, Material* _pMaterial, ModelComponent* pModelComp_)
+void ModelLoader::LoadModel(const char* _sFilename, const Material* _pMaterial, ModelComponent* pModelComp_)
 {
 
   Assimp::Importer oImporter;
@@ -66,7 +66,7 @@ void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, ModelCompon
   }
 }
 
-void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_)
+void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_)
 {  
 
   for (unsigned int i = 0; i < _pAssimpScene->mNumMaterials; i++)
@@ -122,7 +122,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, Material* _pMaterial, std::s
         pMatInstance->AddTexture(std::move(pTexture));
       }
     }  
-    pMatInstance->Setup(_pMaterial);
+    pMatInstance->SetupSubState(_pMaterial);
     pModelComp_->AddMaterialInstance(std::move(pMatInstance));
   }
 }
@@ -199,7 +199,7 @@ void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, ModelCompon
 
 }
 
-void ModelLoader::SetupQuadModel(Material* _pMaterial, ModelComponent* pModelComp_)
+void ModelLoader::SetupQuadModel(const Material* _pMaterial, ModelComponent* pModelComp_)
 {
 
   std::vector<Vertex> lstVertices{
@@ -216,7 +216,7 @@ void ModelLoader::SetupQuadModel(Material* _pMaterial, ModelComponent* pModelCom
 
   owner_ptr<MaterialInstance> pMatInstance = Factory::Create<MaterialInstance>();
 
-  pMatInstance->Setup(_pMaterial);
+  pMatInstance->SetupSubState(_pMaterial);
 
   pModelComp_->AddMaterialInstance(std::move(pMatInstance));
 

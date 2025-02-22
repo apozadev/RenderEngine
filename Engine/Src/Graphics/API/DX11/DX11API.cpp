@@ -19,7 +19,7 @@
 
 #include "Core/Exception.h"
 #include "File/FileUtils.h"
-#include "File/File.h"
+#include "File/InFile.h"
 #include "Util/WideStringUtil.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Vertex.h"
@@ -714,8 +714,8 @@ namespace api
       std::string sPSFilename = _oInfo.m_sPSFilename.substr(0, _oInfo.m_sPSFilename.find_last_of('.')) + ".cso";
       std::string sVSFilename = _oInfo.m_sVSFilename.substr(0, _oInfo.m_sVSFilename.find_last_of('.')) + ".cso";
 
-      file::File oVsFile(sVSFilename.c_str());
-      file::File oPsFile(sPSFilename.c_str());      
+      file::InFile oVsFile(sVSFilename.c_str());
+      file::InFile oPsFile(sPSFilename.c_str());      
       
       DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));      
       DX11_CHECK(pWindow->m_pDevice->CreatePixelShader(oPsFile.GetData(), oPsFile.GetSize(), nullptr, pRenderState->m_pPixelShader.ReleaseAndGetAddressOf()));

@@ -4,16 +4,18 @@
 #include <cstring>
 #include <cstddef>
 
-#include "3rd/rapidxml/rapidxml_ext.hpp"
-#include "3rd/rapidxml/rapidxml.hpp"
+#include "rapidxml/rapidxml_ext.hpp"
+#include "rapidxml/rapidxml.hpp"
 
-#include "Core/PrefabManager.h"
+//#include "Core/PrefabManager.h"
 #include "Reflection/TypeDescriptors.h"
 #include "Reflection/ReflectionHelper.h"
 
-#include "Core/Memory/Factory.h"
+#include "Memory/Factory.h"
 
 #define CAT(a, b) a ## b
+
+#define STRINGIFY(x) #x
 
 ////////////////////////////////////////////////////////////////////////
 // Struct / Class
@@ -25,8 +27,8 @@
     typeDesc->name = #TYPE; \
     typeDesc->size = sizeof(T); \
     typeDesc->parentTypeDesc = PARENT_TYPE_EXP; \
-    typeDesc->create = [](void* obj)->owner_ptr<void>{ CREATE_EXP };  \
-    typeDesc->setup = [](void* obj){ if (!std::is_abstract<TYPE>()) (*(T*)obj).Setup(); };  \
+    typeDesc->create = []()->owner_ptr<void>{ CREATE_EXP };  \
+    typeDesc->configure = [](void* obj){ if (!std::is_abstract<TYPE>()) (*(T*)obj).Configure(); };  \
     typeDesc->reconfigure = [](void* obj){ if (!std::is_abstract<TYPE>()) (*(T*)obj).Reconfigure(); };  \
     typeDesc->members = {
 
@@ -49,7 +51,11 @@
     }; \
     ::reflection::ReflectionHelper::RegisterTypeDesc(typeDesc);  \
   } \
-  const ::reflection::TypeDescriptor_Struct& __typeDesc_ ## TYPE = TYPE::GetReflection(); \
+  static struct TYPE##_AutoRegister { \
+      TYPE##_AutoRegister() { TYPE::GetReflection(); }  \
+  } TYPE##_AutoRegister_Instance; 
+  //static const ::reflection::TypeDescriptor_Struct& __typeDesc_ ## TYPE = TYPE::GetReflection(); \
+  //_Pragma(STRINGIFY(comment(linker, "/include:__typeDesc_" #TYPE)))
 
 ////////////////////////////////////////////////////////////////////////
 // Primitive
@@ -130,8 +136,8 @@
 ////////////////////////////////////////////////////////////////////////
 
 #define __IMPLEMENT_REFLECTION_POINTER(TYPE, NAMESPACE) \
-  void CAT(initReflection_ ## TYPE, _Owned_Ptr)(::reflection::TypeDescriptor_Ptr* typeDesc) { \
-    typeDesc->name = #TYPE "_Owned_Ptr"; \
+  void CAT(initReflection_ ## TYPE, _Owner_Ptr)(::reflection::TypeDescriptor_Ptr* typeDesc) { \
+    typeDesc->name = #TYPE "_Owner_Ptr"; \
     typeDesc->size = sizeof(CAT(NAMESPACE ## TYPE, *)); \
     typeDesc->getDynamicType =  [](const void* pObj)->const ::reflection::TypeDescriptor*{  \
       return pObj ? ::reflection::TypeResolver<NAMESPACE ## TYPE>::getDynamic(pObj) : ::reflection::TypeResolver<NAMESPACE ## TYPE>::get();  \
@@ -151,8 +157,8 @@
     };  \
   } \
   template <> \
-  ::reflection::TypeDescriptor* ::reflection::getPrimitiveDescriptor<::reflection::Owned_Ptr_Wrapper<NAMESPACE ## TYPE>>() {  \
-    static TypeDescriptor_Owned_Ptr typeDesc{CAT(initReflection_ ## TYPE, _Owned_Ptr)};  \
+  ::reflection::TypeDescriptor* ::reflection::getPrimitiveDescriptor<owner_ptr<NAMESPACE ## TYPE>>() {  \
+    static TypeDescriptor_Owner_Ptr typeDesc{CAT(initReflection_ ## TYPE, _Owner_Ptr)};  \
     return &typeDesc; \
   } \
   template <> \
@@ -187,6 +193,9 @@
     };  \
     ((::reflection::TypeDescriptor_Asset_Ptr*)typeDesc)->getPPtr = [](void* pObj)-> void ** { \
       return (void**)&(((::reflection::Ptr_Wrapper<NAMESPACE ## TYPE>*)pObj)->m_ptr); \
+    };  \
+    ((::reflection::TypeDescriptor_Asset_Ptr*)typeDesc)->getPPtrConst = [](const void* pObj)-> const void ** { \
+      return (const void**)&(((::reflection::Ptr_Wrapper<NAMESPACE ## TYPE>*)pObj)->m_ptr); \
     };  \
   } \
   template <> \

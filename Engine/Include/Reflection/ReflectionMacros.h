@@ -47,14 +47,6 @@
     template <> TypeDescriptor* getPrimitiveDescriptor<TYPE>(); \
   }
 
-DECLARE_REFLECTION_PRIMITIVE(int)
-DECLARE_REFLECTION_PRIMITIVE(unsigned int)
-DECLARE_REFLECTION_PRIMITIVE(uint64_t)
-DECLARE_REFLECTION_PRIMITIVE(float)
-DECLARE_REFLECTION_PRIMITIVE(double)
-DECLARE_REFLECTION_PRIMITIVE(bool)
-DECLARE_REFLECTION_PRIMITIVE(std::string)
-
 ////////////////////////////////////////////////////////////////////////
 // Enum
 ////////////////////////////////////////////////////////////////////////
@@ -74,7 +66,7 @@ DECLARE_REFLECTION_PRIMITIVE(std::string)
 ////////////////////////////////////////////////////////////////////////
 
 #define DECLARE_REFLECTION_OWNED_POINTER(TYPE)  \
-  DECLARE_REFLECTION_PRIMITIVE(::reflection::Owned_Ptr_Wrapper<TYPE>)
+  DECLARE_REFLECTION_PRIMITIVE(owner_ptr<TYPE>)
 
 #define DECLARE_REFLECTION_WEAK_POINTER(TYPE)  \
   DECLARE_REFLECTION_PRIMITIVE(::reflection::Weak_Ptr_Wrapper<TYPE>)

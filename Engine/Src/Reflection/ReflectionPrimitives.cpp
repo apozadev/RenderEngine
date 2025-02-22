@@ -1,11 +1,11 @@
-#include "3rd/rapidxml/rapidxml_ext.hpp"
-#include "3rd/rapidxml/rapidxml.hpp"
+#include "Reflection/ReflectionPrimitives.h"
 
 #include "Reflection/ReflectionImplMacros.h"
 
 IMPLEMENT_REFLECTION_PRIMITIVE(int, Int)
 IMPLEMENT_REFLECTION_PRIMITIVE(unsigned int, UInt)
 IMPLEMENT_REFLECTION_PRIMITIVE(uint64_t, UInt64)
+IMPLEMENT_REFLECTION_PRIMITIVE(uint16_t, UInt16)
 IMPLEMENT_REFLECTION_PRIMITIVE(float, Float)
 IMPLEMENT_REFLECTION_PRIMITIVE(double, Double)
 //IMPLEMENT_REFLECTION_PRIMITIVE(bool, Bool)

@@ -26,7 +26,7 @@ Entity& Entity::operator=(Entity&& _rEntity)
 
 void Entity::Start()
 {
-  for (std::unique_ptr<Component>& pComp : m_lstComponents)
+  for (owner_ptr<Component>& pComp : m_lstComponents)
   {
     pComp->Start();
   }
@@ -34,7 +34,7 @@ void Entity::Start()
 
 void Entity::PreTransformUpdate(float _fTimeStep)
 {  
-  for (std::unique_ptr<Component>& pComp : m_lstComponents)
+  for (owner_ptr<Component>& pComp : m_lstComponents)
   {
     pComp->PreTransformUpdate(_fTimeStep);
   }
@@ -42,7 +42,7 @@ void Entity::PreTransformUpdate(float _fTimeStep)
 
 void Entity::Update(float _fTimeStep)
 { 
-  for (std::unique_ptr<Component>& pComp : m_lstComponents)
+  for (owner_ptr<Component>& pComp : m_lstComponents)
   {
     pComp->Update(_fTimeStep);
   }

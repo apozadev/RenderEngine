@@ -5,6 +5,7 @@
 
 #include "Core/Engine.h"
 #include "Core/Exception.h"
+#include "Core/SceneLoading.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Material.h"

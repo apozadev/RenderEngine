@@ -16,9 +16,9 @@ public:
     std::string m_sName;
   };
 
-  ~ReflectedConstantBuffer();  
+  ~ReflectedConstantBuffer();
 
-  void Configure(std::string _sName, std::vector<Variable>&& _lstVariables);
+  void Configure(std::string _sName, std::vector<Variable>&& _lstVariables, float* _pCache);
 
   void SetupRenderSubState() const
   {
@@ -29,6 +29,8 @@ public:
   {
     ConstantBufferBase::Update(m_pData, m_uSize);
   }
+
+  size_t GetSize() const { return m_uSize; }
 
   bool SetFloat(const char* _sName, float _fValue) { return SetVar<ConstantBufferType::SCALAR>(_sName, &_fValue); }
   bool SetVec2(const char* _sName, float* _pData)  { return SetVar<ConstantBufferType::VEC2>(_sName, _pData); }

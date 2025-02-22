@@ -11,19 +11,20 @@ typedef uint32_t MaterialId;
 
 class MaterialLibrary : public Singleton<MaterialLibrary>
 { 
-public:
+public:  
 
-  Material* CreateMaterial()
-  {    
-    owner_ptr<Material> pMaterial = Factory::Create<Material>();
-    m_lstMaterials.push_back(std::move(pMaterial));
-    return m_lstMaterials.back().get();
-  }
+  Material* CreateMaterial();
+
+  const Material* LoadMaterial(const char* _sFilename);
 
   void Clear()
   {
     m_lstMaterials.clear();
   }
+
+protected:
+
+  using Singleton<MaterialLibrary>::Singleton;
 
 private:  
 

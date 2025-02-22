@@ -318,8 +318,8 @@ void CreatePhysicalDevice()
   s_oGlobalData.m_eMaxMsaaSampleCount = GetMaxMSAASampleCount();
 }
 
-void CreatePipeline(const file::File& _oVSFile,
-  const file::File& _oPSFile,
+void CreatePipeline(const file::InFile& _oVSFile,
+  const file::InFile& _oPSFile,
   const RenderStateInfo& _oInfo,
   VkRenderPass _hRenderPass,
   VkSampleCountFlagBits _uMsaaSamples,

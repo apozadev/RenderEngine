@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <vector>
+#include "Memory/PtrTypes.h"
+#include "Memory/Factory.h"
 #include "Core/Component.h"
 #include "Math/Transform.h"
 
@@ -19,11 +21,19 @@ public:
   template<class T, typename ...Args>
   T* AddComponent(Args&&... args)
   {
-    m_lstComponents.push_back(std::make_unique<T>(std::forward<Args>(args)...));
+    m_lstComponents.push_back(owner_ptr<Component>((Component*)(Factory::Create<T>(std::forward<Args>(args)...).release())));
     T* pComp = static_cast<T*>(m_lstComponents[m_lstComponents.size() - 1].get());
     pComp->m_pEntity = this;
     return pComp;
   }
+
+  void AddComponent(owner_ptr<Component>&& _pComponent)
+  {
+    _pComponent->m_pEntity = this;
+    m_lstComponents.push_back(std::move(_pComponent));
+  }
+
+  const std::vector<owner_ptr<Component>>& GetComponents() const { return m_lstComponents;}
 
   uint32_t GetParentId() { return m_uParentId; }
 
@@ -49,7 +59,7 @@ public:
 
 private:    
 
-  std::vector<std::unique_ptr<Component>> m_lstComponents;
+  std::vector<owner_ptr<Component>> m_lstComponents;
   std::vector<uint32_t> m_lstChildren;
 
   Transform m_oGlobalTransform;

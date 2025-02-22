@@ -134,14 +134,14 @@ namespace reflection
 
   //////////////////// SETUP TYPE VISITOR ///////////////////////
 
-  void SetupTypeVisitor::Visit(const TypeDescriptor_Struct* type)
+  void ConfigureTypeVisitor::Visit(const TypeDescriptor_Struct* type)
   {
     void* pObj = m_pObj;
     SetupMembers(type);
-    type->setup(pObj);
+    type->configure(pObj);
   }
 
-  void SetupTypeVisitor::SetupMembers(const TypeDescriptor_Struct* type)
+  void ConfigureTypeVisitor::SetupMembers(const TypeDescriptor_Struct* type)
   {
     void* pObj = m_pObj;
     if (type->parentTypeDesc)
@@ -158,7 +158,7 @@ namespace reflection
     }
   }
 
-  void SetupTypeVisitor::Visit(const TypeDescriptor_StdVector* type)
+  void ConfigureTypeVisitor::Visit(const TypeDescriptor_StdVector* type)
   {
     void* pObj = m_pObj;
     size_t size = type->getSize(pObj);
@@ -170,7 +170,7 @@ namespace reflection
     }
   }
 
-  void SetupTypeVisitor::Visit(const TypeDescriptor_Owner_Ptr* type)
+  void ConfigureTypeVisitor::Visit(const TypeDescriptor_Owner_Ptr* type)
   {
     owner_ptr<void>* ppObj = (owner_ptr<void>*)m_pObj;
 
@@ -179,7 +179,7 @@ namespace reflection
       return;
     }
 
-    const TypeDescriptor* dynamicType = type->getDynamicType(m_pObj);
+    const TypeDescriptor* dynamicType = type->getDynamicType(ppObj->get());
 
     m_pObj = ppObj->get();
 

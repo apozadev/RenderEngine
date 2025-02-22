@@ -10,6 +10,8 @@
 #include "Graphics/Pass.h"
 #include "Core/Exception.h"
 
+#include "Reflection/ReflectionImplMacros.h"
+
 void Material::AddPass(owner_ptr<Pass>&& _pPass)
 {
   m_lstPasses.push_back(std::move(_pPass));
@@ -26,3 +28,7 @@ void Material::Setup() const
     pPass->Setup();
   }
 }
+
+REFLECT_STRUCT_BASE_BEGIN(Material)
+REFLECT_STRUCT_MEMBER(m_lstPasses)
+REFLECT_STRUCT_END(Material)

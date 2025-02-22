@@ -9,22 +9,26 @@
 #include "Memory/PtrTypes.h"
 #include "Core/BaseObject.h"
 
+#include "Reflection/ReflectionMacros.h"
+
 class Resource;
 
 class MaterialInstance : public BaseObject
 {
 public: 
 
+  REFLECT_BASE()
+
   void AddTexture(owner_ptr<Texture2D>&& _pTexture)
   {
     m_lstTextures.push_back(std::move(_pTexture));
   }
 
-  Material* GetMaterial() const { return m_pMaterial; }
+  const Material* GetMaterial() const { return m_pMaterial; }
 
   uint16_t GetId() const { return m_uId; }
 
-  void Setup(Material* _pMaterial);
+  void SetupSubState(const Material* _pMaterial);
 
   void Bind() const;    
 
@@ -37,8 +41,12 @@ private:
 
   uint16_t m_uId;
 
-  Material* m_pMaterial;
+  const Material* m_pMaterial;
 
   api::APIRenderSubState* m_pSubState;
 
 };
+
+DECLARE_REFLECTION_POINTER(MaterialInstance)
+
+DECLARE_REFLECTION_VECTOR(owner_ptr<MaterialInstance>)

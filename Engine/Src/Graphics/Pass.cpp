@@ -10,6 +10,7 @@
 #include "Graphics/RenderStep.h"
 #include "Graphics/RenderTarget.h"
 #include "Core/Exception.h"
+#include "Reflection/ReflectionImplMacros.h"
 
 namespace pass_internal
 {
@@ -31,25 +32,6 @@ void Pass::Configure(const std::string& _sVSFilename
 
   m_uLayer = _uLayer;  
 
-  uint32_t uMsaaSamples = 1u;
-
-  // If pTarget is null, we are drawing to the backbuffer
-  if (_pRenderTarget)
-  {
-    _pRenderTarget->SetUsing();
-    uMsaaSamples = _pRenderTarget->GetMsaaSamples();
-  }
-  else
-  {
-    api::SetUsingAPIRenderTarget(nullptr);
-    uMsaaSamples = api::GetDefaultMsaaSamples();
-  }
-
-  if (m_pAPIRenderState != nullptr)
-  {
-    api::DestroyAPIRenderState(m_pAPIRenderState);
-  }
-
   m_oInfo = {};
   m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
   m_oInfo.m_sVSFilename = _sVSFilename;
@@ -61,44 +43,8 @@ void Pass::Configure(const std::string& _sVSFilename
   m_oInfo.m_bDepthWrite = _bDepthWrite;
   m_oInfo.m_bDepthRead = _bDepthRead;
 
-  m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
-
-  // Reflect constant buffers  
-  uint32_t uCBuffCount = api::GetConstantBufferCount(m_pAPIRenderState, PipelineStage::PIXEL);
-
-  for (uint32_t i = 0u; i < uCBuffCount; i++)
-  {
-    bool bValid = true;
-    uint32_t uNumVariables = api::GetConstantBufferMemberCount(m_pAPIRenderState, PipelineStage::PIXEL, i);
-
-    std::vector<ReflectedConstantBuffer::Variable> lstVariables;
-    lstVariables.reserve(uNumVariables);
-
-    for (uint32_t j = 0u; j < uNumVariables; j++)
-    {
-      ReflectedConstantBuffer::Variable oVar = {};
-
-      oVar.m_eType = api::GetConstantBufferMemberType(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
-
-      if (oVar.m_eType == ConstantBufferType::NONE)
-      {
-        bValid = false;
-        break;
-      }
-      oVar.m_sName = api::GetConstantBufferMemberName(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
-
-      lstVariables.push_back(std::move(oVar));
-    }
-
-    if (bValid)
-    {
-      std::string sName = api::GetConstantBufferName(m_pAPIRenderState, PipelineStage::PIXEL, i);
-
-      owner_ptr<ReflectedConstantBuffer> pCBuffer = Factory::Create<ReflectedConstantBuffer>();
-      pCBuffer->Configure(sName, std::move(lstVariables));
-      m_lstCBuffers.push_back(std::move(pCBuffer));
-    }
-  }
+  Configure();
+  
 }
 
 void Pass::Configure(const std::string& _sVSFilename
@@ -123,6 +69,91 @@ void Pass::Configure(const std::string& _sVSFilename
   const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;
 
   Configure(_sVSFilename, _sPSFilename, _bBlendEnabled, _eBlendOp, _eSrcBlendFactor, _eDstBlendFactor, _bDepthWrite, _bDepthRead, pTarget, _uLayer);
+}
+
+void Pass::Configure()
+{
+  RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(m_sPipelineId);
+  RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(m_iStepIdx) : nullptr;
+  const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;
+
+  Configure(pTarget);
+}
+
+void Pass::Configure(const RenderTarget* _pRenderTarget)
+{
+  uint32_t uMsaaSamples = 1u;
+
+  // If pTarget is null, we are drawing to the backbuffer
+  if (_pRenderTarget)
+  {
+    _pRenderTarget->SetUsing();
+    uMsaaSamples = _pRenderTarget->GetMsaaSamples();
+  }
+  else
+  {
+    api::SetUsingAPIRenderTarget(nullptr);
+    uMsaaSamples = api::GetDefaultMsaaSamples();
+  }
+
+  if (m_pAPIRenderState != nullptr)
+  {
+    api::DestroyAPIRenderState(m_pAPIRenderState);
+  }
+
+  m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
+
+  // Reflect constant buffers  
+  uint32_t uCBuffCount = api::GetConstantBufferCount(m_pAPIRenderState, PipelineStage::PIXEL);
+
+  size_t uCacheIdx = 0u;
+
+  for (uint32_t i = 0u; i < uCBuffCount; i++)
+  {
+    bool bValid = true;
+    uint32_t uNumVariables = api::GetConstantBufferMemberCount(m_pAPIRenderState, PipelineStage::PIXEL, i);
+
+    std::vector<ReflectedConstantBuffer::Variable> lstVariables;
+    lstVariables.reserve(uNumVariables);
+
+    size_t uSize = 0u;
+
+    for (uint32_t j = 0u; j < uNumVariables; j++)
+    {
+      ReflectedConstantBuffer::Variable oVar = {};
+
+      oVar.m_eType = api::GetConstantBufferMemberType(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
+
+      if (oVar.m_eType == ConstantBufferType::NONE)
+      {
+        bValid = false;
+        break;
+      }
+
+      uSize += GetConstantBufferTypeSize(oVar.m_eType);
+
+      oVar.m_sName = api::GetConstantBufferMemberName(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
+
+      lstVariables.push_back(std::move(oVar));
+    }
+
+    if (bValid)
+    {
+      std::string sName = api::GetConstantBufferName(m_pAPIRenderState, PipelineStage::PIXEL, i);
+
+      owner_ptr<ReflectedConstantBuffer> pCBuffer = Factory::Create<ReflectedConstantBuffer>();
+
+      size_t uNumFloats = uSize / sizeof(float);
+
+      float* pCache = (uCacheIdx + uNumFloats <= m_lstCBuffCache.size()) ? &(m_lstCBuffCache[uCacheIdx]) : nullptr;      
+
+      pCBuffer->Configure(sName, std::move(lstVariables), pCache);
+
+      uCacheIdx += uNumFloats;
+
+      m_lstCBuffers.push_back(std::move(pCBuffer));      
+    }
+  }
 }
 
 Pass::~Pass()
@@ -231,3 +262,15 @@ bool Pass::SetVec4(const char* _sName, float* _pValue)
 
   return false;
 }
+
+REFLECT_STRUCT_BASE_BEGIN(Pass)
+REFLECT_STRUCT_MEMBER(m_oInfo)
+REFLECT_STRUCT_MEMBER(m_uLayer)
+REFLECT_STRUCT_MEMBER(m_sPipelineId)
+REFLECT_STRUCT_MEMBER(m_iStepIdx)
+REFLECT_STRUCT_MEMBER(m_lstCBuffCache)
+REFLECT_STRUCT_END(Pass)
+
+IMPLEMENT_REFLECTION_POINTER(Pass)
+
+IMPLEMENT_REFLECTION_VECTOR(owner_ptr<Pass>)

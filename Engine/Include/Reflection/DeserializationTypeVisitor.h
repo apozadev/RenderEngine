@@ -28,9 +28,9 @@ namespace reflection {
     const rapidxml::xml_node<>* m_xmlNode;
   };
 
-  class SetupTypeVisitor : public TypeVisitor {
+  class ConfigureTypeVisitor : public TypeVisitor {
   public:
-    SetupTypeVisitor(void* pObj) :
+    ConfigureTypeVisitor(void* pObj) :
       m_pObj(pObj)
     {}
     void Visit(const TypeDescriptor* type) override {}

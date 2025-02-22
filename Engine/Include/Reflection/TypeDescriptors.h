@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "Memory/PtrTypes.h"
 
@@ -88,12 +89,13 @@ namespace reflection {
 
     const TypeDescriptor_Struct* parentTypeDesc;
     
-    void (*setup)(void*);
+    void (*configure)(void*);
     void (*reconfigure)(void*);
 
     TypeDescriptor_Struct(void (*init)(TypeDescriptor_Struct*)) : TypeDescriptor{ nullptr, 0 }
-    {
+    {      
       init(this);
+      std::cout << "Init type: " << name << std::endl;
     }
     TypeDescriptor_Struct(const char* name, size_t size) : TypeDescriptor{ name, size }
     {}
@@ -219,6 +221,7 @@ namespace reflection {
     void (*setFilename)(void*, const std::string&);
     void (*loadPrefab) (void*);
     void** (*getPPtr)(void*);
+    const void** (*getPPtrConst)(const void*);
 
     TypeDescriptor_Asset_Ptr(void (*init)(TypeDescriptor_Ptr*)) : TypeDescriptor_Ptr{ init }
     {}
@@ -248,11 +251,11 @@ namespace reflection {
     Ptr_Wrapper() {}
     Ptr_Wrapper(T* ptr) : m_ptr(ptr) {}
   };
-  template <typename T>
+  /*template <typename T>
   struct Owned_Ptr_Wrapper : public Ptr_Wrapper<T> {
     Owned_Ptr_Wrapper() {}
     Owned_Ptr_Wrapper(T* ptr) : Ptr_Wrapper<T>(ptr) {}
-  };
+  };*/
   template <typename T>
   struct Weak_Ptr_Wrapper : public Ptr_Wrapper<T> {
     Weak_Ptr_Wrapper() {}
@@ -266,7 +269,7 @@ namespace reflection {
   };
 
 #define WEAK_PTR(TYPE) ::reflection::Weak_Ptr_Wrapper<TYPE>
-#define OWNED_PTR(TYPE) ::reflection::Owned_Ptr_Wrapper<TYPE>
+//#define OWNED_PTR(TYPE) ::reflection::Owned_Ptr_Wrapper<TYPE>
 #define ASSET_PTR(TYPE) ::reflection::Asset_Ptr_Wrapper<TYPE>
 
   //--------------------------------------------------------
@@ -278,8 +281,9 @@ namespace reflection {
     size_t(*getSize)(const void*);
     void* (*getItem)(const void*, size_t);
     void (*resize) (void*, size_t);
-    void (*pushBack) (void*, void*);
-    void (*remove) (void*, unsigned int);
+    //void (*pushBack) (void*, void*);
+    void (*construct) (void*);
+    //void (*remove) (void*, unsigned int);
 
     template <typename ItemType>
     TypeDescriptor_StdVector(ItemType*) :
@@ -298,19 +302,24 @@ namespace reflection {
         };
         resize = [](void* vecPtr, size_t size) {
           auto vec = (std::vector<ItemType>*) vecPtr;
-          vec->resize(size);
-        };
+
+          //if constexpr (std::is_copy_constructible_v<ItemType>)
+          {
+            // Copy-constructible types can use normal resize()
+            vec->resize(size);
+          }
+        };/*
         pushBack = [](void* vecPtr, void* valuePtr) {
           auto vec = (std::vector<ItemType>*) vecPtr;
           vec->push_back(*(ItemType*)valuePtr);
-        };
+        };*/
         construct = [](void* obj) {
           new(obj) std::vector<ItemType>();
-        };
+        };/*
         remove = [](void* vecPtr, unsigned int idx) {
           auto vec = (std::vector<ItemType>*) vecPtr;
           vec->erase(vec->begin() + idx);
-        };
+        };*/
       }
 
     virtual void Accept(TypeVisitor* visitor) const override;
@@ -356,10 +365,10 @@ namespace reflection {
   };
 
   template <typename T>
-  class TypeResolver<std::vector<Owned_Ptr_Wrapper<T>>> {
+  class TypeResolver<std::vector<owner_ptr<T>>> {
   public:
     static TypeDescriptor* get() {
-      static TypeDescriptor_StdVector typeDesc{ (reflection::Owned_Ptr_Wrapper<T>*) nullptr };
+      static TypeDescriptor_StdVector typeDesc{ (owner_ptr<T>*) nullptr };
       return &typeDesc;
     }
   };
