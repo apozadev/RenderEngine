@@ -29,7 +29,7 @@
 #include <string>
 
 // TODO:
-// static reflection init
+// Sombras petan
 
 void PostUpdateCallback(float _fDt)
 {

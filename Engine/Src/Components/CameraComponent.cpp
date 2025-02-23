@@ -17,10 +17,10 @@ CameraComponent::CameraComponent()
 }
 
 void CameraComponent::Start() 
-{
+{/*
   m_fFov = 90.f;
   m_fNear = 0.1F;
-  m_fFar = 100.f;
+  m_fFar = 100.f;*/
 
   const Window* pWindow = Engine::GetInstance()->GetWindow();
 
@@ -112,4 +112,7 @@ REFLECT_STRUCT_BEGIN(CameraComponent, Component)
 REFLECT_STRUCT_END(CameraComponent)
 
 IMPLEMENT_COMPONENT_DESC_BEGIN(CameraComponentDesc)
+REFLECT_STRUCT_MEMBER(m_fFov)
+REFLECT_STRUCT_MEMBER(m_fNear)
+REFLECT_STRUCT_MEMBER(m_fFar)
 IMPLEMENT_COMPONENT_DESC_END(CameraComponentDesc)

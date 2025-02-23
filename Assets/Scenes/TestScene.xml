@@ -32,5 +32,23 @@
 			</ComponentDesc>
 		</Components>
 	</EntityDesc>
+	<EntityDesc>
+		<vPos>
+			<x>0</x><y>0</y><z>-10</z>
+		</vPos>
+		<vRot>
+			<x>0</x><y>0</y><z>0</z>
+		</vRot>
+		<vScl>
+			<x>1</x><y>1</y><z>1</z>
+		</vScl>
+		<Components>
+			<ComponentDesc Type="DirLightComponentDesc">
+				<m_vColor>
+					<x>1</x><y>1</y><z>1</z>
+				</m_vColor>
+			</ComponentDesc>
+		</Components>
+	</EntityDesc>
 </Entities>
 </SceneDesc>

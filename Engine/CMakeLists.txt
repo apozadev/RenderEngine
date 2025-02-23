@@ -194,7 +194,7 @@ add_library(${PROJECT_NAME}
 	"../imgui/backends/imgui_impl_dx11.h"
 	"../imgui/backends/imgui_impl_dx11.cpp"
     "../imgui/backends/imgui_impl_glfw.h"
-    "../imgui/backends/imgui_impl_glfw.cpp" ) 
+    "../imgui/backends/imgui_impl_glfw.cpp"  "Include/Math/Vec3.h" "Src/Math/Vec3.cpp") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

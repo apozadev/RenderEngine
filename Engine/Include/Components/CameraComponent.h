@@ -23,11 +23,7 @@ protected:
 
 private:  
 
-  owner_ptr<Camera> m_pCamera;
-
-  float m_fFov;
-  float m_fNear;
-  float m_fFar;
+  owner_ptr<Camera> m_pCamera;  
 
   float m_fLastMousePosX;
   float m_fLastMousePosY;
@@ -38,4 +34,7 @@ private:
 };
 
 DECLARE_COMPONENT_DESC_BEGIN(CameraComponentDesc,CameraComponent)
+float m_fFov;
+float m_fNear;
+float m_fFar;
 DECLARE_COMPONENT_DESC_END(CameraComponentDesc)

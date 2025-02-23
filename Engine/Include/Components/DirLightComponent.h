@@ -6,6 +6,7 @@
 #include "Graphics/RenderTarget.h"
 #include "Graphics/Pass.h"
 #include "Graphics/Camera.h"
+#include "Math/Vec3.h"
 #include "Memory/PtrTypes.h"
 
 #include <glm/vec3.hpp>
@@ -18,9 +19,7 @@ public:
   REFLECT()
 
   DirLightComponent();
-  ~DirLightComponent();
-
-  void SetColor(glm::vec3 _vColor) { m_oDirLight.m_vColor = _vColor; }
+  ~DirLightComponent();  
 
 protected:
 
@@ -28,9 +27,7 @@ protected:
   virtual void PreTransformUpdate(float _fTimeStep) override;
   virtual void Update(float _fTimeStep) override;
 
-private:
-
-  DirLight m_oDirLight;
+private: 
 
   owner_ptr<RenderTarget> m_pShadowMap;
   owner_ptr<Camera> m_pCamera;
@@ -39,4 +36,5 @@ private:
 };
 
 DECLARE_COMPONENT_DESC_BEGIN(DirLightComponentDesc, DirLightComponent)
+Vec3 m_vColor;
 DECLARE_COMPONENT_DESC_END(DirLightComponentDesc)

@@ -6,8 +6,6 @@
 
 DirLightComponent::DirLightComponent()
 {
-  m_oDirLight.m_vColor = { 1.f, 1.f, 1.f };
-
   m_pShadowMap = Factory::Create<RenderTarget>();
   m_pShadowMap->Configure(0u, 1024, 1024, ImageFormat::R32, true);
 
@@ -44,12 +42,16 @@ void DirLightComponent::PreTransformUpdate(float _fTimeStep)
 
 void DirLightComponent::Update(float _fTimeStep)
 {
+  const DirLightComponentDesc* pLightCompDesc = dynamic_cast<const DirLightComponentDesc*>(m_pComponentDesc.get());
+  const Vec3& vColor = pLightCompDesc->m_vColor;
+
   m_pCamera->UpdateTransform(m_pEntity->GetGlobalTransform());
-  Renderer::GetInstance()->SubmitDirLight(&m_oDirLight, m_pCamera.get(), &m_pEntity->GetGlobalTransform(), m_pShadowMap.get(), m_pShadowPass.get());
+  Renderer::GetInstance()->SubmitDirLight(glm::vec3{vColor.x, vColor.y, vColor.z}, m_pCamera.get(), &m_pEntity->GetGlobalTransform(), m_pShadowMap.get(), m_pShadowPass.get());
 }
 
 REFLECT_STRUCT_BEGIN(DirLightComponent, Component)
 REFLECT_STRUCT_END(DirLightComponent)
 
 IMPLEMENT_COMPONENT_DESC_BEGIN(DirLightComponentDesc)
+REFLECT_STRUCT_MEMBER(m_vColor)
 IMPLEMENT_COMPONENT_DESC_END(DirLightComponentDesc)

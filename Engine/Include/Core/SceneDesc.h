@@ -4,14 +4,8 @@
 #include <vector>
 
 #include "Memory/PtrTypes.h"
+#include "Math/Vec3.h"
 #include "ComponentDesc.h"
-
-struct Vec3 : public BaseObject
-{
-  REFLECT_BASE()
-
-  float x, y, z;
-};
 
 class EntityDesc : public BaseObject
 {

@@ -1,0 +1,8 @@
+#include "Math/Vec3.h"
+#include "Reflection/ReflectionImplMacros.h"
+
+REFLECT_STRUCT_BASE_BEGIN(Vec3)
+REFLECT_STRUCT_MEMBER(x)
+REFLECT_STRUCT_MEMBER(y)
+REFLECT_STRUCT_MEMBER(z)
+REFLECT_STRUCT_END(Vec3)

@@ -43,7 +43,7 @@ void Pass::Configure(const std::string& _sVSFilename
   m_oInfo.m_bDepthWrite = _bDepthWrite;
   m_oInfo.m_bDepthRead = _bDepthRead;
 
-  Configure();
+  Configure(_pRenderTarget);
   
 }
 

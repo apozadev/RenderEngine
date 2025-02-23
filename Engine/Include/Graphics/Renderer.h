@@ -71,7 +71,7 @@ public:
 
   void SubmitCamera(Camera* _pCamera, const Transform* _pTransform);
   void SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, const Transform* _pTransform, bool _bCastShadow);
-  void SubmitDirLight(DirLight* _pDirLight, Camera* _pCamera, const Transform* _pTransform, const RenderTarget* _pShadowMap, const Pass* _pPass);
+  void SubmitDirLight(const glm::vec3& _vColor, Camera* _pCamera, const Transform* _pTransform, const RenderTarget* _pShadowMap, const Pass* _pPass);
 
   void OnWindowResize();
 
