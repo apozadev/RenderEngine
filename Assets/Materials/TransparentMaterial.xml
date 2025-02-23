@@ -5,7 +5,7 @@
 				<m_uMeshConstantSize>128</m_uMeshConstantSize>
 				<m_sVSFilename>Assets/Shaders/Vertex/VertexShader.hlsl</m_sVSFilename>
 				<m_sPSFilename>Assets/Shaders/Pixel/PixelShader.hlsl</m_sPSFilename>
-				<m_bBlendEnabled>false</m_bBlendEnabled>
+				<m_bBlendEnabled>true</m_bBlendEnabled>
 				<m_eBlendOp>BLEND_OP_ADD</m_eBlendOp>
 				<m_eSrcBlendFactor>BLEND_SRC_ALPHA</m_eSrcBlendFactor>
 				<m_eDstBlendFactor>BLEND_INV_SRC_ALPHA</m_eDstBlendFactor>

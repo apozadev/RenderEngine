@@ -8,6 +8,7 @@
 #include "Core/Timer.h"
 #include "Core/Exception.h"
 #include "Core/InputManager.h"
+#include "Core/SceneLoading.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/MaterialLibrary.h"
 #include "Memory/Factory.h"
@@ -57,6 +58,15 @@ int Engine::Run()
     }
     else
     {  
+
+      if (!m_sScheduledSceneFilename.empty())
+      {
+        m_lstScenes.clear();        
+        MaterialLibrary::GetInstance()->Clear();
+        LoadScene(m_sScheduledSceneFilename.c_str(), *CreateScene());
+        m_sScheduledSceneFilename.clear();
+      }
+
       long long llElapsed = oTimer.Peek() - llMinFrameTime;
 
       if (llElapsed > llMinFrameTime)

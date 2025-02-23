@@ -30,8 +30,8 @@ void CameraComponent::Start()
   m_fLastMousePosY = static_cast<float>(dPosY);
 
   glm::vec3 vRot = glm::eulerAngles(m_pEntity->GetGlobalTransform().GetRot());
-  m_fPitch = vRot.x;
-  m_fYaw = vRot.y;
+  m_fPitch = vRot.y;
+  m_fYaw = vRot.x;
 
   /*glm::vec3 vRotLocal = glm::eulerAngles(m_pEntity->GetGlobalTransform().GetRot());
   vRotLocal.z = _PI;

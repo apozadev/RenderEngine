@@ -18,6 +18,8 @@ void LoadScene(const char* _sFilename, Scene& rScene_)
 
   reflection::ReflectionHelper::Deserialize(_sFilename, &oSceneDesc);
 
+  rScene_.m_sFilename = _sFilename;
+
   for (const owner_ptr<EntityDesc>& pEntityDesc : oSceneDesc.Entities)
   {
     Entity* pEntity = rScene_.AddEntity();

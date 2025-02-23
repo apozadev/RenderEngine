@@ -1,10 +1,10 @@
 <Material>
 	<m_lstPasses>
-		<Pass_Ptr PtrId="384775920" Type="Pass">
+		<Pass_Ptr PtrId="384775672" Type="Pass">
 			<m_oInfo>
 				<m_uMeshConstantSize>128</m_uMeshConstantSize>
 				<m_sVSFilename>Assets/Shaders/Vertex/VertexShader.hlsl</m_sVSFilename>
-				<m_sPSFilename>Assets/Shaders/Pixel/PixelShader.hlsl</m_sPSFilename>
+				<m_sPSFilename>Assets/Shaders/Pixel/GridSolidPixel.hlsl</m_sPSFilename>
 				<m_bBlendEnabled>false</m_bBlendEnabled>
 				<m_eBlendOp>BLEND_OP_ADD</m_eBlendOp>
 				<m_eSrcBlendFactor>BLEND_SRC_ALPHA</m_eSrcBlendFactor>
@@ -15,13 +15,6 @@
 			<m_uLayer>0</m_uLayer>
 			<m_sPipelineId>TEST</m_sPipelineId>
 			<m_iStepIdx>0</m_iStepIdx>
-			<m_lstCBuffCache>
-				<float>1</float>
-				<float>1</float>
-				<float>1</float>
-				<float>1</float>
-				<float>1</float>
-			</m_lstCBuffCache>
 		</Pass_Ptr>
 	</m_lstPasses>
 </Material>

@@ -24,6 +24,8 @@ public:
 
   Scene* CreateScene();  
 
+  void ScheduleSceneLoad(const char* _sFilename) { m_sScheduledSceneFilename = _sFilename; }
+
   std::vector<Scene>& GetScenes() { return m_lstScenes; }
 
   bool IsRunning() { return m_bRunning; }
@@ -39,6 +41,8 @@ private:
   float m_fDt;    
 
   void (*m_pfPostUpdateCallback) (float);
+
+  std::string m_sScheduledSceneFilename;
 
   std::vector<Scene> m_lstScenes;
   std::unique_ptr<Window> m_pWindow;

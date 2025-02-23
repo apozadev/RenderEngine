@@ -2,11 +2,6 @@
 	<m_sId>TEST</m_sId>
 	<m_lstSteps>
 		<RenderStepConfig>
-			<m_lstInputs/>
-			<m_sRenderTargetId>GBUFFER</m_sRenderTargetId>
-			<m_bOrderTranslucent>false</m_bOrderTranslucent>
-		</RenderStepConfig>
-		<RenderStepConfig>
 			<m_lstInputs>
 				<RenderStepInputConfig>
 					<m_sTargetId>GBUFFER</m_sTargetId>
@@ -35,4 +30,3 @@
 		</RenderTargetConfig>
 	</m_lstRenderTargets>
 </RenderPipelineConfig>
-

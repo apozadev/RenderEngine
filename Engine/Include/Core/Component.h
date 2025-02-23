@@ -22,7 +22,7 @@ public:
 
   void SetComponentDesc(owner_ptr<ComponentDesc>&& _pCompDesc) { if (!m_pComponentDesc.get()) { m_pComponentDesc = std::move(_pCompDesc); } }
 
-  const ComponentDesc* GetComponentDesc() { return m_pComponentDesc.get(); }
+  ComponentDesc* GetComponentDesc() { return m_pComponentDesc.get(); }
 
 protected:    
 

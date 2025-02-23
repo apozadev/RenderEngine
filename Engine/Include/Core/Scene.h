@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "Core/Entity.h"
 #include "Memory/PtrTypes.h"
 
@@ -32,13 +33,15 @@ public:
 
   std::vector<owner_ptr<Entity>>& GetEntities() { return m_lstEntities; }
 
-  const std::vector<owner_ptr<Entity>>& GetEntities() const { return m_lstEntities; }
+  const std::vector<owner_ptr<Entity>>& GetEntities() const { return m_lstEntities; }  
 
   Scene& operator=(Scene&& _rScene);
 
+  std::string m_sFilename;
+
 private:    
 
-  uint32_t BuildTraverse(owner_ptr<Entity>& _rEntity, std::vector<owner_ptr<Entity>>& _lstNewScene);
+  uint32_t BuildTraverse(owner_ptr<Entity>& _rEntity, std::vector<owner_ptr<Entity>>& _lstNewScene);  
 
   std::vector<owner_ptr<Entity>> m_lstEntities;    
 

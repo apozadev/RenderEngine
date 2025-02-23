@@ -10,16 +10,7 @@
 
 ModelComponent::ModelComponent(const char* _sFilename, Material* _pMaterial)
 {
-  static const std::string s_sQuad("quad");
-
-  if (s_sQuad == _sFilename)
-  {
-    ModelLoader::GetInstance()->SetupQuadModel(_pMaterial, this);
-  }
-  else
-  {
-    ModelLoader::GetInstance()->LoadModel(_sFilename, _pMaterial, this);
-  }
+  
 }
 
 ModelComponent::~ModelComponent()
@@ -32,7 +23,16 @@ void ModelComponent::Configure()
 
   const Material* pMaterial = MaterialLibrary::GetInstance()->LoadMaterial(pModelCompDesc->m_sMaterialFilename.c_str());
 
-  ModelLoader::GetInstance()->LoadModel(pModelCompDesc->m_sModelFilename.c_str(), pMaterial, this);
+  static const std::string s_sQuad("quad");
+
+  if (s_sQuad == pModelCompDesc->m_sModelFilename)
+  {
+    ModelLoader::GetInstance()->SetupQuadModel(pMaterial, this);
+  }
+  else
+  {
+    ModelLoader::GetInstance()->LoadModel(pModelCompDesc->m_sModelFilename.c_str(), pMaterial, this);
+  }  
 }
 
 void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx)
