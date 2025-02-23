@@ -23,6 +23,7 @@ SamplerState texSampler : register(s0);
 #define Texture(name, set, bind) Texture2D name : register(t##bind);
 
 #define CBuffer(name, bind) cbuffer name : register(b##bind)
+
 struct VSin
 {
 	float3 p : Position;

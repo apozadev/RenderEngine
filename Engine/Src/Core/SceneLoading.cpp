@@ -22,6 +22,11 @@ void LoadScene(const char* _sFilename, Scene& rScene_)
   {
     Entity* pEntity = rScene_.AddEntity();
 
+    Transform& oTr = pEntity->GetMutableLocalTransform();
+    oTr.SetPos(glm::vec3(pEntityDesc->vPos.x, pEntityDesc->vPos.y, pEntityDesc->vPos.z));    
+    oTr.SetRot(glm::quat(glm::vec3(pEntityDesc->vRot.x, pEntityDesc->vRot.y, pEntityDesc->vRot.z)));
+    oTr.SetScale(glm::vec3(pEntityDesc->vScl.x, pEntityDesc->vScl.y, pEntityDesc->vScl.z));
+
     for (int i = 0; i < pEntityDesc->Components.size(); i++)
     {     
       owner_ptr<Component> pComponent = pEntityDesc->Components[i]->GetComponentType()->create().cast_release<Component>();
