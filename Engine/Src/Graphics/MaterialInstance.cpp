@@ -14,7 +14,7 @@ void MaterialInstance::SetupSubState(const Material* _pMaterial)
 {    
 
   static const char s_aNames[4][9] = { "Texture0", "Texture1", "Texture2", "Texture3" };
-
+  
   if (m_bSetup)
   {
     return;
@@ -27,7 +27,7 @@ void MaterialInstance::SetupSubState(const Material* _pMaterial)
 
   api::BeginSubStateSetup(m_pSubState);
 
-  for (int i = 0; i < m_lstTextures.size(); i++)
+  for (int i = 0; i < 4 && i < m_lstTextures.size(); i++)
   {     
     const owner_ptr<Texture2D>& pTexture = m_lstTextures[i];
     pTexture->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::MATERIAL_INSTANCE);

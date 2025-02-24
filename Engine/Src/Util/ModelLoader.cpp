@@ -29,7 +29,7 @@ void ModelLoader::LoadModel(const char* _sFilename, const Material* _pMaterial, 
   std::string sFullFilename(_sFilename);
   sFullFilename = file::GetWorkingDirectory() + sFullFilename;
 
-  const aiScene* oScene = oImporter.ReadFile(sFullFilename.c_str(), aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_CalcTangentSpace /* | aiProcess_PreTransformVertices */);
+  const aiScene* oScene = oImporter.ReadFile(sFullFilename.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace /* | aiProcess_PreTransformVertices */);
 
   if (!oScene || oScene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !oScene->mRootNode)
   {

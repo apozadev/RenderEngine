@@ -1,14 +1,14 @@
 <SceneDesc>
 	<Entities>
-		<EntityDesc_Ptr PtrId="1871422808" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="2368748920" Type="EntityDesc">
 			<vPos>
-				<x>-0.011830</x>
-				<y>4.463542</y>
-				<z>0.473082</z>
+				<x>-3.447868</x>
+				<y>3.650450</y>
+				<z>-7.193645</z>
 			</vPos>
 			<vRot>
-				<x>-0.487200</x>
-				<y>0.213600</y>
+				<x>-0.364800</x>
+				<y>-0.525600</y>
 				<z>-0.000000</z>
 			</vRot>
 			<vScl>
@@ -17,21 +17,21 @@
 				<z>1.000000</z>
 			</vScl>
 			<Components>
-				<CameraComponentDesc_Ptr PtrId="1871422952" Type="CameraComponentDesc">
+				<CameraComponentDesc_Ptr PtrId="2368749064" Type="CameraComponentDesc">
 					<m_fFov>0.000000</m_fFov>
 					<m_fNear>0.000000</m_fNear>
 					<m_fFar>0.000000</m_fFar>
 				</CameraComponentDesc_Ptr>
 			</Components>
 		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1871422984" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="2368749096" Type="EntityDesc">
 			<vPos>
 				<x>-1.000000</x>
-				<y>0.000000</y>
+				<y>2.000000</y>
 				<z>-10.000000</z>
 			</vPos>
 			<vRot>
-				<x>0.000000</x>
+				<x>1.500000</x>
 				<y>-0.000000</y>
 				<z>0.000000</z>
 			</vRot>
@@ -41,67 +41,44 @@
 				<z>1.000000</z>
 			</vScl>
 			<Components>
-				<ModelComponentDesc_Ptr PtrId="1871423128" Type="ModelComponentDesc">
-					<m_sModelFilename>Assets/Models/cyborg/cyborg.obj</m_sModelFilename>
+				<ModelComponentDesc_Ptr PtrId="2368749240" Type="ModelComponentDesc">
+					<m_sModelFilename>Assets/Models/DamagedHelmet/DamagedHelmet.glb</m_sModelFilename>
 					<m_sMaterialFilename>Assets/Materials/TestMaterial.xml</m_sMaterialFilename>
 				</ModelComponentDesc_Ptr>
 			</Components>
 		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1871423224" Type="EntityDesc">
-			<vPos>
-				<x>2.000000</x>
-				<y>0.000000</y>
-				<z>-10.000000</z>
-			</vPos>
-			<vRot>
-				<x>0.000000</x>
-				<y>-0.000000</y>
-				<z>0.000000</z>
-			</vRot>
-			<vScl>
-				<x>0.017000</x>
-				<y>0.017000</y>
-				<z>0.017000</z>
-			</vScl>
-			<Components>
-				<ModelComponentDesc_Ptr PtrId="1871423368" Type="ModelComponentDesc">
-					<m_sModelFilename>Assets/Models/demon.fbx</m_sModelFilename>
-					<m_sMaterialFilename>Assets/Materials/TransparentMaterial.xml</m_sMaterialFilename>
-				</ModelComponentDesc_Ptr>
-			</Components>
-		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1871423464" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="2368749336" Type="EntityDesc">
 			<vPos>
 				<x>0.000000</x>
 				<y>0.000000</y>
 				<z>-10.000000</z>
 			</vPos>
 			<vRot>
-				<x>0.000000</x>
+				<x>1.570000</x>
 				<y>-0.000000</y>
 				<z>0.000000</z>
 			</vRot>
 			<vScl>
-				<x>1.000000</x>
-				<y>1.000000</y>
-				<z>1.000000</z>
+				<x>100.000000</x>
+				<y>100.000000</y>
+				<z>100.000000</z>
 			</vScl>
 			<Components>
-				<ModelComponentDesc_Ptr PtrId="1871423608" Type="ModelComponentDesc">
+				<ModelComponentDesc_Ptr PtrId="2368749480" Type="ModelComponentDesc">
 					<m_sModelFilename>quad</m_sModelFilename>
 					<m_sMaterialFilename>Assets/Materials/GridMaterial.xml</m_sMaterialFilename>
 				</ModelComponentDesc_Ptr>
 			</Components>
 		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1871423704" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="2368749576" Type="EntityDesc">
 			<vPos>
 				<x>0.000000</x>
-				<y>0.000000</y>
-				<z>-10.000000</z>
+				<y>5.000000</y>
+				<z>-5.000000</z>
 			</vPos>
 			<vRot>
-				<x>0.000000</x>
-				<y>-0.000000</y>
+				<x>-0.500000</x>
+				<y>0.200000</y>
 				<z>0.000000</z>
 			</vRot>
 			<vScl>
@@ -110,10 +87,10 @@
 				<z>1.000000</z>
 			</vScl>
 			<Components>
-				<DirLightComponentDesc_Ptr PtrId="1871423848" Type="DirLightComponentDesc">
+				<DirLightComponentDesc_Ptr PtrId="2368749720" Type="DirLightComponentDesc">
 					<m_vColor>
 						<x>1.000000</x>
-						<y>2.000000</y>
+						<y>1.000000</y>
 						<z>1.000000</z>
 					</m_vColor>
 				</DirLightComponentDesc_Ptr>

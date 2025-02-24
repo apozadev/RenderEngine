@@ -2,12 +2,7 @@
 	<m_sId>TEST</m_sId>
 	<m_lstSteps>
 		<RenderStepConfig>
-			<m_lstInputs>
-				<RenderStepInputConfig>
-					<m_sTargetId>GBUFFER</m_sTargetId>
-					<m_iImageIdx>0</m_iImageIdx>
-				</RenderStepInputConfig>
-			</m_lstInputs>
+			<m_lstInputs/>
 			<m_sRenderTargetId>DEFAULT</m_sRenderTargetId>
 			<m_bOrderTranslucent>false</m_bOrderTranslucent>
 		</RenderStepConfig>

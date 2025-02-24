@@ -27,8 +27,7 @@ void RGB2RGBA(T** _ppData, int _iWidth, int _iHeight)
 
 const Image* ImageManager::TryGetLoadedImage(const std::string& _sFilename)
 {  
-
-  if (m_mapLoadedImages.find(_sFilename) != m_mapLoadedImages.end())
+  if (!_sFilename.empty() && m_mapLoadedImages.find(_sFilename) != m_mapLoadedImages.end())
   {
     return &m_mapLoadedImages[_sFilename];
   }
@@ -77,7 +76,14 @@ const Image& ImageManager::DecodeFromMemory(const std::string& _sPath, unsigned 
     break;
   }
 
-  return m_mapLoadedImages.emplace(_sPath, img).first->second;
+  if (!_sPath.empty())
+  {
+    return m_mapLoadedImages.emplace(_sPath, img).first->second;
+  }
+  else
+  {
+    return m_mapLoadedImages.emplace(std::string("Texture_") + std::to_string(m_mapLoadedImages.size()), img).first->second;
+  }
 }
 
 const Image& ImageManager::LoadImage(const std::string& _sPath, bool _bAbsolute/* = false*/)
