@@ -33,9 +33,9 @@ namespace vk
       return oBindingDesc;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDesc()
+    static std::array<VkVertexInputAttributeDescription, 5> GetAttributeDesc()
     {
-      std::array<VkVertexInputAttributeDescription, 4> oAttributeDesc{};
+      std::array<VkVertexInputAttributeDescription, 5> oAttributeDesc{};
 
       oAttributeDesc[0].binding = 0;
       oAttributeDesc[0].location = 0;
@@ -50,12 +50,17 @@ namespace vk
       oAttributeDesc[2].binding = 0;
       oAttributeDesc[2].location = 2;
       oAttributeDesc[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-      oAttributeDesc[2].offset = offsetof(Vertex, m_vColor);
+      oAttributeDesc[2].offset = offsetof(Vertex, m_vTangent);
 
       oAttributeDesc[3].binding = 0;
       oAttributeDesc[3].location = 3;
-      oAttributeDesc[3].format = VK_FORMAT_R32G32_SFLOAT;
-      oAttributeDesc[3].offset = offsetof(Vertex, m_vUv);
+      oAttributeDesc[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+      oAttributeDesc[3].offset = offsetof(Vertex, m_vColor);
+
+      oAttributeDesc[4].binding = 0;
+      oAttributeDesc[4].location = 4;
+      oAttributeDesc[4].format = VK_FORMAT_R32G32_SFLOAT;
+      oAttributeDesc[4].offset = offsetof(Vertex, m_vUv);
 
       return oAttributeDesc;
     }

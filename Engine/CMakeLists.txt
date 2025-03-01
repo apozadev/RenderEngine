@@ -175,6 +175,10 @@ add_library(${PROJECT_NAME}
 	"Src/Core/SceneDesc.cpp" 
 	"Src/Graphics/RenderStateInfo.cpp" 
 	"Src/Graphics/MaterialLibrary.cpp" 
+	"Include/Math/Vec3.h" 
+	"Src/Math/Vec3.cpp" 
+	"Include/Reflection/ImGuiTypeVisitor.h" 
+	"Src/Reflection/ImGuiTypeVisitor.cpp"
 	"3rd/spirv-reflect/spirv_reflect.h"
 	"3rd/spirv-reflect/spirv_reflect.cpp"
 	"3rd/spirv-reflect/include/spirv/unified1/spirv.h" 
@@ -194,7 +198,7 @@ add_library(${PROJECT_NAME}
 	"../imgui/backends/imgui_impl_dx11.h"
 	"../imgui/backends/imgui_impl_dx11.cpp"
     "../imgui/backends/imgui_impl_glfw.h"
-    "../imgui/backends/imgui_impl_glfw.cpp"  "Include/Math/Vec3.h" "Src/Math/Vec3.cpp" "Include/Reflection/ImGuiTypeVisitor.h" "Src/Reflection/ImGuiTypeVisitor.cpp") 
+    "../imgui/backends/imgui_impl_glfw.cpp" "Include/Graphics/SamplerConfig.h") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
@@ -218,8 +222,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE CURR_WORKING_DIR=${CMAKE_SOUR
 
  # Shader stuff
 
-file(GLOB_RECURSE V_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Vertex/*.hlsl")
-file(GLOB_RECURSE P_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Pixel/*.hlsl")  
+file(GLOB_RECURSE V_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Vertex/*.vs")
+file(GLOB_RECURSE P_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Pixel/*.ps")  
 
 set(SHADER_BINARY_FILES)
 

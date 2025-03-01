@@ -17,7 +17,7 @@ int Engine::Initialize(int _iWidth, int _iHeight, const char* _sTitle)
 {    
   m_fTargetFPS = 120.f;
 
-  Factory::Init(1024*1024, 1024*1024);
+  Factory::Init(1024*1024, 128 * 1024);
 
   // Init subsystems
   Renderer::GetInstance()->Initialize();
@@ -45,6 +45,8 @@ int Engine::Run()
 
   Renderer::GetInstance()->Setup();
 
+  Factory::PushGlobalMode(false);
+
   m_bRunning = true;
 
   long long llMinFrameTime = (long long)(1000.f / m_fTargetFPS);
@@ -61,6 +63,7 @@ int Engine::Run()
 
       if (!m_sScheduledSceneFilename.empty())
       {
+        m_pWindow->WaitForNextImage();
         m_lstScenes.clear();        
         MaterialLibrary::GetInstance()->Clear();
         LoadScene(m_sScheduledSceneFilename.c_str(), *CreateScene());

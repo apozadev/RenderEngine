@@ -11,6 +11,7 @@
 #include "Graphics/BlendEnums.h"
 #include "Graphics/ImageFormat.h"
 #include "Graphics/ResourceBindInfo.h"
+#include "Graphics/SamplerConfig.h"
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
 #include "Graphics/API/Vulkan/APICamera.h"
@@ -40,6 +41,12 @@ namespace vk
   VkBlendFactor GetVkBlendFactor(BlendFactor _eBlendFactor);
 
   VkImageUsageFlags GetVkTextureUsage(uint32_t _uUsage);
+
+  VkSamplerAddressMode GetVkAddressMode(TextureAddressMode _AddressMode);
+
+  VkSamplerMipmapMode GetSamplerMipmapMode(TextureFilterMode _eMipmapMode);
+
+  VkFilter GetVkFilter(TextureFilterMode _eFliterMode);
 
   void CreateInstance();
 
@@ -89,7 +96,7 @@ namespace vk
 
   void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
 
-  void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels);
+  void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig);
 
   void DestroyBuffer(APIWindow* _pWindow, VkBuffer _hBuffer, VkDeviceMemory _hDeviceMemory_);
 

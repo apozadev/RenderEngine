@@ -6,6 +6,7 @@
 #include "Core/BaseObject.h"
 #include "Graphics/ImageFormat.h"
 #include "Graphics/API/GraphicsAPI.h"
+#include "Graphics/SamplerConfig.h"
 
 class Material;
 struct Image;
@@ -14,9 +15,9 @@ class Texture2D : public BaseObject
 {
 public:
   
-  void Configure(const std::string& _sFilename, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
-  void Configure(const Image& _rImage, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
-  void Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u, uint32_t _uUsage = 1u);
+  void Configure(const std::string& _sFilename, const SamplerConfig& _rSamplerConfig, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
+  void Configure(const Image& _rImage, const SamplerConfig& _rSamplerConfig, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
+  void Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, const SamplerConfig& _rSamplerConfig, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u, uint32_t _uUsage = 1u);
 
   virtual ~Texture2D();
 

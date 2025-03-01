@@ -43,6 +43,7 @@ Texture2D ShadowMap3 : register(t11);
 #define inPos       __input.pos
 #define inUv        __input.uv
 #define inNormal    __input.normal
+#define inTangent   __input.tangent
 #define inWorldPos  __input.worldPos
 
 #define outColor  o.color

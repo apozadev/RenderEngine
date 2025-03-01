@@ -58,6 +58,7 @@
       if (currIdx >= m_numChunks)
       {
         currIdx = 0;
+        candidateIdx = 0;
       }
 
       // Check following chunks are all free

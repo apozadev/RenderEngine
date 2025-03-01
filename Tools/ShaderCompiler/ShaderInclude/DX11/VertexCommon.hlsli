@@ -3,6 +3,7 @@ struct VSin
 {
 	float3 p : Position;
 	float3 n : NORMAL;
+	float3 t : TANGENT;
 	float3 c : COLOR;
 	float2 uv : TexCoord;
 };
@@ -32,10 +33,12 @@ cbuffer ModelBuffer : register(b3)
 
 #define inPos			input.p
 #define inNormal	input.n
+#define inTangent	input.t
 #define inColor		input.c
 #define inUv			input.uv
 
 #define outPos			vso.pos
 #define outNormal		vso.normal
+#define outTangent	vso.tangent
 #define outUv				vso.uv
 #define outWorldPos	vso.worldPos

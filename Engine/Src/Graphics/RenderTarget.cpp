@@ -1,6 +1,7 @@
 #include "Graphics/RenderTarget.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/TextureUsage.h"
+#include "Graphics/SamplerConfig.h"
 #include "Memory/Factory.h"
 
 void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _uWidth, unsigned int _uHeight, ImageFormat _eFormat, bool _bHasDepthStencil, unsigned int _uMipLevels, unsigned int _uMsaaSamples)  
@@ -16,16 +17,22 @@ void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _u
     uColorUsage |= TextureUsage::SHADER_RESOURCE;
   }
 
+  SamplerConfig oSamplerConfig = {};
+  oSamplerConfig.m_eAddressMode = TextureAddressMode::MIRRORED_REPEAT;
+  oSamplerConfig.m_eMipmapFilterMode = TextureFilterMode::LINEAR;
+  oSamplerConfig.m_eMinFilterMode = TextureFilterMode::LINEAR;
+  oSamplerConfig.m_eMagFilterMode = TextureFilterMode::LINEAR;
+
   for (unsigned int i = 0; i < _uNumColorAttachments; i++)
   {
     m_lstColorTextures.push_back(Factory::Create<Texture2D>());
-    m_lstColorTextures.back()->Configure(_uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, uColorUsage);
+    m_lstColorTextures.back()->Configure(_uWidth, _uHeight, _eFormat, oSamplerConfig, _uMipLevels, _uMsaaSamples, uColorUsage);
   }
 
   if (_bHasDepthStencil)
   {
     m_pDepthStencilTexture = Factory::Create<Texture2D>();
-    m_pDepthStencilTexture->Configure(_uWidth, _uHeight, ImageFormat::R32, 1u, _uMsaaSamples, TextureUsage::SHADER_RESOURCE | TextureUsage::DEPTH_TARGET);
+    m_pDepthStencilTexture->Configure(_uWidth, _uHeight, ImageFormat::R32, oSamplerConfig, 1u, _uMsaaSamples, TextureUsage::SHADER_RESOURCE | TextureUsage::DEPTH_TARGET);
   }
 
   if (_uMsaaSamples > 1u)
@@ -33,7 +40,7 @@ void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _u
     for (unsigned int i = 0; i < _uNumColorAttachments; i++)
     {      
       m_lstColorResolveTextures.push_back(Factory::Create<Texture2D>());
-      m_lstColorResolveTextures.back()->Configure(_uWidth, _uHeight, _eFormat, 1u, TextureUsage::SHADER_RESOURCE | TextureUsage::COLOR_TARGET);
+      m_lstColorResolveTextures.back()->Configure(_uWidth, _uHeight, _eFormat, oSamplerConfig, 1u, TextureUsage::SHADER_RESOURCE | TextureUsage::COLOR_TARGET);
     }
   }
 

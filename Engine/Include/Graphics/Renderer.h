@@ -79,7 +79,7 @@ public:
 
   void SetupSubStateLightCBuffers(ResourceFrequency _eFrequency);
 
-  void SetupSubStateShadowMaps(ResourceFrequency _eFrequency);
+  void SetupSubStateShadowMaps(ResourceFrequency _eFrequency);  
   
   void Draw();  
 

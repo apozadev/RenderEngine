@@ -132,9 +132,9 @@ namespace api
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig)
   {
-    return API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage);
+    return API::CreateAPITexture(_pData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage, _rSamplerConfig);
   }
 
   void BindAPITexture(APITexture* _pTexture)

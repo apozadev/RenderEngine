@@ -7,6 +7,7 @@
 #include "Graphics/Texture2D.h"
 #include "Graphics/Vertex.h"
 #include "Graphics/MaterialLibrary.h"
+#include "Graphics/SamplerConfig.h"
 
 //#include <fileapi.h>
 //#include <algorithm>
@@ -29,7 +30,7 @@ void ModelLoader::LoadModel(const char* _sFilename, const Material* _pMaterial, 
   std::string sFullFilename(_sFilename);
   sFullFilename = file::GetWorkingDirectory() + sFullFilename;
 
-  const aiScene* oScene = oImporter.ReadFile(sFullFilename.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace /* | aiProcess_PreTransformVertices */);
+  const aiScene* oScene = oImporter.ReadFile(sFullFilename.c_str(), aiProcess_PreTransformVertices | aiProcess_CalcTangentSpace | aiProcess_FlipUVs | aiProcess_Triangulate);
 
   if (!oScene || oScene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !oScene->mRootNode)
   {
@@ -72,7 +73,9 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
   for (unsigned int i = 0; i < _pAssimpScene->mNumMaterials; i++)
   {
     aiMaterial* aiMat = _pAssimpScene->mMaterials[i];
+
     owner_ptr<MaterialInstance> pMatInstance = Factory::Create<MaterialInstance>();
+
     std::vector<aiTextureType> types = {
         aiTextureType_DIFFUSE, // t0
         aiTextureType_NORMALS, // t1
@@ -80,6 +83,21 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
         //aiTextureType_DIFFUSE_ROUGHNESS, // t3
         aiTextureType_UNKNOWN // t3
     };
+
+    SamplerConfig aSamplerConfigs[4];
+
+    aSamplerConfigs[0].m_eAddressMode = TextureAddressMode::REPEAT;
+    aSamplerConfigs[0].m_eMipmapFilterMode = TextureFilterMode::LINEAR;
+    aSamplerConfigs[0].m_eMinFilterMode = TextureFilterMode::LINEAR;
+    aSamplerConfigs[0].m_eMagFilterMode = TextureFilterMode::LINEAR;
+
+    aSamplerConfigs[1] = aSamplerConfigs[0];
+    aSamplerConfigs[1].m_eAddressMode = TextureAddressMode::REPEAT;
+
+    aSamplerConfigs[2] = aSamplerConfigs[0];
+
+    aSamplerConfigs[3] = aSamplerConfigs[0];
+
     for (int j = 0; j < types.size(); j++)
     {
       if (aiMat->GetTextureCount(types[j]) == 0) continue;
@@ -96,7 +114,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
           if (oImage.m_pData)
           {
             owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-            pTexture->Configure(oImage);
+            pTexture->Configure(oImage, aSamplerConfigs[j]);
             pMatInstance->AddTexture(std::move(pTexture));
           }
         }
@@ -109,7 +127,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
           oImage.m_eFormat = ImageFormat::R8G8B8A8;
 
           owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-          pTexture->Configure(oImage);
+          pTexture->Configure(oImage, aSamplerConfigs[j]);
           pMatInstance->AddTexture(std::move(pTexture));          
         }
       }
@@ -118,7 +136,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
 
         //regular file, read it from disk                
         owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-        pTexture->Configure(_sDirectory + str.C_Str());
+        pTexture->Configure(_sDirectory + str.C_Str(), aSamplerConfigs[j]);
         pMatInstance->AddTexture(std::move(pTexture));
       }
     }  
@@ -163,15 +181,14 @@ void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, ModelCompon
     }
     else oVertex.m_vUv = { 0.0f, 0.0f };
 
-    /*if (mesh->HasTangentsAndBitangents())
+    if (_pAssimpMesh->HasTangentsAndBitangents())
     {
-      oVertex.tangent = {
-          _pMesh->mTangents[i].x,
-          _pMesh->mTangents[i].y,
-          _pMesh->mTangents[i].z
+      oVertex.m_vTangent = {
+          _pAssimpMesh->mTangents[i].x,
+          _pAssimpMesh->mTangents[i].y,
+          _pAssimpMesh->mTangents[i].z
       };
-    }
-    else oVertex.uv = { 0.0f, 0.0f };*/
+    }    
 
     lstVertices[i] = oVertex;
 
@@ -203,10 +220,10 @@ void ModelLoader::SetupQuadModel(const Material* _pMaterial, ModelComponent* pMo
 {
 
   std::vector<Vertex> lstVertices{
-      {{-1.0f,  1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {0, 0}},
-      {{ 1.0f,  1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {1, 0}},
-      {{ 1.0f, -1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {1, 1}},
-      {{-1.0f, -1.0f, 0.f}, {0, 0, -1}, {0, 0, 0}, {0, 1}}
+      {{-1.0f,  1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {0, 0}},
+      {{ 1.0f,  1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {1, 0}},
+      {{ 1.0f, -1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {1, 1}},
+      {{-1.0f, -1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {0, 1}}
   };
 
   std::vector<unsigned short> lstIndices{

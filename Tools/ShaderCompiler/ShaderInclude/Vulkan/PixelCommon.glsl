@@ -2,8 +2,9 @@
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragNormal;
-layout(location = 2) in vec2 fragTexCoord;
-layout(location = 3) in vec3 fragWorldPos;
+layout(location = 2) in vec3 fragTangent;
+layout(location = 3) in vec2 fragTexCoord;
+layout(location = 4) in vec3 fragWorldPos;
 
 layout(location = 0) out vec4 outColor;
 
@@ -42,6 +43,7 @@ Texture(Texture3, 3, 3)
 #define inPos       fragColor
 #define inUv        fragTexCoord
 #define inNormal    fragNormal
+#define inTangent   fragTangent
 #define inWorldPos  fragWorldPos
 
 #define ddx(x)	dFdx(x)

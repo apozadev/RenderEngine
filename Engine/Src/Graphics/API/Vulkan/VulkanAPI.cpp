@@ -119,8 +119,9 @@ namespace vk
     pWindow->m_uCurrFrameIdx = 0u;
 
     // Create dummy texture
+    SamplerConfig oDummySamplerConfig = {};
     uint8_t aDummyBuffer[4] = { 255u, 20u, 0u, 255u};    
-    pWindow->m_pDummyTexture = CreateAPITexture((const char*)(&aDummyBuffer[0]), 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE);
+    pWindow->m_pDummyTexture = CreateAPITexture((const char*)(&aDummyBuffer[0]), 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE, oDummySamplerConfig);
 
     // ImGui stuff
 
@@ -452,7 +453,7 @@ namespace vk
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
+  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig)
   {
 
     APITexture* pTexture = s_oTexturePool.PullElement();
@@ -555,7 +556,7 @@ namespace vk
 
     if ((_uUsage & TextureUsage::SHADER_RESOURCE) != 0u)
     {
-      CreateTextureSampler(pWindow, pTexture, _uMipLevels);
+      CreateTextureSampler(pWindow, pTexture, _uMipLevels, _rSamplerConfig);
     }
 
     return pTexture;
@@ -781,11 +782,20 @@ namespace vk
     pRenderState->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;  
     uint32_t uNumImages = pRenderState->m_pOwnerWindow->m_uSwapchainImageCount;    
 
-    std::string sVSFilename = _oInfo.m_sVSFilename.substr(0, _oInfo.m_sVSFilename.find_last_of('.')) + ".spv";
-    std::string sPSFilename = _oInfo.m_sPSFilename.substr(0, _oInfo.m_sPSFilename.find_last_of('.')) + ".spv";    
+    size_t uSlashPosVS = _oInfo.m_sVSFilename.find_last_of('/');
+    size_t uSlashPosPS = _oInfo.m_sPSFilename.find_last_of('/');
 
-    file::InFile oVSFile(sVSFilename.c_str());
-    file::InFile oPSFile(sPSFilename.c_str());
+    size_t uDotPosVS = _oInfo.m_sVSFilename.find_last_of('.');
+    size_t uDotPosPS = _oInfo.m_sPSFilename.find_last_of('.');
+
+    std::string sVSPath = _oInfo.m_sVSFilename.substr(0, uSlashPosVS) + "/VK";
+    std::string sPSPath = _oInfo.m_sPSFilename.substr(0, uSlashPosPS) + "/VK";
+
+    std::string sVSFilename = _oInfo.m_sVSFilename.substr(uSlashPosVS, uDotPosVS - uSlashPosVS) + ".spv";
+    std::string sPSFilename = _oInfo.m_sPSFilename.substr(uSlashPosPS, uDotPosPS - uSlashPosPS) + ".spv";    
+
+    file::InFile oVSFile((sVSPath + sVSFilename).c_str());
+    file::InFile oPSFile((sPSPath + sPSFilename).c_str());
 
     /*ReflectSetLayouts(oVSFile, pRenderState->m_oMaterialLayoutBuilder);
     ReflectSetLayouts(oPSFile, pRenderState->m_oMaterialLayoutBuilder);*/
@@ -834,10 +844,10 @@ namespace vk
   void BeginRenderStateSetup(APIRenderState* _pAPIRenderState)
   {
 
-    if (s_oGlobalData.m_pUsingRenderState != nullptr)
+    /*if (s_oGlobalData.m_pUsingRenderState != nullptr)
     {
       THROW_GENERIC_EXCEPTION("[API] EndRenderStateSetup was not called before a new BeginRenderStateSetup call")
-    }
+    }*/
 
     s_oGlobalData.m_pUsingRenderState = _pAPIRenderState;
     s_oGlobalData.m_pUsingWindow = _pAPIRenderState->m_pOwnerWindow;
@@ -1332,6 +1342,7 @@ namespace vk
   void WaitForNextImage(APIWindow* _pWindow)
   {
     VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, _pWindow->m_uSwapchainImageCount, _pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
+    s_oGlobalData.m_bRenderBegan = false;
   }
 
   int BeginDraw(APIWindow* _pWindow)
@@ -1351,6 +1362,7 @@ namespace vk
     if (hResult == VK_ERROR_OUT_OF_DATE_KHR || hResult == VK_SUBOPTIMAL_KHR || _pWindow->m_bResized)
     {
       _pWindow->m_bResized = false;     
+      s_oGlobalData.m_bRenderBegan = false;
       ImGui::EndFrame();
       RecreateSwapchain(_pWindow);      
       ImGui_ImplVulkan_Shutdown();

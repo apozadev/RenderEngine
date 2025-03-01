@@ -2,10 +2,11 @@
 
 struct VSout
 {
-	float4 pos : SV_Position;
-	float2 uv : TEXCOORD;
-	float3 normal : NORMAL;
+	float4 pos : SV_Position;	
+	float3 normal : NORMAL;	
 	float3 worldPos : WORLDPOS;
+	float2 uv : TEXCOORD;
+	float3 tangent : TANGENT;
 };
 
 SamplerState texSampler : register(s0);

@@ -29,7 +29,7 @@
 #include <string>
 
 // TODO:
-// Sombras petan
+// Shader linkage error
 
 void PostUpdateCallback(float _fDt)
 {

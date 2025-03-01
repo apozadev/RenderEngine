@@ -133,6 +133,49 @@ VkImageUsageFlags GetVkTextureUsage(uint32_t _uUsage)
   return uRes;
 }
 
+VkSamplerAddressMode GetVkAddressMode(TextureAddressMode _eAddressMode)
+{
+  switch (_eAddressMode)
+  {
+  case TextureAddressMode::REPEAT:
+    return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  case TextureAddressMode::MIRRORED_REPEAT:
+    return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+  case TextureAddressMode::CLAMP:
+    return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  case TextureAddressMode::BORDER:
+    return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+  default:
+    return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  }
+}
+
+VkSamplerMipmapMode GetSamplerMipmapMode(TextureFilterMode _eMipmapMode)
+{
+  switch (_eMipmapMode)
+  {
+  case TextureFilterMode::LINEAR:
+    return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  case TextureFilterMode::POINT:
+    return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+  default:
+    return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+  }
+}
+
+VkFilter GetVkFilter(TextureFilterMode _eFliterMode)
+{
+  switch (_eFliterMode)
+  {
+  case TextureFilterMode::LINEAR:
+    return VK_FILTER_LINEAR;
+  case TextureFilterMode::POINT:
+    return VK_FILTER_NEAREST;
+  default:
+    return VK_FILTER_NEAREST;
+  }
+}
+
 void CreateInstance()
 {
 
@@ -1277,29 +1320,31 @@ void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, ui
   VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &hImageView_))
 }
 
-void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels)
+void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig)
 {
 
   VkPhysicalDeviceProperties oProperties{};
   vkGetPhysicalDeviceProperties(s_oGlobalData.m_hPhysicalDevice, &oProperties);
 
+  VkSamplerAddressMode eAddressMode = GetVkAddressMode(_rSamplerConfig.m_eAddressMode);
+
   VkSamplerCreateInfo oSamplerInfo{};
   oSamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  oSamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  oSamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  oSamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  oSamplerInfo.addressModeU = eAddressMode;
+  oSamplerInfo.addressModeV = eAddressMode;
+  oSamplerInfo.addressModeW = eAddressMode;
   oSamplerInfo.anisotropyEnable = VK_TRUE;
   oSamplerInfo.maxAnisotropy = oProperties.limits.maxSamplerAnisotropy;
   oSamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   oSamplerInfo.unnormalizedCoordinates = VK_FALSE;
   oSamplerInfo.compareEnable = VK_FALSE;
   oSamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-  oSamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  oSamplerInfo.mipmapMode = GetSamplerMipmapMode(_rSamplerConfig.m_eMipmapFilterMode);
   oSamplerInfo.minLod = 0.0f;
   oSamplerInfo.maxLod = static_cast<float>(_uMipLevels);
   oSamplerInfo.mipLodBias = 0.0f;
-  oSamplerInfo.magFilter = VK_FILTER_LINEAR;
-  oSamplerInfo.minFilter = VK_FILTER_LINEAR;
+  oSamplerInfo.magFilter = GetVkFilter(_rSamplerConfig.m_eMagFilterMode);
+  oSamplerInfo.minFilter = GetVkFilter(_rSamplerConfig.m_eMinFilterMode);
 
   VK_CHECK(vkCreateSampler(_pWindow->m_hDevice, &oSamplerInfo, NULL, &_pTexture->m_hSampler))
 }

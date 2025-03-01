@@ -45,16 +45,20 @@ def main():
 	
 	sOutFolder = "DX11" if sAPI == "dx11"  else "VK"
 	sBinExt = ".cso" if sAPI == "dx11"  else ".spv"	
-	sShaderExt = ".hslsl"  if sAPI == "dx11"  else ".glsl"
+	sSrcExt = ".hlsl"  if sAPI == "dx11"  else ".glsl"
 		
 	for i in range(3, iNumArgs):
 		sFilename = str(sys.argv[i])		
 		sName = os.path.splitext(os.path.basename(sFilename))[0]
 		sDir = os.path.dirname(sFilename)
-		sOutDir = sDir + "\\" + sOutFolder		
-		if not os.path.exists(sOutDir):
-			os.makedirs(sOutDir)
-		sOutFilename = sOutDir  + "\\" + sName + sShaderExt		
+		sBinOutDir = sDir + "\\" + sOutFolder + "\\"
+		sSrcOutDir = sBinOutDir + "\\Src\\"
+		if not os.path.exists(sBinOutDir):
+			os.makedirs(sBinOutDir)
+		if not os.path.exists(sSrcOutDir):
+			os.makedirs(sSrcOutDir)
+		sSrcFilename = sSrcOutDir + sName + sSrcExt		
+		sBinFilename = sBinOutDir + sName + sBinExt		
 
 		with open(sFilename) as oShaderFile:
 			sShader = oShaderFile.read()	
@@ -71,16 +75,16 @@ def main():
 				sShader = sNewShader
 			sShader = sCommon + sShader
 
-			with open(sOutFilename, mode='w', encoding='utf-8') as oOutFile:
+			with open(sSrcFilename, mode='w', encoding='utf-8') as oOutFile:
 				oOutFile.write(sShader)		
 
-		sCompilerOutputFilename = os.path.splitext(sFilename)[0] + sBinExt		
+		#sCompilerOutputFilename = os.path.splitext(sFilename)[0] + sBinExt		
 		
 		if sAPI == "dx11":
 			sCompilerTypeFlag = "vs_5_0" if sType == "v" else "ps_5_0"
-			os.system("fxc -Zi -E main -T " + sCompilerTypeFlag + " -Fo " + sCompilerOutputFilename + " " + sOutFilename)
+			os.system("fxc -E main -T " + sCompilerTypeFlag + " -Fo " + sBinFilename + " -Od -Zi " + sSrcFilename)
 		else:
-			os.system(os.environ["VULKAN_SDK"] + "/Bin/glslc.exe -g " + sOutFilename + " -o " + sCompilerOutputFilename)
+			os.system(os.environ["VULKAN_SDK"] + "/Bin/glslc.exe -g " + sSrcFilename + " -o " + sBinFilename)
 
 		# if os.path.exists(sOutDir):
 		# 	shutil.rmtree(sOutDir)		

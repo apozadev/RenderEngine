@@ -9,6 +9,7 @@
 #include "Graphics/ResourceBindInfo.h"
 #include "Graphics/RenderStateInfo.h"
 #include "Graphics/ConstantBufferTypes.h"
+#include "Graphics/SamplerConfig.h"
 
 struct GLFWwindow;
 
@@ -82,7 +83,7 @@ namespace vk
 
 	// Texture
 
-	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage);
+	APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig);
 
 	void BindAPITexture(APITexture* _pTexture);
 
