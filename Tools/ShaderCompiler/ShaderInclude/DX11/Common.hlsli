@@ -15,8 +15,9 @@ struct VSout
 
 #define mat4 matrix
 #define mat3 float3x3
+#define buildmat3(x, y, z) transpose(float3x3(x, y, z))
 
-#define mul(mat, v) mul(mat, v)
+//#define mul(mat, v) mul(mat, v)
 
 #define sampleTex(tex, uv) tex.Sample(tex##_Sampler, uv)
 

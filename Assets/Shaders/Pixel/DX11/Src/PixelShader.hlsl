@@ -15,8 +15,9 @@ struct VSout
 
 #define mat4 matrix
 #define mat3 float3x3
+#define buildmat3(x, y, z) transpose(float3x3(x, y, z))
 
-#define mul(mat, v) mul(mat, v)
+//#define mul(mat, v) mul(mat, v)
 
 #define sampleTex(tex, uv) tex.Sample(tex##_Sampler, uv)
 
@@ -208,14 +209,12 @@ PIXEL_MAIN_BEGIN
 
   vec3 vN = normalize(inNormal);
   vec3 vT = normalize(inTangent - dot(inTangent, vN) * vN);
-  vec3 vB = -normalize(cross(inNormal, inTangent));
-  mat3 mTBN = mat3(vT, vB, vN);
+  vec3 vB = normalize(cross(inNormal, inTangent));
+  mat3 mTBN = buildmat3(vT, vB, vN);
 
   vec3 vWN = sampleTex(Texture1, vec2(inUv.x, inUv.y)).rgb * 2.0 - 1.0;
 
-  //vWN.y = vWN.y * -1;
-
-  vWN = normalize(mul(mTBN, vWN));
+  vWN = normalize(mul(mTBN, vWN)); 
 
   vec3 light = LambertDirLighting(vec4(inWorldPos, 1), vWN);
 
