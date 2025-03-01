@@ -40,6 +40,21 @@ Texture2D ShadowMap1 : register(t9);
 Texture2D ShadowMap2 : register(t10);
 Texture2D ShadowMap3 : register(t11);
 
+sampler Input0_Sampler : register(s0);
+sampler Input1_Sampler : register(s1);
+sampler Input2_Sampler : register(s2);
+sampler Input3_Sampler : register(s3);
+
+sampler Texture0_Sampler : register(s4);
+sampler Texture1_Sampler : register(s5);
+sampler Texture2_Sampler : register(s6);
+sampler Texture3_Sampler : register(s7);
+
+sampler ShadowMap0_Sampler : register(s8);
+sampler ShadowMap1_Sampler : register(s9);
+sampler ShadowMap2_Sampler : register(s10);
+sampler ShadowMap3_Sampler : register(s11);
+
 #define inPos       __input.pos
 #define inUv        __input.uv
 #define inNormal    __input.normal

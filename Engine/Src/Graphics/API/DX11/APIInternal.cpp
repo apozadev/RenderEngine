@@ -159,6 +159,79 @@ namespace dx11
     }
   }
 
+  D3D11_TEXTURE_ADDRESS_MODE GetD3D11AdressMode(TextureAddressMode _eAddressMode)
+  {
+    switch (_eAddressMode)
+    {
+    case TextureAddressMode::REPEAT:
+      return D3D11_TEXTURE_ADDRESS_WRAP;
+    case TextureAddressMode::MIRRORED_REPEAT:
+      return D3D11_TEXTURE_ADDRESS_MIRROR;
+    case TextureAddressMode::CLAMP:
+      return D3D11_TEXTURE_ADDRESS_CLAMP;
+    case TextureAddressMode::BORDER:
+      return D3D11_TEXTURE_ADDRESS_BORDER;
+    default:
+      return D3D11_TEXTURE_ADDRESS_CLAMP;
+    }
+  }
+
+  D3D11_FILTER GetD3D11Filter(TextureFilterMode _eMipmapFilter, TextureFilterMode _eMinFilter, TextureFilterMode _eMagFilter)
+  {
+    if (_eMipmapFilter == TextureFilterMode::POINT
+      && _eMinFilter == TextureFilterMode::POINT
+      && _eMagFilter == TextureFilterMode::POINT)
+    {
+      return D3D11_FILTER_MIN_MAG_MIP_POINT;
+    }
+    else if (_eMipmapFilter == TextureFilterMode::LINEAR
+      && _eMinFilter == TextureFilterMode::POINT
+      && _eMagFilter == TextureFilterMode::POINT)
+    {
+      return D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+    }
+    else if (_eMipmapFilter == TextureFilterMode::POINT
+      && _eMinFilter == TextureFilterMode::POINT
+      && _eMagFilter == TextureFilterMode::LINEAR)
+    {
+      return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+    }
+    else if (_eMipmapFilter == TextureFilterMode::LINEAR
+      && _eMinFilter == TextureFilterMode::POINT
+      && _eMagFilter == TextureFilterMode::LINEAR)
+    {
+      return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+    }
+    else if (_eMipmapFilter == TextureFilterMode::POINT
+      && _eMinFilter == TextureFilterMode::LINEAR
+      && _eMagFilter == TextureFilterMode::POINT)
+    {
+      return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+    }
+    else if (_eMipmapFilter == TextureFilterMode::LINEAR
+      && _eMinFilter == TextureFilterMode::LINEAR
+      && _eMagFilter == TextureFilterMode::POINT)
+    {
+      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+    }
+    else if (_eMipmapFilter == TextureFilterMode::POINT
+      && _eMinFilter == TextureFilterMode::LINEAR
+      && _eMagFilter == TextureFilterMode::LINEAR)
+    {
+      return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+    }
+    else if (_eMipmapFilter == TextureFilterMode::LINEAR
+      && _eMinFilter == TextureFilterMode::LINEAR
+      && _eMagFilter == TextureFilterMode::LINEAR)
+    {
+      return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    }
+    else
+    {
+      THROW_GENERIC_EXCEPTION("[API] [DX11] Sampler filter combination not supported")
+    }
+  }
+
   void CreateDeviceAndSwapChain(APIWindow* _pWindow)
   {
     DXGI_SWAP_CHAIN_DESC oSwapchainDesc = {};

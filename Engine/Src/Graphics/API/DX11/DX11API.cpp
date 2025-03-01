@@ -468,7 +468,7 @@ namespace api
 
     // Texture
 
-    APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage)
+    APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig)
     {
       APITexture* pTexture = s_oTexturePool.PullElement();
 
@@ -538,6 +538,18 @@ namespace api
       pTexture->m_iWidth = _uWidth;
       pTexture->m_iHeight = _uHeight;
 
+      D3D11_SAMPLER_DESC oSamplerDesc{};
+      oSamplerDesc.AddressU = GetD3D11AdressMode(_rSamplerConfig.m_eAddressMode);
+      oSamplerDesc.AddressV = GetD3D11AdressMode(_rSamplerConfig.m_eAddressMode);
+      oSamplerDesc.AddressW = GetD3D11AdressMode(_rSamplerConfig.m_eAddressMode);
+      oSamplerDesc.Filter = GetD3D11Filter(_rSamplerConfig.m_eMipmapFilterMode, _rSamplerConfig.m_eMinFilterMode, _rSamplerConfig.m_eMagFilterMode);
+      oSamplerDesc.MaxAnisotropy = 1;
+      oSamplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+      oSamplerDesc.MinLOD = 0;
+      oSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;      
+
+      pWindow->m_pDevice->CreateSamplerState(&oSamplerDesc, pTexture->m_pSampler.GetAddressOf());
+
       return pTexture;
     }
 
@@ -550,10 +562,12 @@ namespace api
       if ((uStageMsk & static_cast<uint32_t>(PipelineStage::VERTEX)) != 0u)
       {
         pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+        pWindow->m_pContext->VSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
       if ((uStageMsk & static_cast<uint32_t>(PipelineStage::PIXEL)) != 0u)
       {
         pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+        pWindow->m_pContext->PSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
     }
 
@@ -711,11 +725,20 @@ namespace api
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-      std::string sPSFilename = _oInfo.m_sPSFilename.substr(0, _oInfo.m_sPSFilename.find_last_of('.')) + ".cso";
-      std::string sVSFilename = _oInfo.m_sVSFilename.substr(0, _oInfo.m_sVSFilename.find_last_of('.')) + ".cso";
+      size_t uSlashPosVS = _oInfo.m_sVSFilename.find_last_of('/');
+      size_t uSlashPosPS = _oInfo.m_sPSFilename.find_last_of('/');
 
-      file::InFile oVsFile(sVSFilename.c_str());
-      file::InFile oPsFile(sPSFilename.c_str());      
+      size_t uDotPosVS = _oInfo.m_sVSFilename.find_last_of('.');
+      size_t uDotPosPS = _oInfo.m_sPSFilename.find_last_of('.');
+
+      std::string sVSPath = _oInfo.m_sVSFilename.substr(0, uSlashPosVS) + "/DX11";
+      std::string sPSPath = _oInfo.m_sPSFilename.substr(0, uSlashPosPS) + "/DX11";
+
+      std::string sVSFilename = _oInfo.m_sVSFilename.substr(uSlashPosVS, uDotPosVS - uSlashPosVS) + ".cso";
+      std::string sPSFilename = _oInfo.m_sPSFilename.substr(uSlashPosPS, uDotPosPS - uSlashPosPS) + ".cso";
+
+      file::InFile oVsFile((sVSPath + sVSFilename).c_str());
+      file::InFile oPsFile((sPSPath + sPSFilename).c_str());
       
       DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));      
       DX11_CHECK(pWindow->m_pDevice->CreatePixelShader(oPsFile.GetData(), oPsFile.GetSize(), nullptr, pRenderState->m_pPixelShader.ReleaseAndGetAddressOf()));

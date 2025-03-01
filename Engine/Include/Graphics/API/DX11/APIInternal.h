@@ -5,6 +5,7 @@
 
 #include "Graphics/ImageFormat.h"
 #include "Graphics/BlendEnums.h"
+#include "Graphics/SamplerConfig.h"
 #include "Graphics/API/DX11/DX11Data.h"
 
 namespace api
@@ -26,7 +27,11 @@ namespace dx11
 
   D3D11_BLEND GetD3D11Blend(BlendFactor _eBlendFactor);
 
-  ImageFormat GetImageFormat(DXGI_FORMAT _eFormat);
+  ImageFormat GetImageFormat(DXGI_FORMAT _eFormat);  
+
+  D3D11_TEXTURE_ADDRESS_MODE GetD3D11AdressMode(TextureAddressMode _eAddressMode);
+
+  D3D11_FILTER GetD3D11Filter(TextureFilterMode _eMipmapFilter, TextureFilterMode _eMinFilter, TextureFilterMode _eMagFilter);
 
   void CreateDeviceAndSwapChain(APIWindow* _pWindow);
 
