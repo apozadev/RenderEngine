@@ -16,4 +16,6 @@ public:
 
   void SetupQuadModel(const Material* _pMaterial, ModelComponent* pModelComp_);
 
+  void SetupCubeModel(const Material* _pMaterial, ModelComponent* pModelComp_);
+
 };

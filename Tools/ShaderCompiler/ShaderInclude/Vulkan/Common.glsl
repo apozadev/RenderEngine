@@ -8,4 +8,6 @@
 
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
 
+#define CubeTexture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform samplerCube name;
+
 #define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name

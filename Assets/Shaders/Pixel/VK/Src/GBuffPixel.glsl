@@ -2,9 +2,13 @@
 
 #define mul(mat, v) (mat * v)
 
+#define buildmat3(x, y, z) mat3(x, y, z)
+
 #define sampleTex(tex, uv) texture(tex, uv)
 
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
+
+#define CubeTexture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform samplerCube name;
 
 #define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name
 #pragma shader_stage(fragment)
@@ -33,6 +37,8 @@ Texture(ShadowMap0, 0, 1)
 Texture(ShadowMap1, 0, 2)
 Texture(ShadowMap2, 0, 3)
 Texture(ShadowMap3, 0, 4)
+
+CubeTexture(Skybox, 0, 5)
 
 Texture(Input0, 1, 0)
 Texture(Input1, 1, 1)

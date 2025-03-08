@@ -24,10 +24,15 @@ void ModelComponent::Configure()
   const Material* pMaterial = MaterialLibrary::GetInstance()->LoadMaterial(pModelCompDesc->m_sMaterialFilename.c_str());
 
   static const std::string s_sQuad("quad");
+  static const std::string s_sCube("cube");
 
   if (s_sQuad == pModelCompDesc->m_sModelFilename)
   {
     ModelLoader::GetInstance()->SetupQuadModel(pMaterial, this);
+  }
+  else if (s_sCube == pModelCompDesc->m_sModelFilename)
+  {
+    ModelLoader::GetInstance()->SetupCubeModel(pMaterial, this);
   }
   else
   {

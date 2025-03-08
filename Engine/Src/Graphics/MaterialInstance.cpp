@@ -28,9 +28,8 @@ void MaterialInstance::SetupSubState(const Material* _pMaterial)
   api::BeginSubStateSetup(m_pSubState);
 
   for (int i = 0; i < 4 && i < m_lstTextures.size(); i++)
-  {     
-    const owner_ptr<Texture2D>& pTexture = m_lstTextures[i];
-    pTexture->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::MATERIAL_INSTANCE);
+  {         
+    m_lstTextures[i]->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::MATERIAL_INSTANCE);
   }
 
   /*for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)

@@ -1,10 +1,14 @@
 <RenderPipelineConfig>
 	<m_sId>TEST</m_sId>
-	<m_lstSteps>
+	<m_lstSteps>		
 		<RenderStepConfig>
 			<m_lstInputs/>
 			<m_sRenderTargetId>DEFAULT</m_sRenderTargetId>
 			<m_bOrderTranslucent>false</m_bOrderTranslucent>
+		</RenderStepConfig>
+		<RenderStepConfig>
+			<m_lstInputs/>
+			<m_sRenderTargetId>DEFAULT</m_sRenderTargetId>			
 		</RenderStepConfig>
 		<RenderStepConfig>
 			<m_lstInputs/>

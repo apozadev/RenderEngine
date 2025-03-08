@@ -15,7 +15,7 @@
 #include "Graphics/API/GraphicsAPI.h"
 
 
-RenderStep::RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget)
+RenderStep::RenderStep(std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget)
   : m_lstInputs(std::move(_lstInputs))
   , m_pRenderTarget(_pRenderTarget)
 {
@@ -47,9 +47,8 @@ void RenderStep::SetupInternal()
   }
 
   for (int i = 0; i < m_lstInputs.size(); i++)
-  {
-    RenderTarget* _pInput = m_lstInputs[i];
-    _pInput->GetColorTextures()[0]->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::RENDER_STEP);
+  {    
+    m_lstInputs[i]->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::RENDER_STEP);
   }
 }
 
@@ -97,9 +96,9 @@ void RenderStep::Bind() const
     }
   }
 
-  for (RenderTarget* _pInput : m_lstInputs)
+  for (Texture2D* _pInput : m_lstInputs)
   {
-    _pInput->GetColorTextures()[0]->Bind();
+    _pInput->Bind();
   }  
 
   api::BindAPIRenderSubState(m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);
@@ -108,9 +107,9 @@ void RenderStep::Bind() const
 void RenderStep::Unbind() const
 {
 
-  for (RenderTarget* _pInput : m_lstInputs)
+  for (Texture2D* _pInput : m_lstInputs)
   {
-    _pInput->GetColorTextures()[0]->Unbind();
+    _pInput->Unbind();
   }
 
  /* if (m_pRenderTarget)

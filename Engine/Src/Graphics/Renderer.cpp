@@ -8,6 +8,8 @@
 #include "Graphics/Window.h"
 #include "Graphics/Camera.h"
 #include "Graphics/ConstantBuffer.h"
+#include "Graphics/Texture2D.h"
+#include "Graphics/SamplerConfig.h"
 #include "Graphics/Job.h"
 #include "Graphics/RenderPipelineConfig.h"
 #include "Graphics/RenderTarget.h"
@@ -16,6 +18,7 @@
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/DirLight.h"
 #include "Graphics/GeometryRenderStep.h"
+#include "Core/ImageManager.h"
 #include "Memory/Factory.h"
 
 #include "Core/Exception.h"
@@ -41,6 +44,24 @@ void Renderer::InitializePostWindow()
   m_pLightCBuff = Factory::Create<ConstantBuffer<LightData>>();
   m_pLightCBuff->Configure();
 
+  m_pEnvMap = Factory::Create<Texture2D>();
+
+  Image aImages[6];
+  aImages[0] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/0.png");
+  aImages[1] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/1.png");
+  aImages[2] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/2.png");
+  aImages[3] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/3.png");
+  aImages[4] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/4.png");
+  aImages[5] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/5.png");
+
+  SamplerConfig oSampler = {};
+  oSampler.m_eAddressMode = TextureAddressMode::CLAMP;
+  oSampler.m_eMagFilterMode = TextureFilterMode::POINT;
+  oSampler.m_eMinFilterMode = TextureFilterMode::POINT;
+  oSampler.m_eMipmapFilterMode = TextureFilterMode::POINT;
+
+  m_pEnvMap->ConfigureAsCubemap(aImages, oSampler, 1u, 1u);
+
   m_pLightCBuff->GetData()->m_uNumLights = 0u;
 }
 
@@ -53,6 +74,8 @@ void Renderer::ShutDownPreWindow()
   m_lstRenderPipelines.clear();
 
   m_pLightCBuff.reset();
+
+  m_pEnvMap.reset();
 }
 
 void Renderer::ShutDownPostWindow()
@@ -181,7 +204,7 @@ void Renderer::Draw()
     {
       rShadowView.m_pShadowMap->Clear();
 
-      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>(std::vector<RenderTarget*>(), rShadowView.m_pShadowMap, false, false);
+      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>(std::vector<Texture2D*>(), rShadowView.m_pShadowMap, false, false);
 
       for (Job& rJob : m_lstShadowJobs)
       {
@@ -208,6 +231,8 @@ void Renderer::Draw()
     {      
       rShadowView.m_pShadowMap->GetDepthStencilTexture()->Bind();
     }
+
+    m_pEnvMap->Bind();
 
     for (CamView& rCamView : m_lstCamViews)
     {

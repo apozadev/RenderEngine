@@ -9,6 +9,8 @@
 #include "Graphics/RenderStateInfo.h"
 #include "Graphics/PipelineStage.h"
 #include "Graphics/BlendEnums.h"
+#include "Graphics/CullMode.h"
+#include "Graphics/DepthCompareOp.h"
 #include "Graphics/ImageFormat.h"
 #include "Graphics/ResourceBindInfo.h"
 #include "Graphics/SamplerConfig.h"
@@ -47,6 +49,10 @@ namespace vk
   VkSamplerMipmapMode GetSamplerMipmapMode(TextureFilterMode _eMipmapMode);
 
   VkFilter GetVkFilter(TextureFilterMode _eFliterMode);
+
+  VkCullModeFlagBits GetVkCullMode(CullMode _eCullMode);
+
+  VkCompareOp GetVkCompareOp(DepthCompareOp _eCompareOp);
 
   void CreateInstance();
 
@@ -92,9 +98,9 @@ namespace vk
 
   void CreateBuffer(APIWindow* _pWindow, size_t _uSize, VkBufferUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkBuffer& hBuffer_, VkDeviceMemory& hDeviceMemory_);
 
-  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
+  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkImageCreateFlags _uCreateFlags, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
 
-  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
+  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, bool _bIsCubeTexture, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
 
   void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig);
 
@@ -108,13 +114,13 @@ namespace vk
 
   void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize);
 
-  void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight);
+  void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uLayers);
 
-  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
+  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
 
-  void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
+  void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
 
-  void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels);
+  void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels, uint32_t _uLayers);
 
   void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t& uDescSetCount_);
 

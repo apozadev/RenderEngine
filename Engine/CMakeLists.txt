@@ -175,6 +175,7 @@ add_library(${PROJECT_NAME}
 	"Src/Core/SceneDesc.cpp" 
 	"Src/Graphics/RenderStateInfo.cpp" 
 	"Src/Graphics/MaterialLibrary.cpp" 
+	"Include/Graphics/SamplerConfig.h"
 	"Include/Math/Vec3.h" 
 	"Src/Math/Vec3.cpp" 
 	"Include/Reflection/ImGuiTypeVisitor.h" 
@@ -198,7 +199,7 @@ add_library(${PROJECT_NAME}
 	"../imgui/backends/imgui_impl_dx11.h"
 	"../imgui/backends/imgui_impl_dx11.cpp"
     "../imgui/backends/imgui_impl_glfw.h"
-    "../imgui/backends/imgui_impl_glfw.cpp" "Include/Graphics/SamplerConfig.h") 
+    "../imgui/backends/imgui_impl_glfw.cpp" "Include/Graphics/CullMode.h" "Src/Graphics/CullMode.cpp" "Include/Graphics/DepthCompareOp.h" "Src/Graphics/DepthCompareOp.cpp") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

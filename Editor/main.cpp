@@ -29,7 +29,11 @@
 #include <string>
 
 // TODO:
-// Shader linkage error
+// Skybox:shaders no compilan
+// VK_REMAINING_ARRAY_LAYERS no sirve
+// RenderStep usar string de id en lugar de idx
+// Material::m_uMeshConstantSize? 
+// [API] Struct de contexto en lugar de usingX
 
 void PostUpdateCallback(float _fDt)
 {

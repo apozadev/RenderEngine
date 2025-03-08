@@ -22,6 +22,8 @@ class Camera
   struct GlobalBufferData
   {
     glm::mat4 m_mViewProj;
+    glm::mat4 m_mView;
+    glm::mat4 m_mProj;
   };
 
 public:

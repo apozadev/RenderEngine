@@ -4,12 +4,13 @@
 #include <vector>
 
 #include "Graphics/RenderStep.h"
+#include "Graphics/Texture2D.h"
 
 class GeometryRenderStep : public RenderStep
 {
 public:
 
-  GeometryRenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps = true);  
+  GeometryRenderStep(std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps = true);  
 
   void SubmitJob(Job&& _rJob) override;  
   void SubmitJobs(const std::vector<Job>& _rJob) override;

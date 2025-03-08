@@ -2,9 +2,13 @@
 
 #define mul(mat, v) (mat * v)
 
+#define buildmat3(x, y, z) mat3(x, y, z)
+
 #define sampleTex(tex, uv) texture(tex, uv)
 
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
+
+#define CubeTexture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform samplerCube name;
 
 #define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name
 #pragma shader_stage(fragment)
@@ -33,6 +37,8 @@ Texture(ShadowMap0, 0, 1)
 Texture(ShadowMap1, 0, 2)
 Texture(ShadowMap2, 0, 3)
 Texture(ShadowMap3, 0, 4)
+
+CubeTexture(Skybox, 0, 5)
 
 Texture(Input0, 1, 0)
 Texture(Input1, 1, 1)
@@ -175,17 +181,17 @@ PIXEL_MAIN_BEGIN
   vec3 vN = normalize(inNormal);
   vec3 vT = normalize(inTangent - dot(inTangent, vN) * vN);
   vec3 vB = normalize(cross(inNormal, inTangent));
-  mat3 mTBN = mat3(vT, vB, vN);
+  mat3 mTBN = buildmat3(vT, vB, vN);
 
   vec3 vWN = sampleTex(Texture1, vec2(inUv.x, inUv.y)).rgb * 2.0 - 1.0;
 
-  vWN = normalize(mul(vWN, mTBN)); 
+  vWN = normalize(mul(mTBN, vWN)); 
 
   vec3 light = LambertDirLighting(vec4(inWorldPos, 1), vWN);
 
   vec4 color = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
   
-  outColor.rgb = vWN;//color * vec4(light + ambientFactor, 1);
+  outColor = color * vec4(light + ambientFactor, 1);
   outColor.a = 0.7f; 
 
   outColor *= vTint * fMult;

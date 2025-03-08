@@ -105,7 +105,7 @@ void RenderPipeline::GenerateFromConfig()
 
   for (const RenderStepConfig& rStepConfig : m_oConfig.m_lstSteps)
   {
-    std::vector<RenderTarget*> lstInputs;
+    std::vector<Texture2D*> lstInputs;
 
     for (const RenderStepInputConfig& rInputConfig : rStepConfig.m_lstInputs)
     {
@@ -113,7 +113,7 @@ void RenderPipeline::GenerateFromConfig()
       {
         if (rInputConfig.m_sTargetId == m_oConfig.m_lstRenderTargets[i].m_sId)
         {
-          lstInputs.push_back(m_lstRenderTargets[i].get());
+          lstInputs.push_back(m_lstRenderTargets[i]->GetColorTextures()[0].get());
           break;
         }
       }
@@ -133,7 +133,6 @@ void RenderPipeline::GenerateFromConfig()
     }     
 
     owner_ptr<GeometryRenderStep> pRenderStep = Factory::Create<GeometryRenderStep>(std::move(lstInputs), pTarget, rStepConfig.m_bOrderTranslucent);
-
-    m_lstRenderSteps.push_back(pRenderStep.cast_release<RenderStep>());
+    m_lstRenderSteps.push_back(pRenderStep.cast_release<RenderStep>()); 
   }
 }

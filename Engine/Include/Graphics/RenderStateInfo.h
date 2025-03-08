@@ -3,6 +3,8 @@
 #include <string>
 
 #include "Graphics/BlendEnums.h"
+#include "Graphics/CullMode.h"
+#include "Graphics/DepthCompareOp.h"
 #include "Core/BaseObject.h"
 #include "Reflection/ReflectionMacros.h"
 
@@ -23,4 +25,8 @@ struct RenderStateInfo : public BaseObject
 
   bool m_bDepthWrite;
   bool m_bDepthRead;
+
+  CullMode m_eCullMode;
+
+  DepthCompareOp m_eDepthCompareOp;
 };

@@ -19,6 +19,9 @@ public:
   void Configure(const Image& _rImage, const SamplerConfig& _rSamplerConfig, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
   void Configure(uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, const SamplerConfig& _rSamplerConfig, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u, uint32_t _uUsage = 1u);
 
+  // For cubemaps
+  void ConfigureAsCubemap(const Image _rImages[6], const SamplerConfig& _rSamplerConfig, unsigned int _uMipLevels = 0u, unsigned int _uMsaaSamples = 1u);
+
   virtual ~Texture2D();
 
   void SetupRenderSubState(std::string&& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const;

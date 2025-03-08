@@ -121,7 +121,8 @@ namespace vk
     // Create dummy texture
     SamplerConfig oDummySamplerConfig = {};
     uint8_t aDummyBuffer[4] = { 255u, 20u, 0u, 255u};    
-    pWindow->m_pDummyTexture = CreateAPITexture((const char*)(&aDummyBuffer[0]), 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE, oDummySamplerConfig);
+    void* pDummyBuffer = &(aDummyBuffer[0]);
+    pWindow->m_pDummyTexture = CreateAPITexture(&pDummyBuffer, 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE, oDummySamplerConfig, false);
 
     // ImGui stuff
 
@@ -157,7 +158,7 @@ namespace vk
 
     // Depth buffer
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkImageSubresourceRange oRange = {};
     oRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -169,11 +170,11 @@ namespace vk
     VkClearDepthStencilValue oDepthClearColor = { 1.f, 0.f };
     vkCmdClearDepthStencilImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hDepthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oDepthClearColor, 1u, &oRange);    
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
     // Color buffer
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     oRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     oRange.baseMipLevel = 0;
@@ -184,7 +185,7 @@ namespace vk
     VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
     vkCmdClearColorImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hColorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
   }
 
   void BindDefaultRenderTarget(APIWindow* _pWindow)
@@ -453,7 +454,7 @@ namespace vk
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig)
+  APITexture* CreateAPITexture(const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap)
   {
 
     APITexture* pTexture = s_oTexturePool.PullElement();
@@ -465,14 +466,21 @@ namespace vk
     VkBuffer hStagingBuffer;
     VkDeviceMemory hStagingBufferMemory;       
 
-    size_t uSize = _uWidth* _uHeight* GetImageFormatSize(_eFormat);
+    size_t uSize = _uWidth * _uHeight * GetImageFormatSize(_eFormat);
+
+    if (_bIsCubemap)
+    {
+      uSize *= 6u;
+    }
 
     pTexture->m_eFormat = GetVKFormat(_eFormat);
 
     uint32_t uMaxMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_uWidth, _uWidth)))) + 1;
     _uMipLevels = _uMipLevels == 0u? uMaxMipLevels : std::min(_uMipLevels, uMaxMipLevels);
 
-    if (_pData != nullptr)
+    uint32_t uLayers = _bIsCubemap ? 6u : 1u;
+
+    if (_ppData != nullptr)
     {
       CreateBuffer(pWindow
         , uSize
@@ -481,12 +489,26 @@ namespace vk
         , hStagingBuffer
         , hStagingBufferMemory);
 
-      SetBufferData(pWindow, _pData, uSize, hStagingBufferMemory);
+      if (_bIsCubemap)
+      {
+        size_t uSizePerLayer = uSize / 6u;
+        void* pDeviceData;
+        VK_CHECK(vkMapMemory(pWindow->m_hDevice, hStagingBufferMemory, 0, uSize, 0, &pDeviceData))
+        for (size_t i = 0u; i < 6u; i++)
+        {          
+          memcpy(static_cast<char*>(pDeviceData) + uSizePerLayer * i, *(_ppData + i), uSizePerLayer);
+        }
+        vkUnmapMemory(pWindow->m_hDevice, hStagingBufferMemory);
+      }
+      else
+      {
+        SetBufferData(pWindow, *_ppData, uSize, hStagingBufferMemory);
+      }
     }
 
     VkImageUsageFlags uUsageFlags = GetVkTextureUsage(_uUsage);
 
-    if (_pData != nullptr)
+    if (_ppData != nullptr)
     {
       uUsageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     }
@@ -501,10 +523,12 @@ namespace vk
       , _uHeight
       , pTexture->m_eFormat
       , _uMipLevels
+      , uLayers
       , static_cast<VkSampleCountFlagBits>(_uMsaaSamples)
       , VK_IMAGE_TILING_OPTIMAL
       , uUsageFlags
-      , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+      , _bIsCubemap ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0u      
+      , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT      
       , pTexture->m_hImage
       , pTexture->m_hMemory);
 
@@ -519,38 +543,47 @@ namespace vk
       uAspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
-    if (_pData != nullptr)
+    if (_ppData != nullptr)
     {
       TransitionImageLayoutOffline(pWindow
         , pTexture->m_hImage
         , pTexture->m_eFormat
         , _uMipLevels
+        , uLayers
         , uAspectFlags
         , VK_IMAGE_LAYOUT_UNDEFINED
         , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-      CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight);
+      CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight, uLayers);
 
 
       // When we generate mipmaps, we also do the transition layout
       if (_uMipLevels > 1u)
       {
-        GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels);
+        GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels, uLayers);
       }
       // If no mipmaps, perform layout transition
       else
       {
-        TransitionImageLayoutOffline(pWindow, pTexture->m_hImage, pTexture->m_eFormat, _uMipLevels, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        TransitionImageLayoutOffline(pWindow
+          , pTexture->m_hImage
+          , pTexture->m_eFormat
+          , _uMipLevels          
+          , uLayers
+          , VK_IMAGE_ASPECT_COLOR_BIT
+          , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+          , VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
       }
 
       DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
-
     }
 
     CreateImageView(pWindow
       , pTexture->m_hImage
       , pTexture->m_eFormat
       , _uMipLevels
+      , uLayers
+      , _bIsCubemap
       , uAspectFlags
       , pTexture->m_hImageView);
 
@@ -593,7 +626,7 @@ namespace vk
       break;
     }
 
-    TransitionImageLayout(pWindow, _pTexture->m_hImage, _pTexture->m_eFormat, VK_REMAINING_MIP_LEVELS, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    TransitionImageLayout(pWindow, _pTexture->m_hImage, _pTexture->m_eFormat, VK_REMAINING_MIP_LEVELS, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkImageSubresourceRange oRange = {};
     oRange.aspectMask = uAspectFlags;
@@ -615,7 +648,7 @@ namespace vk
 
     VkImageLayout eFinalLayout = _eUsage == TextureUsage::COLOR_TARGET ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    TransitionImageLayout(pWindow, _pTexture->m_hImage, _pTexture->m_eFormat, VK_REMAINING_MIP_LEVELS, uAspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, eFinalLayout);
+    TransitionImageLayout(pWindow, _pTexture->m_hImage, _pTexture->m_eFormat, VK_REMAINING_MIP_LEVELS, 1u, uAspectFlags, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, eFinalLayout);
   }
 
   void DestroyAPITexture(APITexture* _pTexture)

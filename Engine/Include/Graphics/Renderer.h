@@ -15,6 +15,7 @@ class MaterialInstance;
 class Transform;
 class Window;
 class Camera;
+class Texture2D;
 class RenderTarget;
 struct DirLight;
 struct RenderPipelineConfig;
@@ -80,6 +81,8 @@ public:
   void SetupSubStateLightCBuffers(ResourceFrequency _eFrequency);
 
   void SetupSubStateShadowMaps(ResourceFrequency _eFrequency);  
+
+  const owner_ptr<Texture2D>& GetEnvMap() const { return m_pEnvMap; }
   
   void Draw();  
 
@@ -94,4 +97,6 @@ private:
   std::vector<ShadowView> m_lstShadowViews;  
 
   std::vector<Job> m_lstShadowJobs;    
+
+  owner_ptr<Texture2D> m_pEnvMap;
 };

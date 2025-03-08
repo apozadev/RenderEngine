@@ -6,6 +6,7 @@
 
 #include "Core/Engine.h"
 #include "Graphics/Window.h"
+#include "Graphics/Texture2D.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/RenderPipeline.h"
 #include "Graphics/RenderPipelineConfig.h"
@@ -47,9 +48,10 @@ Camera::~Camera()
 void Camera::UpdateTransform(const Transform& _oParentTransform)
 {
   GlobalBufferData oData{};  
-
-  glm::mat4x4 mView = glm::inverse(_oParentTransform.GetMatrix());  
-  oData.m_mViewProj = GetProjMatrix() * mView;
+ 
+  oData.m_mView = glm::inverse(_oParentTransform.GetMatrix());
+  oData.m_mProj = GetProjMatrix();
+  oData.m_mViewProj = oData.m_mProj * oData.m_mView;
   
   m_pCBuffer->SetData(&oData);
 
@@ -61,6 +63,7 @@ void Camera::PreRenderSetup()
   api::BeginSubStateSetup(m_pSubState);
   m_pCBuffer->SetupRenderSubState("GlobalBuffer", PipelineStage::VERTEX, ResourceFrequency::GLOBAL);
   Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);
+  Renderer::GetInstance()->GetEnvMap()->SetupRenderSubState("Skybox", PipelineStage::PIXEL, ResourceFrequency::GLOBAL);
   api::EndSubStateSetup(ResourceFrequency::GLOBAL);
 }
 

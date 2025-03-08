@@ -1,0 +1,22 @@
+<Material>
+	<m_lstPasses>
+		<Pass_Ptr PtrId="384775920" Type="Pass">
+			<m_oInfo>
+				<m_uMeshConstantSize>128</m_uMeshConstantSize>
+				<m_sVSFilename>Assets/Shaders/Vertex/SkyboxVertexShader.vs</m_sVSFilename>
+				<m_sPSFilename>Assets/Shaders/Pixel/SkyboxPixelShader.ps</m_sPSFilename>
+				<m_bBlendEnabled>false</m_bBlendEnabled>
+				<m_eBlendOp>BLEND_OP_ADD</m_eBlendOp>
+				<m_eSrcBlendFactor>BLEND_SRC_ALPHA</m_eSrcBlendFactor>
+				<m_eDstBlendFactor>BLEND_INV_SRC_ALPHA</m_eDstBlendFactor>
+				<m_bDepthWrite>true</m_bDepthWrite>
+				<m_bDepthRead>true</m_bDepthRead>
+				<m_eCullMode>FRONT</m_eCullMode>
+				<m_eDepthCompareOp>LESS_OR_EQUAL</m_eDepthCompareOp>
+			</m_oInfo>
+			<m_uLayer>0</m_uLayer>
+			<m_sPipelineId>TEST</m_sPipelineId>
+			<m_iStepIdx>2</m_iStepIdx>
+		</Pass_Ptr>
+	</m_lstPasses>
+</Material>

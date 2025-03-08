@@ -218,7 +218,7 @@ PIXEL_MAIN_BEGIN
 
   vec3 light = LambertDirLighting(vec4(inWorldPos, 1), vWN);
 
-  vec4 color = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
+  vec4 color = sampleTex(Texture2, vec2(inUv.x, inUv.y));  
   
   outColor = color * vec4(light + ambientFactor, 1);
   outColor.a = 0.7f; 

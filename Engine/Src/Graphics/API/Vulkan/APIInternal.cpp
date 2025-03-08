@@ -176,10 +176,50 @@ VkFilter GetVkFilter(TextureFilterMode _eFliterMode)
   }
 }
 
+VkCullModeFlagBits GetVkCullMode(CullMode _eCullMode)
+{
+  switch (_eCullMode)
+  {
+  case CullMode::BACK:
+    return VK_CULL_MODE_BACK_BIT;
+  case CullMode::FRONT:
+    return VK_CULL_MODE_FRONT_BIT;
+  case CullMode::NONE:
+    return VK_CULL_MODE_NONE;
+  default:
+    return VK_CULL_MODE_BACK_BIT;
+  }
+}
+
+VkCompareOp GetVkCompareOp(DepthCompareOp _eCompareOp)
+{
+  switch (_eCompareOp)
+  {
+  case DepthCompareOp::LESS:
+    return VK_COMPARE_OP_LESS;
+  case DepthCompareOp::EQUAL:
+    return VK_COMPARE_OP_EQUAL;
+  case DepthCompareOp::LESS_OR_EQUAL:
+    return VK_COMPARE_OP_LESS_OR_EQUAL;  
+  case DepthCompareOp::GREATER:
+    return VK_COMPARE_OP_GREATER;
+  case DepthCompareOp::NOT_EQUAL:
+    return VK_COMPARE_OP_NOT_EQUAL;
+  case DepthCompareOp::GREATER_OR_EQUAL:
+    return VK_COMPARE_OP_GREATER_OR_EQUAL;
+  case DepthCompareOp::ALWAYS:
+    return VK_COMPARE_OP_ALWAYS;
+  case DepthCompareOp::NEVER:
+    return VK_COMPARE_OP_NEVER;
+  default:
+    return VK_COMPARE_OP_LESS;
+  }
+}
+
 void CreateInstance()
 {
 
-  const char* pDebugLayers[] = { "VK_LAYER_KHRONOS_validation" };
+  const char* pDebugLayers[] = { "VK_LAYER_KHRONOS_validation"};
 
 
 #ifdef _DEBUG
@@ -459,8 +499,8 @@ void CreatePipeline(const file::InFile& _oVSFile,
   oRasterizer.rasterizerDiscardEnable = VK_FALSE;
   oRasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   oRasterizer.lineWidth = 1.0f;
-  oRasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
-  oRasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  oRasterizer.cullMode = GetVkCullMode(_oInfo.m_eCullMode);
+  oRasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   oRasterizer.depthBiasEnable = VK_FALSE;
   oRasterizer.depthBiasConstantFactor = 0.0f; // Optional
   oRasterizer.depthBiasClamp = 0.0f; // Optional
@@ -483,7 +523,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
   oDepthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   oDepthStencil.depthTestEnable = _oInfo.m_bDepthRead;
   oDepthStencil.depthWriteEnable = _oInfo.m_bDepthWrite;
-  oDepthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+  oDepthStencil.depthCompareOp = GetVkCompareOp(_oInfo.m_eDepthCompareOp);
   oDepthStencil.depthBoundsTestEnable = VK_FALSE;
   oDepthStencil.stencilTestEnable = VK_FALSE;
   oDepthStencil.minDepthBounds = 0.f;
@@ -573,8 +613,7 @@ void CreateLogicalDevice(APIWindow* _pWindow)
   VK_KHR_SWAPCHAIN_EXTENSION_NAME
   };
 
-  uint32_t uDeviceExtensionCount = 1u;
-
+  uint32_t uDeviceExtensionCount = 1u;  
 
   VkDeviceQueueCreateInfo aDeviceQueueCreateInfos[2];
 
@@ -617,6 +656,32 @@ void CreateLogicalDevice(APIWindow* _pWindow)
     aDeviceQueueCreateInfos[1].pQueuePriorities = queuePriorities;
   }
 
+  // Check extensions are available
+
+  uint32_t uSupportedExtensionCount = 0;
+  vkEnumerateDeviceExtensionProperties(s_oGlobalData.m_hPhysicalDevice, nullptr, &uSupportedExtensionCount, nullptr);
+
+  std::vector<VkExtensionProperties> lstSupportedExtensions(uSupportedExtensionCount);
+  vkEnumerateDeviceExtensionProperties(s_oGlobalData.m_hPhysicalDevice, nullptr, &uSupportedExtensionCount, lstSupportedExtensions.data());
+
+  for (int i = 0; i < uDeviceExtensionCount; i++)
+  {
+    bool found = false;
+    for (const auto& ext : lstSupportedExtensions)
+    {
+      if (std::strcmp(ext.extensionName, aDeviceExtensions[i]) == 0)
+      {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+    {
+      THROW_GENERIC_EXCEPTION("Some extension not supported by this GPU!");
+    }
+  }
+
   VkPhysicalDeviceFeatures oDeviceFeatures{};
   vkGetPhysicalDeviceFeatures(s_oGlobalData.m_hPhysicalDevice, &oDeviceFeatures);
 
@@ -629,9 +694,9 @@ void CreateLogicalDevice(APIWindow* _pWindow)
   oDeviceCreateInfo.enabledExtensionCount = uDeviceExtensionCount;
   oDeviceCreateInfo.ppEnabledExtensionNames = aDeviceExtensions;
   oDeviceCreateInfo.pEnabledFeatures = &oDeviceFeatures;
+  oDeviceCreateInfo.pNext = NULL;
 
-  VK_CHECK(vkCreateDevice(s_oGlobalData.m_hPhysicalDevice, &oDeviceCreateInfo, NULL, &_pWindow->m_hDevice))
-
+  VK_CHECK(vkCreateDevice(s_oGlobalData.m_hPhysicalDevice, &oDeviceCreateInfo, NULL, &_pWindow->m_hDevice))  
 }
 
 void RetrieveQueues(APIWindow* _pWindow)
@@ -685,14 +750,16 @@ void CreateColorBuffer(APIWindow* _pWindow)
     , _pWindow->m_oExtent.height
     , _pWindow->m_eSwapchainFormat
     , 1u
+    , 1u
     , s_oGlobalData.m_eMaxMsaaSampleCount
     , VK_IMAGE_TILING_OPTIMAL
     , VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+    , 0u    
     , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     , _pWindow->m_hColorImage
     , _pWindow->m_hColorImageMemory);
 
-  CreateImageView(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, 1u, VK_IMAGE_ASPECT_COLOR_BIT, _pWindow->m_hColorImageView);
+  CreateImageView(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, 1u, 1u, false, VK_IMAGE_ASPECT_COLOR_BIT, _pWindow->m_hColorImageView);
 }
 
 void CreateDepthBuffer(APIWindow* _pWindow)
@@ -706,16 +773,18 @@ void CreateDepthBuffer(APIWindow* _pWindow)
     _pWindow->m_oExtent.height,
     eFormat,
     1u,
+    1u,
     s_oGlobalData.m_eMaxMsaaSampleCount,
     VK_IMAGE_TILING_OPTIMAL,
     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+    0u,    
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     _pWindow->m_hDepthImage,
     _pWindow->m_hDepthImageMemory);
 
-  CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, uAspectFlags, _pWindow->m_hDepthImageView);
+  CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, false, uAspectFlags, _pWindow->m_hDepthImageView);
 
-  TransitionImageLayoutOffline(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+  TransitionImageLayoutOffline(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
 void CreateSwapchain(APIWindow* _pWindow)
@@ -1110,27 +1179,40 @@ void CreateDescriptorPool(APIWindow* _pWindow)
 void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
 {
   {
-    VkDescriptorSetLayoutBinding oBinding{};
-    oBinding.binding = 0u;//static_cast<uint32_t>(ResourceFrequency::GLOBAL);
-    oBinding.descriptorCount = 1u;
-    oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    oBinding.pImmutableSamplers = NULL;
+    {
+      VkDescriptorSetLayoutBinding oBinding{};
+      oBinding.binding = 0u;
+      oBinding.descriptorCount = 1u;
+      oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+      oBinding.pImmutableSamplers = NULL;
 
-    _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("GlobalBuffer", std::move(oBinding));
+      _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("GlobalBuffer", std::move(oBinding));
+    }
 
     char aNames[4][11] = { "ShadowMap0", "ShadowMap1", "ShadowMap2", "ShadowMap3" };
 
     for (uint32_t i = 0u; i < 4u; i++)
     {
       VkDescriptorSetLayoutBinding oBinding{};
-      oBinding.binding = i + 1u;// static_cast<uint32_t>(ResourceFrequency::RENDER_STEP);
+      oBinding.binding = i + 1u;
       oBinding.descriptorCount = 1u;
       oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
       oBinding.pImmutableSamplers = NULL;
 
       _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding(aNames[i], std::move(oBinding));
+    }
+
+    {
+      VkDescriptorSetLayoutBinding oBinding{};
+      oBinding.binding = 5u;
+      oBinding.descriptorCount = 1u;
+      oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+      oBinding.pImmutableSamplers = NULL;
+
+      _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("Skybox", std::move(oBinding));
     }
 
     _pWindow->m_hGlobalDescSetLayout = _pWindow->m_oGlobalLayoutBuilder.Build(_pWindow->m_hDevice);
@@ -1238,7 +1320,12 @@ uint32_t FindMemoryType(uint32_t _uTypeFilter, VkMemoryPropertyFlags _uPropertie
   THROW_GENERIC_EXCEPTION("Failed to find suitable memory type")
 }
 
-void CreateBuffer(APIWindow* _pWindow, size_t _uSize, VkBufferUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkBuffer& hBuffer_, VkDeviceMemory& hDeviceMemory_)
+void CreateBuffer(APIWindow* _pWindow
+  , size_t _uSize
+  , VkBufferUsageFlags _uUsage
+  , VkMemoryPropertyFlags _uProperties
+  , VkBuffer& hBuffer_
+  , VkDeviceMemory& hDeviceMemory_)
 {
 
   VkDevice hDevice = _pWindow->m_hDevice;
@@ -1265,7 +1352,19 @@ void CreateBuffer(APIWindow* _pWindow, size_t _uSize, VkBufferUsageFlags _uUsage
   VK_CHECK(vkBindBufferMemory(hDevice, hBuffer_, hDeviceMemory_, 0))
 }
 
-void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_)
+void CreateImage(APIWindow* _pWindow
+  , uint32_t _uWidth
+  , uint32_t _uHeight
+  , VkFormat _eFormat
+  , uint32_t _uMipLevels
+  , uint32_t _uLayers
+  , VkSampleCountFlagBits _eMsaaSampleCount
+  , VkImageTiling _eTiling
+  , VkImageUsageFlags _uUsage
+  , VkImageCreateFlags _uCreateFlags  
+  , VkMemoryPropertyFlags _uProperties
+  , VkImage& hImage_
+  , VkDeviceMemory& hMemory_)
 {
   VkImageCreateInfo oImageCreateInfo{};
 
@@ -1275,14 +1374,14 @@ void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFor
   oImageCreateInfo.extent.height = _uHeight;
   oImageCreateInfo.extent.depth = 1u;
   oImageCreateInfo.mipLevels = _uMipLevels;
-  oImageCreateInfo.arrayLayers = 1;
+  oImageCreateInfo.arrayLayers = _uLayers;
   oImageCreateInfo.format = _eFormat;
   oImageCreateInfo.tiling = _eTiling;
   oImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   oImageCreateInfo.usage = _uUsage;
   oImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   oImageCreateInfo.samples = _eMsaaSampleCount;
-  oImageCreateInfo.flags = 0u;
+  oImageCreateInfo.flags = _uCreateFlags;
 
   VK_CHECK(vkCreateImage(_pWindow->m_hDevice, &oImageCreateInfo, NULL, &hImage_))
 
@@ -1299,7 +1398,14 @@ void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFor
     VK_CHECK(vkBindImageMemory(_pWindow->m_hDevice, hImage_, hMemory_, 0))
 }
 
-void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_)
+void CreateImageView(APIWindow* _pWindow
+  , VkImage _hImage
+  , VkFormat _eFormat
+  , uint32_t _uMipLevels  
+  , uint32_t _uLayers
+  , bool _bIsCubeTexture
+  , VkImageAspectFlags _uAspectFlags
+  , VkImageView& hImageView_)
 {
   VkImageViewCreateInfo oCreateInfo = {};
   oCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1312,9 +1418,9 @@ void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, ui
   oCreateInfo.subresourceRange.baseMipLevel = 0u;
   oCreateInfo.subresourceRange.levelCount = _uMipLevels;
   oCreateInfo.subresourceRange.baseArrayLayer = 0u;
-  oCreateInfo.subresourceRange.layerCount = 1u;
+  oCreateInfo.subresourceRange.layerCount = _uLayers;
   oCreateInfo.image = _hImage;
-  oCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  oCreateInfo.viewType = _bIsCubeTexture ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
   oCreateInfo.format = _eFormat;
 
   VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &hImageView_))
@@ -1417,7 +1523,7 @@ void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer,
   EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }
 
-void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight)
+void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uLayers)
 {
   VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
 
@@ -1429,7 +1535,7 @@ void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, 
   oCopyRegion.imageExtent = { _uWidth, _uHeight, 1 };
   oCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   oCopyRegion.imageSubresource.baseArrayLayer = 0;
-  oCopyRegion.imageSubresource.layerCount = 1;
+  oCopyRegion.imageSubresource.layerCount = _uLayers;
   oCopyRegion.imageSubresource.mipLevel = 0;
 
   vkCmdCopyBufferToImage(hCmdBuffer, _hBuffer, _hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &oCopyRegion);
@@ -1437,7 +1543,14 @@ void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, 
   EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }
 
-void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer
+  , VkImage _hImage
+  , VkFormat _eFormat
+  , uint32_t _uMipLevels  
+  , uint32_t _uLayers
+  , VkImageAspectFlags _uAspectFlags
+  , VkImageLayout _eOldLayout
+  , VkImageLayout _eNewLayout)
 {  
 
   VkImageMemoryBarrier oBarrier{};
@@ -1451,7 +1564,7 @@ void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer, VkImage _hImage, 
   oBarrier.subresourceRange.baseMipLevel = 0;
   oBarrier.subresourceRange.levelCount = _uMipLevels;
   oBarrier.subresourceRange.baseArrayLayer = 0;
-  oBarrier.subresourceRange.layerCount = 1;
+  oBarrier.subresourceRange.layerCount = _uLayers;
 
   VkPipelineStageFlags uSrcStage;
   VkPipelineStageFlags uDstStage;
@@ -1504,21 +1617,21 @@ void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer, VkImage _hImage, 
   vkCmdPipelineBarrier(_hCmdBuffer, uSrcStage, uDstStage, 0, 0, NULL, 0, NULL, 1, &oBarrier);  
 }
 
-void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
 {  
-  PerformTransitionImageLayout(_pWindow->m_pCmdBuffers[_pWindow->m_uCurrFrameIdx], _hImage, _eFormat, _uMipLevels, _uAspectFlags, _eOldLayout, _eNewLayout);
+  PerformTransitionImageLayout(_pWindow->m_pCmdBuffers[_pWindow->m_uCurrFrameIdx], _hImage, _eFormat, _uMipLevels, _uLayers, _uAspectFlags, _eOldLayout, _eNewLayout);
 }
 
-void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
 {
   VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
 
-  PerformTransitionImageLayout(hCmdBuffer, _hImage, _eFormat, _uMipLevels, _uAspectFlags, _eOldLayout, _eNewLayout);
+  PerformTransitionImageLayout(hCmdBuffer, _hImage, _eFormat, _uMipLevels, _uLayers, _uAspectFlags, _eOldLayout, _eNewLayout);
 
   EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }
 
-void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels)
+void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels, uint32_t _uLayers)
 {
   VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
 
@@ -1529,7 +1642,7 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
   oBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   oBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   oBarrier.subresourceRange.baseArrayLayer = 0;
-  oBarrier.subresourceRange.layerCount = 1;
+  oBarrier.subresourceRange.layerCount = _uLayers;
   oBarrier.subresourceRange.levelCount = 1;
 
   int32_t iMipWidth = _iWidth;
@@ -1555,13 +1668,13 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
     oBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     oBlit.srcSubresource.mipLevel = i - 1;
     oBlit.srcSubresource.baseArrayLayer = 0;
-    oBlit.srcSubresource.layerCount = 1;
+    oBlit.srcSubresource.layerCount = _uLayers;
     oBlit.dstOffsets[0] = { 0, 0, 0 };
     oBlit.dstOffsets[1] = { iMipWidth > 1 ? iMipWidth / 2 : 1, iMipHeight > 1 ? iMipHeight / 2 : 1, 1 };
     oBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     oBlit.dstSubresource.mipLevel = i;
     oBlit.dstSubresource.baseArrayLayer = 0;
-    oBlit.dstSubresource.layerCount = 1;
+    oBlit.dstSubresource.layerCount = _uLayers;
 
     vkCmdBlitImage(hCmdBuffer,
       _hImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,

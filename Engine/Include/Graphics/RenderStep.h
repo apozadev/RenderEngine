@@ -7,6 +7,7 @@
 
 class Window;
 class RenderTarget;
+class Texture2D;
 class Transform;
 class Camera;
 class Pass;
@@ -15,7 +16,7 @@ class RenderStep
 {
 public:
 
-  RenderStep(std::vector<RenderTarget*>&& _lstInputs, const RenderTarget* _pRenderTarget);
+  RenderStep(std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget);
 
   virtual ~RenderStep();
 
@@ -44,7 +45,7 @@ protected:
   
 private:  
 
-  std::vector<RenderTarget*> m_lstInputs;
+  std::vector<Texture2D*> m_lstInputs;
 
   const RenderTarget* m_pRenderTarget;
 
