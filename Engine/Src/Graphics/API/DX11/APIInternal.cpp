@@ -232,6 +232,46 @@ namespace dx11
     }
   }
 
+  D3D11_CULL_MODE GetD3D11CullMode(CullMode _eCullMode)
+  {
+    switch (_eCullMode)
+    {
+    case CullMode::BACK:
+      return D3D11_CULL_BACK;
+    case CullMode::FRONT:
+      return D3D11_CULL_FRONT;
+    case CullMode::NONE:
+      return D3D11_CULL_NONE;
+    default:
+      return D3D11_CULL_BACK;
+    }
+  }
+
+  D3D11_COMPARISON_FUNC GetD3D11DepthCompareFunc(DepthCompareOp _eCompareOp)
+  {
+    switch (_eCompareOp)
+    {
+    case DepthCompareOp::ALWAYS:
+      return D3D11_COMPARISON_ALWAYS;
+    case DepthCompareOp::EQUAL:
+      return D3D11_COMPARISON_EQUAL;
+    case DepthCompareOp::GREATER:
+      return D3D11_COMPARISON_GREATER;
+    case DepthCompareOp::GREATER_OR_EQUAL:
+      return D3D11_COMPARISON_GREATER_EQUAL;
+    case DepthCompareOp::LESS:
+      return D3D11_COMPARISON_LESS;
+    case DepthCompareOp::LESS_OR_EQUAL:
+      return D3D11_COMPARISON_LESS_EQUAL;
+    case DepthCompareOp::NEVER:
+      return D3D11_COMPARISON_NEVER;
+    case DepthCompareOp::NOT_EQUAL:
+      return D3D11_COMPARISON_NOT_EQUAL;
+    default:
+      return D3D11_COMPARISON_LESS;
+    }
+  }
+
   void CreateDeviceAndSwapChain(APIWindow* _pWindow)
   {
     DXGI_SWAP_CHAIN_DESC oSwapchainDesc = {};

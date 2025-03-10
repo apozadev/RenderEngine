@@ -74,13 +74,11 @@ cbuffer ModelBuffer : register(b3)
 #define outWorldPos	vso.worldPos
 
 VERTEX_MAIN_BEGIN
+	
+	vec3 viewPos = mul(view, vec4(inPos, 0.0)).xyz;
+	outPos = mul(proj, vec4(viewPos, 1.0)).xyww;
 
-	vec4 worldPos = mul(modelMat, vec4(inPos, 1.0));
-	outPos = mul(viewProj, worldPos);
-	outWorldPos = worldPos.xyz;
-	outNormal = normalize(mul(normalMat, vec4(inNormal, 0.0))).xyz;
-	outTangent = normalize(mul(normalMat, vec4(inTangent, 0.0))).xyz;
-	outUv = inUv;
+	outWorldPos = inPos;
 	
 VERTEX_MAIN_END
  

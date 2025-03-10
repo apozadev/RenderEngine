@@ -5,6 +5,8 @@
 
 #include "Graphics/ImageFormat.h"
 #include "Graphics/BlendEnums.h"
+#include "Graphics/CullMode.h"
+#include "Graphics/DepthCompareOp.h"
 #include "Graphics/SamplerConfig.h"
 #include "Graphics/API/DX11/DX11Data.h"
 
@@ -32,6 +34,10 @@ namespace dx11
   D3D11_TEXTURE_ADDRESS_MODE GetD3D11AdressMode(TextureAddressMode _eAddressMode);
 
   D3D11_FILTER GetD3D11Filter(TextureFilterMode _eMipmapFilter, TextureFilterMode _eMinFilter, TextureFilterMode _eMagFilter);
+
+  D3D11_CULL_MODE GetD3D11CullMode(CullMode _eCullMode);
+
+  D3D11_COMPARISON_FUNC GetD3D11DepthCompareFunc(DepthCompareOp _eCompareOp);
 
   void CreateDeviceAndSwapChain(APIWindow* _pWindow);
 

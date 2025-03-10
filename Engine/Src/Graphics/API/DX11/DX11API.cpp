@@ -142,6 +142,7 @@ namespace api
       lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap1", 9u, PipelineStage::PIXEL });      
       lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap2", 10u, PipelineStage::PIXEL });      
       lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap3", 11u, PipelineStage::PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "Skybox", 12u, PipelineStage::PIXEL });      
 
       IMGUI_CHECKVERSION();
       ImGui::CreateContext();
@@ -468,7 +469,7 @@ namespace api
 
     // Texture
 
-    APITexture* CreateAPITexture(const void* _pData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig)
+    APITexture* CreateAPITexture(const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap)
     {
       APITexture* pTexture = s_oTexturePool.PullElement();
 
@@ -488,14 +489,10 @@ namespace api
       if (_uMipLevels > 1u)
       {
         uBindFlags |= D3D11_BIND_RENDER_TARGET;
-      }
-
-      D3D11_SUBRESOURCE_DATA oData = {};
-      oData.pSysMem = _pData;
-      oData.SysMemPitch = uMemPitch;
+      }      
 
       D3D11_TEXTURE2D_DESC oTexDesc = {};
-      oTexDesc.ArraySize = 1;
+      oTexDesc.ArraySize = _bIsCubemap ? 6u : 1u;
       oTexDesc.BindFlags = uBindFlags;
       oTexDesc.CPUAccessFlags = 0;
       oTexDesc.Format = eDXGIFormat;
@@ -504,16 +501,42 @@ namespace api
       oTexDesc.Usage = D3D11_USAGE_DEFAULT;
       oTexDesc.MipLevels = _uMipLevels;
       oTexDesc.Width = _uWidth;
-      oTexDesc.Height = _uHeight;
+      oTexDesc.Height = _uHeight;      
 
       if (_uMipLevels != 1)
       {
-        oTexDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+        oTexDesc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+      }
+      
+      if(_bIsCubemap)
+      {
+        oTexDesc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
       }
 
       if (_uMipLevels == 1)
       {
-        DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _pData? &oData : nullptr, pTexture->m_pTexture.GetAddressOf()));
+        if (_bIsCubemap)
+        {          
+          D3D11_SUBRESOURCE_DATA aData[6];
+          if (_ppData != nullptr)
+          {
+            for (int i = 0; i < 6; i++)
+            {
+              aData[i].pSysMem = _ppData[i];
+              aData[i].SysMemPitch = uMemPitch;
+            }
+          }
+
+          DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _ppData ? &aData[0] : nullptr, pTexture->m_pTexture.GetAddressOf()));
+        }
+        else
+        {
+          D3D11_SUBRESOURCE_DATA oData = {};
+          oData.pSysMem = _ppData ? *_ppData : nullptr;
+          oData.SysMemPitch = uMemPitch;
+
+          DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _ppData ? &oData : nullptr, pTexture->m_pTexture.GetAddressOf()));
+        }
       }
       else
       {
@@ -521,16 +544,39 @@ namespace api
         DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, nullptr, pTexture->m_pTexture.GetAddressOf()));
       }
 
-      D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-      srvDesc.Format = eDXGISrvFormat;
-      srvDesc.Texture2D.MipLevels = _uMipLevels;
-      srvDesc.Texture2D.MostDetailedMip = 0u;
-      srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-      DX11_CHECK(pWindow->m_pDevice->CreateShaderResourceView(pTexture->m_pTexture.Get(), &srvDesc, pTexture->m_pSRV.GetAddressOf()));
+      D3D11_SHADER_RESOURCE_VIEW_DESC oSrvDesc = {};
+      oSrvDesc.Format = eDXGISrvFormat;
 
-      if (_uMipLevels != 1)
+      if (_bIsCubemap)
       {
-        pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), 0u, nullptr, _pData, uMemPitch, 0u);
+        oSrvDesc.TextureCube.MipLevels = _uMipLevels;
+        oSrvDesc.TextureCube.MostDetailedMip = 0u;
+        oSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+      }
+      else
+      {                
+        oSrvDesc.Texture2D.MipLevels = _uMipLevels;
+        oSrvDesc.Texture2D.MostDetailedMip = 0u;
+        oSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;        
+      }
+
+      DX11_CHECK(pWindow->m_pDevice->CreateShaderResourceView(pTexture->m_pTexture.Get(), &oSrvDesc, pTexture->m_pSRV.GetAddressOf()));
+
+      if (_ppData != nullptr && _uMipLevels != 1)
+      {
+        if (_bIsCubemap)
+        {
+          for (int i = 0; i < 6; i++)
+          {
+            UINT uSubResource = D3D11CalcSubresource(0, i, _uMipLevels);
+            pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), uSubResource, nullptr, _ppData[i], uMemPitch, 0u);
+          }
+        }
+        else
+        {
+          pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), 0u, nullptr, *_ppData, uMemPitch, 0u);
+        }
+
         pWindow->m_pContext->GenerateMips(pTexture->m_pSRV.Get());
       }
 
@@ -759,8 +805,8 @@ namespace api
 
       D3D11_RASTERIZER_DESC oRasterizerDesc = {};
       oRasterizerDesc.FillMode = D3D11_FILL_SOLID;
-      oRasterizerDesc.CullMode = D3D11_CULL_FRONT;
-      oRasterizerDesc.FrontCounterClockwise = false;
+      oRasterizerDesc.CullMode = GetD3D11CullMode(_oInfo.m_eCullMode);
+      oRasterizerDesc.FrontCounterClockwise = true;
       oRasterizerDesc.DepthBias = 0;// DEPTH_BIAS_D32_FLOAT(-0.00001);
       oRasterizerDesc.DepthBiasClamp = 0;//-0.001;
       oRasterizerDesc.SlopeScaledDepthBias = 0;// 1.f;
@@ -795,7 +841,16 @@ namespace api
       D3D11_DEPTH_STENCIL_DESC oDSDesc = {};
       oDSDesc.DepthEnable = _oInfo.m_bDepthWrite || _oInfo.m_bDepthRead;      
       oDSDesc.DepthWriteMask = _oInfo.m_bDepthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;            
-      oDSDesc.DepthFunc = _oInfo.m_bDepthRead ? D3D11_COMPARISON_LESS : D3D11_COMPARISON_ALWAYS;      
+
+      if (_oInfo.m_bDepthRead)
+      {
+        oDSDesc.DepthFunc = GetD3D11DepthCompareFunc(_oInfo.m_eDepthCompareOp);
+      }
+      else
+      {
+        oDSDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+      }
+      
 
       DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilState(&oDSDesc, pRenderState->m_pDSState.GetAddressOf()));
 

@@ -11,6 +11,8 @@ struct VSin
 cbuffer GlobalBuffer : register(b0)
 {
 	matrix viewproj;
+	matrix view;
+	matrix proj;
 };
 
 cbuffer ModelBuffer : register(b3)

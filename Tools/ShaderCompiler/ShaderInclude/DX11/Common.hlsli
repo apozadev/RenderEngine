@@ -23,4 +23,6 @@ struct VSout
 
 #define Texture(name, set, bind) Texture2D name : register(t##bind);
 
+#define CubeTexture(name, setIdx, bindIdx) TextureCube name : register(t##bind);
+
 #define CBuffer(name, bind) cbuffer name : register(b##bind)

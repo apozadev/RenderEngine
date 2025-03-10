@@ -23,6 +23,8 @@ struct VSout
 
 #define Texture(name, set, bind) Texture2D name : register(t##bind);
 
+#define CubeTexture(name, setIdx, bindIdx) TextureCube name : register(t##bind);
+
 #define CBuffer(name, bind) cbuffer name : register(b##bind)
 
 #define PIXEL_MAIN_BEGIN \
@@ -66,6 +68,8 @@ Texture2D ShadowMap1 : register(t9);
 Texture2D ShadowMap2 : register(t10);
 Texture2D ShadowMap3 : register(t11);
 
+TextureCube Skybox : register(t12);
+
 sampler Input0_Sampler : register(s0);
 sampler Input1_Sampler : register(s1);
 sampler Input2_Sampler : register(s2);
@@ -80,6 +84,8 @@ sampler ShadowMap0_Sampler : register(s8);
 sampler ShadowMap1_Sampler : register(s9);
 sampler ShadowMap2_Sampler : register(s10);
 sampler ShadowMap3_Sampler : register(s11);
+
+sampler Skybox_Sampler : register(s12);
 
 #define inPos       __input.pos
 #define inUv        __input.uv
@@ -218,7 +224,7 @@ PIXEL_MAIN_BEGIN
 
   vec3 light = LambertDirLighting(vec4(inWorldPos, 1), vWN);
 
-  vec4 color = sampleTex(Texture2, vec2(inUv.x, inUv.y));  
+  vec4 color = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
   
   outColor = color * vec4(light + ambientFactor, 1);
   outColor.a = 0.7f; 
