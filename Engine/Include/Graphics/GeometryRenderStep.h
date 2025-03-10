@@ -10,7 +10,7 @@ class GeometryRenderStep : public RenderStep
 {
 public:
 
-  GeometryRenderStep(std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps = true);  
+  GeometryRenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps = true);  
 
   void SubmitJob(Job&& _rJob) override;  
   void SubmitJobs(const std::vector<Job>& _rJob) override;

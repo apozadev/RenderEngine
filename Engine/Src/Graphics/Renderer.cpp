@@ -107,7 +107,7 @@ void Renderer::SubmitMesh(Mesh* _pMesh, const MaterialInstance* _pMaterial, cons
   for (const owner_ptr<Pass>& pPass : _pMaterial->GetMaterial()->GetPasses())
   {
     RenderPipeline* pPipeline = GetRenderPipeline(pPass->GetRenderPipelineId());
-    RenderStep* pRenderStep = pPipeline ? pPipeline->GetRenderStep(pPass->GetRenderStepIdx()) : nullptr;
+    RenderStep* pRenderStep = pPipeline ? pPipeline->GetRenderStep(pPass->GetRenderStepId()) : nullptr;
 
     if (pRenderStep)
     {
@@ -204,7 +204,7 @@ void Renderer::Draw()
     {
       rShadowView.m_pShadowMap->Clear();
 
-      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>(std::vector<Texture2D*>(), rShadowView.m_pShadowMap, false, false);
+      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>("", std::vector<Texture2D*>(), rShadowView.m_pShadowMap, false, false);
 
       for (Job& rJob : m_lstShadowJobs)
       {

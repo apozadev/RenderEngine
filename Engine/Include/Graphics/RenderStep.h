@@ -16,9 +16,11 @@ class RenderStep
 {
 public:
 
-  RenderStep(std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget);
+  RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget);
 
   virtual ~RenderStep();
+
+  const std::string& GetId() const { return m_sId; }
 
   void Setup();
 
@@ -44,6 +46,8 @@ protected:
   virtual void ExecuteInternal(const Camera* _pCamera, const Transform* _pViewTransform) = 0;
   
 private:  
+
+  std::string m_sId;
 
   std::vector<Texture2D*> m_lstInputs;
 

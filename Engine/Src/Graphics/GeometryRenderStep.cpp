@@ -7,8 +7,8 @@
 #include "Graphics/Mesh.h"
 #include "Graphics/Renderer.h"
 
-GeometryRenderStep::GeometryRenderStep(std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps)
-  : RenderStep(std::move(_lstInputs), _pRenderTarget)
+GeometryRenderStep::GeometryRenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps)
+  : RenderStep(_sId, std::move(_lstInputs), _pRenderTarget)
   , m_bOrderTranslucent(_bOrderTranslucent)
   ,m_bUseShadowMaps(_bUseShadowMaps)
 {

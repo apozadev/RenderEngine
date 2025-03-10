@@ -15,8 +15,9 @@
 #include "Graphics/API/GraphicsAPI.h"
 
 
-RenderStep::RenderStep(std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget)
-  : m_lstInputs(std::move(_lstInputs))
+RenderStep::RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget)
+  : m_sId(_sId)
+  , m_lstInputs(std::move(_lstInputs))
   , m_pRenderTarget(_pRenderTarget)
 {
   m_pAPIRenderSubState = api::CreateAPIRenderSubState(ResourceFrequency::RENDER_STEP);

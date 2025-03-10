@@ -63,7 +63,7 @@ layout(location = 4) out vec3 fragWorldPos;
 
 VERTEX_MAIN_BEGIN
 	
-	vec3 viewPos = mul(mat3(view), inPos);
+	vec3 viewPos = mul(view, vec4(inPos, 0.0)).xyz;
 	outPos = mul(proj, vec4(viewPos, 1.0)).xyww;
 
 	outWorldPos = inPos;

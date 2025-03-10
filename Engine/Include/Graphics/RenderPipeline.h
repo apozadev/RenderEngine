@@ -24,7 +24,7 @@ public:
 
 	const std::string& GetId() const { return m_sId; }
 
-	RenderStep* GetRenderStep(int _iIdx) { if (_iIdx < m_lstRenderSteps.size()) return m_lstRenderSteps[_iIdx].get(); return nullptr; }
+	RenderStep* GetRenderStep(const std::string& _sId);
 
 	void OnWindowResize();
 

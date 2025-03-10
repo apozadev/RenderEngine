@@ -16,6 +16,19 @@ RenderPipeline::RenderPipeline(std::string _sId, RenderPipelineConfig&& _rConfig
   GenerateFromConfig();
 }
 
+RenderStep* RenderPipeline::GetRenderStep(const std::string& _sId)
+{
+  for (owner_ptr<RenderStep>& pStep : m_lstRenderSteps)
+  {
+    if (pStep->GetId() == _sId)
+    {
+      return pStep.get();
+    }
+  }
+
+  return nullptr;
+}
+
 void RenderPipeline::OnWindowResize()
 {
 
@@ -132,7 +145,7 @@ void RenderPipeline::GenerateFromConfig()
       }
     }     
 
-    owner_ptr<GeometryRenderStep> pRenderStep = Factory::Create<GeometryRenderStep>(std::move(lstInputs), pTarget, rStepConfig.m_bOrderTranslucent);
+    owner_ptr<GeometryRenderStep> pRenderStep = Factory::Create<GeometryRenderStep>(rStepConfig.m_sId, std::move(lstInputs), pTarget, rStepConfig.m_bOrderTranslucent);
     m_lstRenderSteps.push_back(pRenderStep.cast_release<RenderStep>()); 
   }
 }

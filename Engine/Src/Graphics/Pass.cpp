@@ -33,7 +33,6 @@ void Pass::Configure(const std::string& _sVSFilename
   m_uLayer = _uLayer;  
 
   m_oInfo = {};
-  m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
   m_oInfo.m_sVSFilename = _sVSFilename;
   m_oInfo.m_sPSFilename = _sPSFilename;
   m_oInfo.m_bBlendEnabled = _bBlendEnabled;
@@ -56,16 +55,15 @@ void Pass::Configure(const std::string& _sVSFilename
   , bool _bDepthWrite
   , bool _bDepthRead
   , const std::string& _sPipelineId
-  , int _uStepIdx
+  , const std::string& _sStepId
   , uint16_t _uLayer)    
 {  
 
-  m_sPipelineId = _sPipelineId;
-
-  m_iStepIdx = _uStepIdx;
+  m_sPipelineId = _sPipelineId; 
+  m_sStepId = _sStepId;
 
   RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(_sPipelineId);
-  RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(_uStepIdx) : nullptr;
+  RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(m_sStepId) : nullptr;
   const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;
 
   Configure(_sVSFilename, _sPSFilename, _bBlendEnabled, _eBlendOp, _eSrcBlendFactor, _eDstBlendFactor, _bDepthWrite, _bDepthRead, pTarget, _uLayer);
@@ -74,7 +72,7 @@ void Pass::Configure(const std::string& _sVSFilename
 void Pass::Configure()
 {
   RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(m_sPipelineId);
-  RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(m_iStepIdx) : nullptr;
+  RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(m_sStepId) : nullptr;
   const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;
 
   Configure(pTarget);
@@ -100,6 +98,8 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
   {
     api::DestroyAPIRenderState(m_pAPIRenderState);
   }
+
+  m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
 
   m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
 
@@ -201,16 +201,6 @@ void Pass::SetUsing() const
   api::SetUsingAPIRenderState(m_pAPIRenderState);
 }
 
-const std::string& Pass::GetRenderPipelineId() const
-{
-  return m_sPipelineId;
-}
-
-int Pass::GetRenderStepIdx() const
-{
-  return m_iStepIdx;
-}
-
 bool Pass::GetFloat(const char* _sName, float* pOutValue_) const 
 {
   for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
@@ -267,7 +257,7 @@ REFLECT_STRUCT_BASE_BEGIN(Pass)
 REFLECT_STRUCT_MEMBER(m_oInfo)
 REFLECT_STRUCT_MEMBER(m_uLayer)
 REFLECT_STRUCT_MEMBER(m_sPipelineId)
-REFLECT_STRUCT_MEMBER(m_iStepIdx)
+REFLECT_STRUCT_MEMBER(m_sStepId)
 REFLECT_STRUCT_MEMBER(m_lstCBuffCache)
 REFLECT_STRUCT_END(Pass)
 

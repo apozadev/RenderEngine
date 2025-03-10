@@ -47,7 +47,7 @@ public:
     , bool _bDepthWrite
     , bool _bDepthRead
     , const std::string& _sPipelineId
-    , int _uStepIdx
+    , const std::string& _sStepId
     , uint16_t _uLayer);  
 
   void Configure() override;
@@ -77,9 +77,9 @@ public:
 
   uint16_t GetLayer() const { return m_uLayer; }
 
-  const std::string& GetRenderPipelineId() const;
+  const std::string& GetRenderPipelineId() const { return m_sPipelineId; }
 
-  int GetRenderStepIdx() const;
+  const std::string& GetRenderStepId() const { return m_sStepId; }
 
   bool GetFloat(const char* _sName, float* pOutValue_) const;
   bool GetVec4(const char* _sName, float* pOutValue_) const;
@@ -112,8 +112,7 @@ private:
 
   std::string m_sPipelineId;
 
-  int m_iStepIdx;  
-
+  std::string m_sStepId;
 };
 
 DECLARE_REFLECTION_POINTER(Pass)

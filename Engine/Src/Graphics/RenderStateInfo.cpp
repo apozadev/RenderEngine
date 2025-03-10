@@ -2,7 +2,6 @@
 #include "Reflection/ReflectionImplMacros.h"
 
 REFLECT_STRUCT_BASE_BEGIN(RenderStateInfo)
-REFLECT_STRUCT_MEMBER(m_uMeshConstantSize)
 REFLECT_STRUCT_MEMBER(m_sVSFilename)
 REFLECT_STRUCT_MEMBER(m_sPSFilename)
 REFLECT_STRUCT_MEMBER(m_bBlendEnabled)

@@ -33,6 +33,7 @@ struct RenderStepConfig : public BaseObject
 {
   REFLECT_BASE()
 
+  std::string m_sId;
   std::vector<RenderStepInputConfig> m_lstInputs;
   std::string m_sRenderTargetId;
   bool m_bOrderTranslucent;
