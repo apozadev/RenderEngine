@@ -30,7 +30,11 @@ public:
     ConstantBufferBase::Update(m_pData, m_uSize);
   }
 
+  const std::string& GetName() { return m_sName; }
+
   size_t GetSize() const { return m_uSize; }
+
+  const std::vector<Variable>& GetVariables() { return m_lstVariables; }
 
   bool SetFloat(const char* _sName, float _fValue) { return SetVar<ConstantBufferType::SCALAR>(_sName, &_fValue); }
   bool SetVec2(const char* _sName, float* _pData)  { return SetVar<ConstantBufferType::VEC2>(_sName, _pData); }

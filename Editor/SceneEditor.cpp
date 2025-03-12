@@ -1,6 +1,8 @@
 #include "SceneEditor.h"
 
 #include "Core/Scene.h"
+#include "Graphics/Material.h"
+#include "Graphics/Pass.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_win32.h"
@@ -9,8 +11,10 @@
 #include "Reflection/TypeDescriptors.h"
 #include "Reflection/ImGuiTypeVisitor.h"
 #include "Reflection/CopyTypeVisitor.h"
+#include "Reflection/ReflectionHelper.h"
 #include "Core/Engine.h"
 #include "Core/SceneLoading.h"
+#include "Graphics/MaterialLibrary.h"
 
 #define UNIQUE_LABEL(LABEL, PTR) (std::string(LABEL) + "##" + std::to_string((size_t)PTR)).c_str()
 
@@ -84,6 +88,57 @@ void ViewScene(Scene* _pScene)
   }
 
   ImGui::TreePop();  
+
+  ImGui::End();
+}
+
+void ViewMaterial(const std::vector<MaterialLibrary::MatEntry>& _lstMaterials)
+{  
+  ImGui::Begin("Materials");
+
+  for (auto& rEntry : _lstMaterials)
+  {
+    if (ImGui::TreeNode(UNIQUE_LABEL("Material", rEntry.m_pMaterial.get())))
+    {
+      for (const owner_ptr<Pass>& pPass : rEntry.m_pMaterial->GetPasses())
+      {
+        for (const owner_ptr<ReflectedConstantBuffer>& pCBuff : pPass->GetConstantBuffers())
+        {
+          ImGui::Text(pCBuff->GetName().c_str());
+
+          for (const ReflectedConstantBuffer::Variable& rVar : pCBuff->GetVariables())
+          {
+            switch (rVar.m_eType)
+            {
+            case ConstantBufferType::SCALAR:
+              float fValue = 0.f;
+              pCBuff->GetFloat(rVar.m_sName.c_str(), &fValue);
+              if (ImGui::InputFloat(rVar.m_sName.c_str(), &fValue))
+              {
+                pCBuff->SetFloat(rVar.m_sName.c_str(), fValue);
+              }
+              break;
+            }
+          }
+
+          ImGui::Separator();
+        }
+      }
+
+      if (ImGui::Button(UNIQUE_LABEL("Save", rEntry.m_pMaterial.get())))
+      {
+        for (const owner_ptr<Pass>& pPass : rEntry.m_pMaterial->GetPasses())
+        {
+          pPass->UpdateCache();
+        }
+
+        const std::string& sFilename = MaterialLibrary::GetInstance()->FindMaterialFilename(rEntry.m_pMaterial.get());
+        reflection::ReflectionHelper::Serialize(sFilename.c_str(), rEntry.m_pMaterial.get());
+      }
+
+      ImGui::TreePop();
+    }    
+  }
 
   ImGui::End();
 }

@@ -81,11 +81,15 @@ public:
 
   const std::string& GetRenderStepId() const { return m_sStepId; }
 
+  const std::vector<owner_ptr<ReflectedConstantBuffer>>& GetConstantBuffers() { return m_lstCBuffers; }
+
   bool GetFloat(const char* _sName, float* pOutValue_) const;
   bool GetVec4(const char* _sName, float* pOutValue_) const;
 
   bool SetFloat(const char* _sName, float _fValue);
   bool SetVec4(const char* _sName, float* _pValue);
+
+  void UpdateCache();
 
   Pass& operator=(const Pass&) = delete;
 

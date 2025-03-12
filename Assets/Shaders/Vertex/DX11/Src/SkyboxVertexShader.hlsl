@@ -40,6 +40,7 @@ cbuffer GlobalBuffer : register(b0)
 {
 	matrix viewproj;
 	matrix view;
+	matrix viewInv;
 	matrix proj;
 };
 

@@ -253,6 +253,26 @@ bool Pass::SetVec4(const char* _sName, float* _pValue)
   return false;
 }
 
+void Pass::UpdateCache()
+{
+  m_lstCBuffCache.clear();
+
+  for (auto& rCBuff : m_lstCBuffers)
+  {
+    for (auto& rVar : rCBuff->GetVariables())
+    {
+      switch (rVar.m_eType)
+      {
+      case ConstantBufferType::SCALAR:
+        float fValue = 0.f;
+        GetFloat(rVar.m_sName.c_str(), &fValue);
+        m_lstCBuffCache.push_back(fValue);
+        break;
+      }
+    }
+  }
+}
+
 REFLECT_STRUCT_BASE_BEGIN(Pass)
 REFLECT_STRUCT_MEMBER(m_oInfo)
 REFLECT_STRUCT_MEMBER(m_uLayer)

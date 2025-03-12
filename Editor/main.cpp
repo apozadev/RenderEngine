@@ -29,10 +29,7 @@
 #include <string>
 
 // TODO:
-// Skybox:shaders no compilan
-// VK_REMAINING_ARRAY_LAYERS no sirve
-// RenderStep usar string de id en lugar de idx
-// Material::m_uMeshConstantSize? 
+// Guardar cbuffer cache
 // [API] Struct de contexto en lugar de usingX
 
 void PostUpdateCallback(float _fDt)
@@ -41,6 +38,8 @@ void PostUpdateCallback(float _fDt)
   {
     ViewScene(&rScene);
   }
+  
+  ViewMaterial(MaterialLibrary::GetInstance()->GetMaterials());  
 }
 
 int main()

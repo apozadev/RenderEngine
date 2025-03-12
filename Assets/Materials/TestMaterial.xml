@@ -1,9 +1,9 @@
 <Material>
 	<m_lstPasses>
-		<Pass_Ptr PtrId="384775920" Type="Pass">
+		<Pass_Ptr PtrId="2055670784" Type="Pass">
 			<m_oInfo>
 				<m_sVSFilename>Assets/Shaders/Vertex/VertexShader.vs</m_sVSFilename>
-				<m_sPSFilename>Assets/Shaders/Pixel/PixelShader.ps</m_sPSFilename>
+				<m_sPSFilename>Assets/Shaders/Pixel/PBRPixel.ps</m_sPSFilename>
 				<m_bBlendEnabled>false</m_bBlendEnabled>
 				<m_eBlendOp>BLEND_OP_ADD</m_eBlendOp>
 				<m_eSrcBlendFactor>BLEND_SRC_ALPHA</m_eSrcBlendFactor>
@@ -11,17 +11,16 @@
 				<m_bDepthWrite>true</m_bDepthWrite>
 				<m_bDepthRead>true</m_bDepthRead>
 				<m_eCullMode>BACK</m_eCullMode>
+				<m_eDepthCompareOp>LESS</m_eDepthCompareOp>
 			</m_oInfo>
 			<m_uLayer>0</m_uLayer>
 			<m_sPipelineId>TEST</m_sPipelineId>
 			<m_sStepId>OPAQUE</m_sStepId>
 			<m_lstCBuffCache>
-				<float>1</float>
-				<float>1</float>
-				<float>1</float>
-				<float>1</float>
-				<float>1</float>
+				<float>0.000000</float>
+				<float>0.000000</float>
 			</m_lstCBuffCache>
 		</Pass_Ptr>
 	</m_lstPasses>
 </Material>
+

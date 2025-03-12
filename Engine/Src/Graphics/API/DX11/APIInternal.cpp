@@ -3,6 +3,7 @@
 #include "Core/Exception.h"
 #include "Graphics/TextureUsage.h"
 #include "Graphics/API/DX11/APIWindow.h"
+#include "Graphics/API/DX11/APIRenderState.h"
 
 namespace api
 {
@@ -404,6 +405,66 @@ namespace dx11
     DX11_CHECK(_pWindow->m_pSwapchain->ResizeBuffers(_pWindow->m_uNumSwapchainImages, _pWindow->m_uWidth, _pWindow->m_uHeight, _pWindow->m_eSwapchainFormat, 0u))    
 
     CreateWindowRenderTarget(_pWindow, s_oGlobalData.m_uMaxMsaaSamples);            
+  }
+
+  bool IsGlobalResource(const char* _sName, PipelineStage _eStage)
+  {
+    for (GlobalLayout::Resource& rGlobalCBuff : s_oGlobalData.m_oGlobalLayout.m_lstCBuffers)
+    {
+      if (rGlobalCBuff.m_sName == _sName
+        && rGlobalCBuff.m_eStage == _eStage)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool GetBufferByIndex(const APIRenderState* _pRenderState, PipelineStage _eStage, uint32_t _uIdx, ID3D11ShaderReflectionConstantBuffer** ppCBuffer_, D3D11_SHADER_BUFFER_DESC& rDesc_)
+  {
+    ID3D11ShaderReflection* pReflection = nullptr;
+
+    switch (_eStage)
+    {
+    case PipelineStage::VERTEX:
+      break;
+      pReflection = _pRenderState->m_pVertexReflection.Get();
+    case PipelineStage::PIXEL:
+      pReflection = _pRenderState->m_pPixelReflection.Get();
+    default:
+      break;
+    }
+
+    if (pReflection)
+    {
+      D3D11_SHADER_DESC oDesc = {};
+      pReflection->GetDesc(&oDesc);
+
+      if (oDesc.ConstantBuffers > _uIdx)
+      {
+        uint32_t uCurrIdx = 0;
+        for (uint32_t i = 0; i < oDesc.ConstantBuffers; i++)
+        {
+          ID3D11ShaderReflectionConstantBuffer* pCBuffer = pReflection->GetConstantBufferByIndex(i);
+
+          D3D11_SHADER_BUFFER_DESC oBufferDesc;
+          pCBuffer->GetDesc(&oBufferDesc);
+
+          if (!IsGlobalResource(oBufferDesc.Name, _eStage)
+            && uCurrIdx++ == _uIdx)
+          {
+            if (ppCBuffer_ != nullptr)
+            {
+              *ppCBuffer_ = pCBuffer;
+            }
+            rDesc_ = oBufferDesc;
+            return true;
+          }
+        }
+      }
+    }    
+    return false;
   }
 
 }

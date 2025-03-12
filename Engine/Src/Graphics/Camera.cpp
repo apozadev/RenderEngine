@@ -49,7 +49,8 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
 {
   GlobalBufferData oData{};  
  
-  oData.m_mView = glm::inverse(_oParentTransform.GetMatrix());
+  oData.m_mViewInv = _oParentTransform.GetMatrix();
+  oData.m_mView = glm::inverse(oData.m_mViewInv);
   oData.m_mProj = GetProjMatrix();
   oData.m_mViewProj = oData.m_mProj * oData.m_mView;
   
@@ -62,6 +63,7 @@ void Camera::PreRenderSetup()
 {
   api::BeginSubStateSetup(m_pSubState);
   m_pCBuffer->SetupRenderSubState("GlobalBuffer", PipelineStage::VERTEX, ResourceFrequency::GLOBAL);
+  m_pCBuffer->SetupRenderSubState("GlobalBuffer", PipelineStage::PIXEL, ResourceFrequency::GLOBAL);
   Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);
   Renderer::GetInstance()->GetEnvMap()->SetupRenderSubState("Skybox", PipelineStage::PIXEL, ResourceFrequency::GLOBAL);
   api::EndSubStateSetup(ResourceFrequency::GLOBAL);

@@ -11,6 +11,14 @@
   return o; \
   } 
 
+cbuffer GlobalBuffer : register(b0)
+{
+  matrix viewproj;
+  matrix view;
+  matrix viewInv;
+  matrix proj;
+};
+
 struct DirLight
 {
   float4 vDirLightDir;
@@ -59,6 +67,8 @@ sampler ShadowMap3_Sampler : register(s11);
 
 sampler Skybox_Sampler : register(s12);
 
+#define viewProj	viewproj
+
 #define inPos       __input.pos
 #define inUv        __input.uv
 #define inNormal    __input.normal
@@ -76,3 +86,5 @@ sampler Skybox_Sampler : register(s12);
 #define DirLightViewProj(i) mLightViewProj[i]
 #define DirLightCount uNumLights
 #define DirLightShadowCount uNumShadows
+
+#define CameraPos float3(viewInv._14, viewInv._24, viewInv._34)

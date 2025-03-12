@@ -126,6 +126,7 @@ namespace api
 
       std::vector<GlobalLayout::Resource>& lstCbuffs = s_oGlobalData.m_oGlobalLayout.m_lstCBuffers;
       lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, PipelineStage::VERTEX });
+      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, PipelineStage::PIXEL });
       lstCbuffs.push_back(GlobalLayout::Resource{ "LightBuffer", 1u, PipelineStage::PIXEL});
       lstCbuffs.push_back(GlobalLayout::Resource{ "ModelBuffer", 3u, PipelineStage::VERTEX });
 
@@ -892,20 +893,41 @@ namespace api
 
     uint32_t GetConstantBufferCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
     {
-      D3D11_SHADER_DESC oDesc = {};
+      uint32_t uCount = 0u;
+
+      ID3D11ShaderReflection* pReflection = nullptr;
 
       switch (_eStage)
       {
       case PipelineStage::VERTEX:
         break;
-        _pAPIRenderState->m_pVertexReflection->GetDesc(&oDesc);
+        pReflection = _pAPIRenderState->m_pVertexReflection.Get();
       case PipelineStage::PIXEL:
-        _pAPIRenderState->m_pPixelReflection->GetDesc(&oDesc);
+        pReflection = _pAPIRenderState->m_pPixelReflection.Get();
       default:
         break;
-      }      
+      }
 
-      return oDesc.ConstantBuffers;
+      if (pReflection)
+      {
+        D3D11_SHADER_DESC oDesc = {};
+        pReflection->GetDesc(&oDesc);
+
+        for(uint32_t i = 0; i < oDesc.ConstantBuffers; i++)
+        {
+          ID3D11ShaderReflectionConstantBuffer* pCBuffer = pReflection->GetConstantBufferByIndex(i);
+
+          D3D11_SHADER_BUFFER_DESC oBufferDesc;
+          pCBuffer->GetDesc(&oBufferDesc);
+
+          if (!IsGlobalResource(oBufferDesc.Name, _eStage))
+          {
+            uCount++;
+          }
+        }
+      }
+
+      return uCount;
     }
 
     uint32_t GetTextureCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage)
@@ -936,7 +958,7 @@ namespace api
           D3D11_SHADER_INPUT_BIND_DESC oResourceDesc;
           pReflection->GetResourceBindingDesc(i, &oResourceDesc);
 
-          if (oResourceDesc.Type == D3D_SIT_TEXTURE)
+          if (oResourceDesc.Type == D3D_SIT_TEXTURE && !IsGlobalResource(oResourceDesc.Name, _eStage))
           {
             uTextureCount++;;
           }
@@ -948,38 +970,17 @@ namespace api
 
     std::string GetConstantBufferName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
     {
-
-      ID3D11ShaderReflection* pReflection = nullptr;
-
-      switch (_eStage)
+      D3D11_SHADER_BUFFER_DESC oDesc{};
+      
+      if(GetBufferByIndex(_pAPIRenderState, _eStage, _uIdx, nullptr, oDesc))
       {
-      case PipelineStage::VERTEX:
-        break;
-        pReflection = _pAPIRenderState->m_pVertexReflection.Get();
-      case PipelineStage::PIXEL:
-        pReflection = _pAPIRenderState->m_pPixelReflection.Get();
-      default:
-        break;
+        return oDesc.Name;
       }
-
-      if (pReflection)
+              
+      else
       {
-        D3D11_SHADER_DESC oDesc = {};
-        pReflection->GetDesc(&oDesc);
-        
-        if (oDesc.ConstantBuffers > _uIdx)
-        {
-          ID3D11ShaderReflectionConstantBuffer* pCBuffer = pReflection->GetConstantBufferByIndex(_uIdx);
-
-          D3D11_SHADER_BUFFER_DESC oBufferDesc;
-          pCBuffer->GetDesc(&oBufferDesc);
-
-          return oBufferDesc.Name;
-        }
+        return "[ERROR]";        
       }
-
-      return "[ERROR]";
-
     }
 
     const char* GetTextureName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
@@ -989,34 +990,11 @@ namespace api
 
     uint32_t GetConstantBufferMemberCount(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx)
     {
-      ID3D11ShaderReflection* pReflection = nullptr;
+      D3D11_SHADER_BUFFER_DESC oDesc{};
 
-      switch (_eStage)
+      if (GetBufferByIndex(_pAPIRenderState, _eStage, _uIdx, nullptr, oDesc))
       {
-      case PipelineStage::VERTEX:
-        break;
-        pReflection = _pAPIRenderState->m_pVertexReflection.Get();
-      case PipelineStage::PIXEL:
-        pReflection = _pAPIRenderState->m_pPixelReflection.Get();
-      default:
-        break;
-      }
-
-      if (pReflection)
-      {
-        D3D11_SHADER_DESC oDesc = {};
-        pReflection->GetDesc(&oDesc);
-
-        if (oDesc.ConstantBuffers > _uIdx)
-        {
-          if (ID3D11ShaderReflectionConstantBuffer* pCBuffer = pReflection->GetConstantBufferByIndex(_uIdx))
-          {
-            D3D11_SHADER_BUFFER_DESC oBufferDesc;
-            pCBuffer->GetDesc(&oBufferDesc);
-
-            return oBufferDesc.Variables;
-          }
-        }
+        return oDesc.Variables;
       }
 
       return 0u;
@@ -1024,85 +1002,43 @@ namespace api
 
     std::string GetConstantBufferMemberName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
     {
-      ID3D11ShaderReflection* pReflection = nullptr;
+      D3D11_SHADER_BUFFER_DESC oBufferDesc = {};
 
-      switch (_eStage)
+      ID3D11ShaderReflectionConstantBuffer* pCBuffer = nullptr;
+      
+      if (GetBufferByIndex(_pAPIRenderState, _eStage, _uIdx, &pCBuffer, oBufferDesc))
       {
-      case PipelineStage::VERTEX:
-        break;
-        pReflection = _pAPIRenderState->m_pVertexReflection.Get();
-      case PipelineStage::PIXEL:
-        pReflection = _pAPIRenderState->m_pPixelReflection.Get();
-      default:
-        break;
-      }
-
-      if (pReflection)
-      {
-        D3D11_SHADER_DESC oDesc = {};
-        pReflection->GetDesc(&oDesc);
-
-        if (oDesc.ConstantBuffers > _uIdx)
-        {          
-          if (ID3D11ShaderReflectionConstantBuffer* pCBuffer = pReflection->GetConstantBufferByIndex(_uIdx))
+        if (_uMemberIdx < oBufferDesc.Variables)
+        {
+          if (ID3D11ShaderReflectionVariable* pVariable = pCBuffer->GetVariableByIndex(_uMemberIdx))
           {
-            D3D11_SHADER_BUFFER_DESC oBufferDesc;
-            pCBuffer->GetDesc(&oBufferDesc);
+            D3D11_SHADER_VARIABLE_DESC oVarDesc = {};
+            pVariable->GetDesc(&oVarDesc);
 
-            if (_uMemberIdx < oBufferDesc.Variables)
-            {
-              if (ID3D11ShaderReflectionVariable* pVariable = pCBuffer->GetVariableByIndex(_uMemberIdx))
-              {
-                D3D11_SHADER_VARIABLE_DESC oVarDesc = {};
-                pVariable->GetDesc(&oVarDesc);
-
-                return oVarDesc.Name;
-              }
-            }
+            return oVarDesc.Name;
           }
         }
       }
 
-      return "";
+      return "[ERROR]";
     }
 
     size_t GetConstantBufferMemberSize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
     {
-      ID3D11ShaderReflection* pReflection = nullptr;
+      D3D11_SHADER_BUFFER_DESC oBufferDesc = {};
 
-      switch (_eStage)
+      ID3D11ShaderReflectionConstantBuffer* pCBuffer = nullptr;
+
+      if (GetBufferByIndex(_pAPIRenderState, _eStage, _uIdx, &pCBuffer, oBufferDesc))
       {
-      case PipelineStage::VERTEX:
-        break;
-        pReflection = _pAPIRenderState->m_pVertexReflection.Get();
-      case PipelineStage::PIXEL:
-        pReflection = _pAPIRenderState->m_pPixelReflection.Get();
-      default:
-        break;
-      }
-
-      if (pReflection)
-      {
-        D3D11_SHADER_DESC oDesc = {};
-        pReflection->GetDesc(&oDesc);
-
-        if (oDesc.ConstantBuffers > _uIdx)
+        if (_uMemberIdx < oBufferDesc.Variables)
         {
-          if (ID3D11ShaderReflectionConstantBuffer* pCBuffer = pReflection->GetConstantBufferByIndex(_uIdx))
+          if (ID3D11ShaderReflectionVariable* pVariable = pCBuffer->GetVariableByIndex(_uMemberIdx))
           {
-            D3D11_SHADER_BUFFER_DESC oBufferDesc;
-            pCBuffer->GetDesc(&oBufferDesc);
+            D3D11_SHADER_VARIABLE_DESC oVarDesc = {};
+            pVariable->GetDesc(&oVarDesc);
 
-            if (_uMemberIdx < oBufferDesc.Variables)
-            {
-              if (ID3D11ShaderReflectionVariable* pVariable = pCBuffer->GetVariableByIndex(_uMemberIdx))
-              {
-                D3D11_SHADER_VARIABLE_DESC oVarDesc = {};
-                pVariable->GetDesc(&oVarDesc);
-
-                return oVarDesc.Size;
-              }
-            }
+            return oVarDesc.Size;
           }
         }
       }
@@ -1112,67 +1048,50 @@ namespace api
 
     ConstantBufferType GetConstantBufferMemberType(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
     {
-      ID3D11ShaderReflection* pReflection = nullptr;
 
-      switch (_eStage)
+      D3D11_SHADER_BUFFER_DESC oBufferDesc = {};
+
+      ID3D11ShaderReflectionConstantBuffer* pCBuffer = nullptr;
+
+      if (GetBufferByIndex(_pAPIRenderState, _eStage, _uIdx, &pCBuffer, oBufferDesc))
       {
-      case PipelineStage::VERTEX:
-        break;
-        pReflection = _pAPIRenderState->m_pVertexReflection.Get();
-      case PipelineStage::PIXEL:
-        pReflection = _pAPIRenderState->m_pPixelReflection.Get();
-      default:
-        break;
-      }
-
-      if (pReflection)
-      {
-        D3D11_SHADER_DESC oDesc = {};
-        pReflection->GetDesc(&oDesc);
-
-        if (oDesc.ConstantBuffers > _uIdx)
+        if (_uMemberIdx < oBufferDesc.Variables)
         {
-          if (ID3D11ShaderReflectionConstantBuffer* pCBuffer = pReflection->GetConstantBufferByIndex(_uIdx))
+          if (ID3D11ShaderReflectionVariable* pVariable = pCBuffer->GetVariableByIndex(_uMemberIdx))
           {
-            D3D11_SHADER_BUFFER_DESC oBufferDesc;
-            pCBuffer->GetDesc(&oBufferDesc);
+            D3D11_SHADER_VARIABLE_DESC oVarDesc = {};
+            pVariable->GetDesc(&oVarDesc);
 
-            if (_uMemberIdx < oBufferDesc.Variables)
+            ID3D11ShaderReflectionType* pType = pVariable->GetType();
+            D3D11_SHADER_TYPE_DESC oTypeDesc;
+            pType->GetDesc(&oTypeDesc);
+
+            switch (oTypeDesc.Columns)
             {
-              if (ID3D11ShaderReflectionVariable* pVariable = pCBuffer->GetVariableByIndex(_uMemberIdx))
-              {            
-                ID3D11ShaderReflectionType* pType = pVariable->GetType();
-                D3D11_SHADER_TYPE_DESC oTypeDesc;
-                pType->GetDesc(&oTypeDesc);
-
-                switch (oTypeDesc.Columns)
-                {
-                case 1u:
-                  return ConstantBufferType::SCALAR;
-                case 2u:
-                  return ConstantBufferType::VEC2;
-                case 3u:
-                  if (oTypeDesc.Rows == 3u)
-                  {
-                    return ConstantBufferType::MAT3;
-                  }
-                  else if(oTypeDesc.Rows == 1u)
-                  {
-                    return ConstantBufferType::VEC3;
-                  }
-                case 4u:
-                  if (oTypeDesc.Rows == 4u)
-                  {
-                    return ConstantBufferType::MAT4;
-                  }
-                  else if(oTypeDesc.Rows == 1u)
-                  {
-                    return ConstantBufferType::VEC4;
-                  }
-                default:                 
-                  break;
-                }
+            case 1u:
+              return ConstantBufferType::SCALAR;
+            case 2u:
+              return ConstantBufferType::VEC2;
+            case 3u:
+              if (oTypeDesc.Rows == 3u)
+              {
+                return ConstantBufferType::MAT3;
               }
+              else if (oTypeDesc.Rows == 1u)
+              {
+                return ConstantBufferType::VEC3;
+              }
+            case 4u:
+              if (oTypeDesc.Rows == 4u)
+              {
+                return ConstantBufferType::MAT4;
+              }
+              else if (oTypeDesc.Rows == 1u)
+              {
+                return ConstantBufferType::VEC4;
+              }
+            default:
+              break;
             }
           }
         }
@@ -1195,7 +1114,7 @@ namespace api
     void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo)
     {      
 
-      _pCBuffer->m_stageMask = static_cast<unsigned int>(_oBindInfo.m_eStage);      
+      _pCBuffer->m_stageMask |= static_cast<unsigned int>(_oBindInfo.m_eStage);      
 
       
       if (_oBindInfo.m_eLevel == ResourceFrequency::MATERIAL)

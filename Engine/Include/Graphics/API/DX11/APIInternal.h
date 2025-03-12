@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include <d3dcompiler.h>
 #include <inttypes.h>
 
 #include "Graphics/ImageFormat.h"
@@ -48,6 +49,10 @@ namespace dx11
   void CreateWindowRenderTarget(APIWindow* _pWindow, uint32_t _uMsaaSamples);
 
   void ResizeSwapchain(APIWindow* _pWindow);
+
+  bool IsGlobalResource(const char* _sName, PipelineStage _eStage);
+
+  bool GetBufferByIndex(const APIRenderState* _pRenderState, PipelineStage _eStage, uint32_t _uIdx, ID3D11ShaderReflectionConstantBuffer** ppCBuffer_, D3D11_SHADER_BUFFER_DESC& _oDesc);
 
 }
 }

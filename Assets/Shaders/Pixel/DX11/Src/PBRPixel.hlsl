@@ -317,17 +317,66 @@ vec3 PBRSpecularIBL(PBRinput input)
   //float2 envBRDF = BrdfLutTex.Sample(brdfSampler, float2(NdotV, input.roughness)).xy;
   return (kS /** envBRDF.x + envBRDF.y*/)*input.lightColor;
 }
+/*
+  PBRinput pbrIn;
+  pbrIn.worldPos = posTex.Sample(texSampler, input.uv);
+  pbrIn.normal = normalTex.Sample(texSampler, input.uv);
+  pbrIn.viewDir = normalize(float4(viewInv._14, viewInv._24, viewInv._34, 1) - pbrIn.worldPos);
+  pbrIn.halfVector = normalize((pbrIn.viewDir + dirLightDir) * 0.5);
+  pbrIn.lightDir = dirLightDir;
+  pbrIn.lightColor = dirLightColor;
+  pbrIn.albedo = colorTex.Sample(texSampler, input.uv);
+
+  float4 pbrParams = pbrParamsTex.Sample(texSampler, input.uv);
+  pbrIn.metalness = pbrParams.x;
+  pbrIn.roughness = pbrParams.y;  
+  pbrIn.reflectivity = pbrParams.z;
+*/
+
+CBuffer(MatBuffer, 2)
+{
+  float fMetalness;
+  float fRoughness;
+};
 
 PIXEL_MAIN_BEGIN
 
-vec3 lightDir = vec3(0, 0, 1);
-float ambientFactor = 0.3;
+  vec3 ambientFactor = vec3(0.3, 0.3, 0.3);  
 
-float light = max(0, dot(lightDir, normalize(inNormal)));
+  vec3 vN = normalize(inNormal);
+  vec3 vT = normalize(inTangent - dot(inTangent, vN) * vN);
+  vec3 vB = normalize(cross(inNormal, inTangent));
+  mat3 mTBN = buildmat3(vT, vB, vN);
 
-vec4 color = vec4(1,1,1,1);
+  vec3 vWN = sampleTex(Texture1, vec2(inUv.x, inUv.y)).rgb * 2.0 - 1.0;
 
-outColor = color * (light + ambientFactor); 
+  vWN = normalize(mul(mTBN, vWN)); 
 
-PIXEL_MAIN_END 
+  vec4 vAlbedo = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
 
+  PBRinput pbrIn;
+  pbrIn.normal = vec4(vWN, 0);
+  pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
+  pbrIn.albedo = vAlbedo;
+  pbrIn.metalness = fMetalness;
+  pbrIn.roughness = fRoughness;  
+  pbrIn.reflectivity = 0;
+
+  vec3 color = vec3(0,0,0);
+
+  for (uint i = 0; i < DirLightCount; i++)
+  {
+    vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 0));
+
+    pbrIn.halfVector = normalize((pbrIn.viewDir + DirLightDir(i)) * 0.5);
+    pbrIn.lightDir = DirLightDir(i);
+    pbrIn.lightColor = DirLightColor(i) * ShadowFactor(vLightViewProjPos, i);
+
+    color += PBR(pbrIn); 
+
+  }
+    
+  outColor = vec4(color, 1); 
+ 
+PIXEL_MAIN_END
+ 

@@ -179,6 +179,10 @@ add_library(${PROJECT_NAME}
 	"Include/Math/Vec3.h" 
 	"Src/Math/Vec3.cpp" 
 	"Include/Reflection/ImGuiTypeVisitor.h" 
+	"Include/Graphics/CullMode.h" 
+	"Src/Graphics/CullMode.cpp" 
+	"Include/Graphics/DepthCompareOp.h" 
+	"Src/Graphics/DepthCompareOp.cpp"
 	"Src/Reflection/ImGuiTypeVisitor.cpp"
 	"3rd/spirv-reflect/spirv_reflect.h"
 	"3rd/spirv-reflect/spirv_reflect.cpp"
@@ -199,7 +203,7 @@ add_library(${PROJECT_NAME}
 	"../imgui/backends/imgui_impl_dx11.h"
 	"../imgui/backends/imgui_impl_dx11.cpp"
     "../imgui/backends/imgui_impl_glfw.h"
-    "../imgui/backends/imgui_impl_glfw.cpp" "Include/Graphics/CullMode.h" "Src/Graphics/CullMode.cpp" "Include/Graphics/DepthCompareOp.h" "Src/Graphics/DepthCompareOp.cpp") 
+    "../imgui/backends/imgui_impl_glfw.cpp") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
