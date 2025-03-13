@@ -1,5 +1,7 @@
 #version 450
 
+#define lerp(a, b, t) mix(a, b, t)
+
 #define mul(mat, v) (mat * v)
 
 #define buildmat3(x, y, z) mat3(x, y, z)

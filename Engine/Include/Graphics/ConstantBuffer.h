@@ -12,7 +12,7 @@ public:
   
   virtual ~ConstantBufferBase();  
 
-  virtual void SetupRenderSubState(const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const = 0;
+  virtual void SetupRenderSubState(const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const = 0;
 
   void Bind() const;
 
@@ -22,7 +22,7 @@ protected:
 
   void Update(const void* _pData, size_t _uSize) const;
 
-  void SetupRenderSubState(size_t _uSize, const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const;
+  void SetupRenderSubState(size_t _uSize, const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const;
 
 private:
 
@@ -39,9 +39,9 @@ public:
     ConstantBufferBase::Configure(sizeof(T));
   }
 
-  void SetupRenderSubState(const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const override
+  void SetupRenderSubState(const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const override
   {
-    ConstantBufferBase::SetupRenderSubState(sizeof(T), _sName, _eStage, _eFrequency);
+    ConstantBufferBase::SetupRenderSubState(sizeof(T), _sName, _uStageFlags, _eFrequency);
   }
 
   void Update() const

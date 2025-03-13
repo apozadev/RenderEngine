@@ -16,11 +16,11 @@ void ConstantBufferBase::Update(const void* _pData, size_t _uSize) const
   api::UpdateAPIConstantBuffer(m_pAPICbuffer, _pData, _uSize);  
 }
 
-void ConstantBufferBase::SetupRenderSubState(size_t _uSize, const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const
+void ConstantBufferBase::SetupRenderSubState(size_t _uSize, const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const
 {  
   ResourceBindInfo oBindInfo{};
   oBindInfo.m_eLevel = _eFrequency;
-  oBindInfo.m_eStage = _eStage;
+  oBindInfo.m_uStageFlags = _uStageFlags;
   oBindInfo.m_sName = _sName;
   api::SubStateSetupConstantBuffer(m_pAPICbuffer, _uSize, oBindInfo);
 }

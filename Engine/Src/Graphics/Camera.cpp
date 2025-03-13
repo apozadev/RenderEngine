@@ -62,10 +62,9 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
 void Camera::PreRenderSetup()
 {
   api::BeginSubStateSetup(m_pSubState);
-  m_pCBuffer->SetupRenderSubState("GlobalBuffer", PipelineStage::VERTEX, ResourceFrequency::GLOBAL);
-  m_pCBuffer->SetupRenderSubState("GlobalBuffer", PipelineStage::PIXEL, ResourceFrequency::GLOBAL);
+  m_pCBuffer->SetupRenderSubState("GlobalBuffer", STAGE_VERTEX | STAGE_PIXEL, ResourceFrequency::GLOBAL);
   Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);
-  Renderer::GetInstance()->GetEnvMap()->SetupRenderSubState("Skybox", PipelineStage::PIXEL, ResourceFrequency::GLOBAL);
+  Renderer::GetInstance()->GetEnvMap()->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
   api::EndSubStateSetup(ResourceFrequency::GLOBAL);
 }
 

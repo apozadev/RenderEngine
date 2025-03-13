@@ -104,14 +104,14 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
   m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
 
   // Reflect constant buffers  
-  uint32_t uCBuffCount = api::GetConstantBufferCount(m_pAPIRenderState, PipelineStage::PIXEL);
+  uint32_t uCBuffCount = api::GetConstantBufferCount(m_pAPIRenderState, STAGE_PIXEL);
 
   size_t uCacheIdx = 0u;
 
   for (uint32_t i = 0u; i < uCBuffCount; i++)
   {
     bool bValid = true;
-    uint32_t uNumVariables = api::GetConstantBufferMemberCount(m_pAPIRenderState, PipelineStage::PIXEL, i);
+    uint32_t uNumVariables = api::GetConstantBufferMemberCount(m_pAPIRenderState, STAGE_PIXEL, i);
 
     std::vector<ReflectedConstantBuffer::Variable> lstVariables;
     lstVariables.reserve(uNumVariables);
@@ -122,7 +122,7 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
     {
       ReflectedConstantBuffer::Variable oVar = {};
 
-      oVar.m_eType = api::GetConstantBufferMemberType(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
+      oVar.m_eType = api::GetConstantBufferMemberType(m_pAPIRenderState, STAGE_PIXEL, i, j);
 
       if (oVar.m_eType == ConstantBufferType::NONE)
       {
@@ -132,14 +132,14 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
 
       uSize += GetConstantBufferTypeSize(oVar.m_eType);
 
-      oVar.m_sName = api::GetConstantBufferMemberName(m_pAPIRenderState, PipelineStage::PIXEL, i, j);
+      oVar.m_sName = api::GetConstantBufferMemberName(m_pAPIRenderState, STAGE_PIXEL, i, j);
 
       lstVariables.push_back(std::move(oVar));
     }
 
     if (bValid)
     {
-      std::string sName = api::GetConstantBufferName(m_pAPIRenderState, PipelineStage::PIXEL, i);
+      std::string sName = api::GetConstantBufferName(m_pAPIRenderState, STAGE_PIXEL, i);
 
       owner_ptr<ReflectedConstantBuffer> pCBuffer = Factory::Create<ReflectedConstantBuffer>();
 
@@ -168,7 +168,7 @@ void Pass::Setup() const
   /*for (int i = 0; i < m_lstTextures.size(); i++)
   {
     const owner_ptr<Texture2D>& rTexture = m_lstTextures[i];
-    rTexture->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::MATERIAL);
+    rTexture->SetupRenderSubState(s_aNames[i], STAGE_PIXEL, ResourceFrequency::MATERIAL);
   }*/
 
   for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)

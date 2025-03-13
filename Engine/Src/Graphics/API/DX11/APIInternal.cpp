@@ -427,10 +427,10 @@ namespace dx11
 
     switch (_eStage)
     {
-    case PipelineStage::VERTEX:
+    case STAGE_VERTEX:
       break;
       pReflection = _pRenderState->m_pVertexReflection.Get();
-    case PipelineStage::PIXEL:
+    case STAGE_PIXEL:
       pReflection = _pRenderState->m_pPixelReflection.Get();
     default:
       break;

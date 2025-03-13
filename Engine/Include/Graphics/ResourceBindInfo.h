@@ -7,7 +7,7 @@
 
 struct ResourceBindInfo
 {
-  PipelineStage m_eStage;
+  PipelineStageFlags m_uStageFlags;
   ResourceFrequency m_eLevel;
   std::string m_sName;
 };

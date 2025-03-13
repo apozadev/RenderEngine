@@ -1,6 +1,6 @@
 <Material>
 	<m_lstPasses>
-		<Pass_Ptr PtrId="2055670784" Type="Pass">
+		<Pass_Ptr PtrId="893099008" Type="Pass">
 			<m_oInfo>
 				<m_sVSFilename>Assets/Shaders/Vertex/VertexShader.vs</m_sVSFilename>
 				<m_sPSFilename>Assets/Shaders/Pixel/PBRPixel.ps</m_sPSFilename>
@@ -18,7 +18,7 @@
 			<m_sStepId>OPAQUE</m_sStepId>
 			<m_lstCBuffCache>
 				<float>0.000000</float>
-				<float>0.000000</float>
+				<float>1.000000</float>
 			</m_lstCBuffCache>
 		</Pass_Ptr>
 	</m_lstPasses>

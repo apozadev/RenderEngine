@@ -1,8 +1,10 @@
 #pragma once
 
-enum class PipelineStage
+enum PipelineStage : unsigned int
 {
-  NONE    = 0,
-  VERTEX  = 1,
-  PIXEL   = 2
+  STAGE_NONE    = 0,
+  STAGE_VERTEX  = 1 << 0,
+  STAGE_PIXEL   = 1 << 1
 };
+
+typedef std::underlying_type<PipelineStage>::type PipelineStageFlags;

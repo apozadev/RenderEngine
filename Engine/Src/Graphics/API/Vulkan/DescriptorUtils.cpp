@@ -71,12 +71,12 @@ bool DescriptorSetLayoutBuilder::Contains(VkDescriptorSetLayoutBinding _oBinding
   return false;
 }
 
-uint32_t DescriptorSetLayoutBuilder::FindBinding(const std::string& _sName, PipelineStage _eStage, VkDescriptorType _eType) const
+uint32_t DescriptorSetLayoutBuilder::FindBinding(const std::string& _sName, VkShaderStageFlags _uStageFlags, VkDescriptorType _eType) const
 {
   for (int i = 0; i < m_lstNames.size(); i++)
   {
     if (_sName == m_lstNames[i] 
-      && (m_lstDescriptors[i].stageFlags & GetVkStageFlag(_eStage)) != 0u
+      && (m_lstDescriptors[i].stageFlags & _uStageFlags) != 0u
       && m_lstDescriptors[i].descriptorType == _eType)
     {
       return m_lstDescriptors[i].binding;      
@@ -120,13 +120,13 @@ VkDescriptorPool DescriptorPoolBuilder::Build(VkDevice _hDevice)
   return hDescPool;
 }
 
-void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage)
+void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStageFlags _uStageFlags)
 {
   for (SetBoundBufferInfoList& rInfoList : m_lstSetBufferInfos)
   {
     if (rInfoList.m_uSetIdx == _uSetIdx
       && rInfoList.m_uBinding == _uBinding
-      && rInfoList.m_eStage == _eStage)
+      && rInfoList.m_uStageFlags == _uStageFlags)
     {
       rInfoList.m_lstBufferInfos.push_back(std::move(_oBufferInfo));      
       return;
@@ -138,18 +138,18 @@ void DescriptorSetUpdater::AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, 
   SetBoundBufferInfoList oInfoList{};
   oInfoList.m_uSetIdx = _uSetIdx;
   oInfoList.m_uBinding = _uBinding;
-  oInfoList.m_eStage = _eStage;
+  oInfoList.m_uStageFlags = _uStageFlags;
   oInfoList.m_lstBufferInfos.push_back(std::move(_oBufferInfo));
   m_lstSetBufferInfos.push_back(std::move(oInfoList));
 }
 
-void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage)
+void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStageFlags _uStageFlags)
 {
   for (SetBoundImgInfoList& rInfoList : m_lstSetImageInfos)
   {
     if (rInfoList.m_uSetIdx == _uSetIdx
       && rInfoList.m_uBinding == _uBinding
-      && rInfoList.m_eStage == _eStage)
+      && rInfoList.m_uStageFlags == _uStageFlags)
     {      
       rInfoList.m_lstImgInfos.push_back(std::move(_oImageInfo));      
       return;
@@ -161,7 +161,7 @@ void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uin
   SetBoundImgInfoList oInfoList{};
   oInfoList.m_uSetIdx = _uSetIdx;
   oInfoList.m_uBinding = _uBinding;
-  oInfoList.m_eStage = _eStage;
+  oInfoList.m_uStageFlags = _uStageFlags;
   oInfoList.m_lstImgInfos.push_back(std::move(_oImageInfo));
   m_lstSetImageInfos.push_back(std::move(oInfoList));
 }
@@ -178,7 +178,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.binding = lstSetBufferInfo.m_uBinding;
     oBinding.descriptorCount = lstSetBufferInfo.m_lstBufferInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    oBinding.stageFlags = GetVkStageFlag(lstSetBufferInfo.m_eStage);
+    oBinding.stageFlags = GetVkShaderFlags(lstSetBufferInfo.m_uStageFlags);
     if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
     {
       continue;
@@ -211,7 +211,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.binding = lstSetImageInfo.m_uBinding;
     oBinding.descriptorCount = lstSetImageInfo.m_lstImgInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    oBinding.stageFlags = GetVkStageFlag(lstSetImageInfo.m_eStage);
+    oBinding.stageFlags = GetVkShaderFlags(lstSetImageInfo.m_uStageFlags);
     if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
     {
       continue;
@@ -251,7 +251,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
         {
           if (lstSetImageInfo.m_uBinding == rBinding.binding
             && lstSetImageInfo.m_lstImgInfos.size() == rBinding.descriptorCount
-            && GetVkStageFlag(lstSetImageInfo.m_eStage) == rBinding.stageFlags)
+            && GetVkShaderFlags(lstSetImageInfo.m_uStageFlags) == rBinding.stageFlags)
           {
             bFound = true;
             break;

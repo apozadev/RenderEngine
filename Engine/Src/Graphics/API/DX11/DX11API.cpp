@@ -125,25 +125,25 @@ namespace api
       s_oRenderTargetPool.Initialize();
 
       std::vector<GlobalLayout::Resource>& lstCbuffs = s_oGlobalData.m_oGlobalLayout.m_lstCBuffers;
-      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, PipelineStage::VERTEX });
-      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, PipelineStage::PIXEL });
-      lstCbuffs.push_back(GlobalLayout::Resource{ "LightBuffer", 1u, PipelineStage::PIXEL});
-      lstCbuffs.push_back(GlobalLayout::Resource{ "ModelBuffer", 3u, PipelineStage::VERTEX });
+      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, STAGE_VERTEX });
+      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, STAGE_PIXEL });
+      lstCbuffs.push_back(GlobalLayout::Resource{ "LightBuffer", 1u, STAGE_PIXEL});
+      lstCbuffs.push_back(GlobalLayout::Resource{ "ModelBuffer", 3u, STAGE_VERTEX });
 
       std::vector<GlobalLayout::Resource>& lstTextures = s_oGlobalData.m_oGlobalLayout.m_lstTextures;
-      lstTextures.push_back(GlobalLayout::Resource{ "Input0", 0u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Input1", 1u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Input2", 2u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Input3", 3u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Texture0", 4u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Texture1", 5u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Texture2", 6u, PipelineStage::PIXEL });
-      lstTextures.push_back(GlobalLayout::Resource{ "Texture3", 7u, PipelineStage::PIXEL });      
-      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap0", 8u, PipelineStage::PIXEL });      
-      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap1", 9u, PipelineStage::PIXEL });      
-      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap2", 10u, PipelineStage::PIXEL });      
-      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap3", 11u, PipelineStage::PIXEL });      
-      lstTextures.push_back(GlobalLayout::Resource{ "Skybox", 12u, PipelineStage::PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "Input0", 0u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Input1", 1u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Input2", 2u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Input3", 3u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Texture0", 4u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Texture1", 5u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Texture2", 6u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "Texture3", 7u, STAGE_PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap0", 8u, STAGE_PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap1", 9u, STAGE_PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap2", 10u, STAGE_PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap3", 11u, STAGE_PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "Skybox", 12u, STAGE_PIXEL });      
 
       IMGUI_CHECKVERSION();
       ImGui::CreateContext();
@@ -399,7 +399,7 @@ namespace api
 
       ResourceBindInfo oBindInfo = {};
       oBindInfo.m_eLevel = ResourceFrequency::MATERIAL_INSTANCE;
-      oBindInfo.m_eStage = PipelineStage::VERTEX;
+      oBindInfo.m_eStage = STAGE_VERTEX;
       oBindInfo.m_sName = "ModelBuffer";
 
       SubStateSetupConstantBuffer(pMesh->m_pModelCBuffer, sizeof(MeshConstant), oBindInfo);
@@ -452,11 +452,11 @@ namespace api
 
       uint32_t uStageMsk = _pCbuffer->m_stageMask;
 
-      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::VERTEX)) != 0u)
+      if ((uStageMsk & static_cast<uint32_t>(STAGE_VERTEX)) != 0u)
       {
         pWindow->m_pContext->VSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
-      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::PIXEL)) != 0u)
+      if ((uStageMsk & static_cast<uint32_t>(STAGE_PIXEL)) != 0u)
       {
         pWindow->m_pContext->PSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
@@ -606,12 +606,12 @@ namespace api
 
       uint32_t uStageMsk = static_cast<uint32_t>(_pTexture->m_eStage);
 
-      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::VERTEX)) != 0u)
+      if ((uStageMsk & static_cast<uint32_t>(STAGE_VERTEX)) != 0u)
       {
         pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
         pWindow->m_pContext->VSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
-      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::PIXEL)) != 0u)
+      if ((uStageMsk & static_cast<uint32_t>(STAGE_PIXEL)) != 0u)
       {
         pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
         pWindow->m_pContext->PSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
@@ -626,11 +626,11 @@ namespace api
 
       ID3D11ShaderResourceView* pNullSrv = nullptr;
 
-      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::VERTEX)) != 0u)
+      if ((uStageMsk & static_cast<uint32_t>(STAGE_VERTEX)) != 0u)
       {
         pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
-      if ((uStageMsk & static_cast<uint32_t>(PipelineStage::PIXEL)) != 0u)
+      if ((uStageMsk & static_cast<uint32_t>(STAGE_PIXEL)) != 0u)
       {
         pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
@@ -899,10 +899,10 @@ namespace api
 
       switch (_eStage)
       {
-      case PipelineStage::VERTEX:
+      case STAGE_VERTEX:
         break;
         pReflection = _pAPIRenderState->m_pVertexReflection.Get();
-      case PipelineStage::PIXEL:
+      case STAGE_PIXEL:
         pReflection = _pAPIRenderState->m_pPixelReflection.Get();
       default:
         break;
@@ -939,10 +939,10 @@ namespace api
 
       switch (_eStage)
       {
-      case PipelineStage::VERTEX:
+      case STAGE_VERTEX:
         break;
         pReflection  = _pAPIRenderState->m_pVertexReflection.Get();
-      case PipelineStage::PIXEL:
+      case STAGE_PIXEL:
         pReflection = _pAPIRenderState->m_pPixelReflection.Get();
       default:
         break;
@@ -1128,10 +1128,10 @@ namespace api
 
         switch (_oBindInfo.m_eStage)
         {
-        case PipelineStage::VERTEX:
+        case STAGE_VERTEX:
           pReflection = s_oGlobalData.m_pUsingRenderState->m_pVertexReflection.Get();
           break;
-        case PipelineStage::PIXEL:
+        case STAGE_PIXEL:
           pReflection = s_oGlobalData.m_pUsingRenderState->m_pPixelReflection.Get();
           break;
         default:
@@ -1188,10 +1188,10 @@ namespace api
 
         /*switch (_oBindInfo.m_eStage)
         {
-        case PipelineStage::VERTEX:
+        case STAGE_VERTEX:
           s_oGlobalData.m_pUsingRenderState->m_pVertexReflection->
           break;
-        case PipelineStage::PIXEL:
+        case STAGE_PIXEL:
           break;
         }*/
 

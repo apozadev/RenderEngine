@@ -163,7 +163,7 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId)
 
 void Renderer::SetupSubStateLightCBuffers(ResourceFrequency _eFrequency)
 {
-  m_pLightCBuff->SetupRenderSubState("LightBuffer", PipelineStage::PIXEL, _eFrequency);
+  m_pLightCBuff->SetupRenderSubState("LightBuffer", STAGE_PIXEL, _eFrequency);
 }
 
 void Renderer::SetupSubStateShadowMaps(ResourceFrequency _eFrequency)
@@ -172,7 +172,7 @@ void Renderer::SetupSubStateShadowMaps(ResourceFrequency _eFrequency)
   for (unsigned int i = 0u; i < m_lstShadowViews.size(); i++)
   {
     const RenderTarget* pShadowMap = m_lstShadowViews[i].m_pShadowMap;
-    pShadowMap->GetDepthStencilTexture()->SetupRenderSubState(aNames[i], PipelineStage::PIXEL, _eFrequency);
+    pShadowMap->GetDepthStencilTexture()->SetupRenderSubState(aNames[i], STAGE_PIXEL, _eFrequency);
   }
 }
 

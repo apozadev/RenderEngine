@@ -24,7 +24,7 @@ public:
 
   virtual ~Texture2D();
 
-  void SetupRenderSubState(std::string&& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const;
+  void SetupRenderSubState(std::string&& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const;
 
   void SetupAsRenderTargetColor() const;
   void SetupAsRenderTargetDepthStencil() const;

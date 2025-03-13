@@ -54,11 +54,11 @@ Texture2D::~Texture2D()
   api::DestroyAPITexture(m_pAPITexture);
 }
 
-void Texture2D::SetupRenderSubState(std::string&& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const
+void Texture2D::SetupRenderSubState(std::string&& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const
 {  
   ResourceBindInfo oBindInfo {};
   oBindInfo.m_eLevel = _eFrequency;
-  oBindInfo.m_eStage = _eStage;
+  oBindInfo.m_uStageFlags = _uStageFlags;
   oBindInfo.m_sName = _sName;
   api::SubStateSetupTexture(m_pAPITexture, oBindInfo);
 }

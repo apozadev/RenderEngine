@@ -8,6 +8,13 @@ layout(location = 4) in vec3 fragWorldPos;
 
 layout(location = 0) out vec4 outColor;
 
+layout(set = 0, binding = 0) uniform GlobalBuffer {
+    mat4 viewproj;
+	mat4 view;
+	mat4 viewInv;
+	mat4 proj;
+};
+
 struct DirLightData {
     vec4 vDirLightDir;
     vec4 vDirLightColor;
@@ -56,3 +63,5 @@ Texture(Texture3, 3, 3)
 #define DirLightViewProj(i) mLightViewProj[i]
 #define DirLightCount uNumLights
 #define DirLightShadowCount uNumShadows
+
+#define CameraPos viewInv[3].xyz

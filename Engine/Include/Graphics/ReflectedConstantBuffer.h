@@ -22,7 +22,7 @@ public:
 
   void SetupRenderSubState() const
   {
-    ConstantBufferBase::SetupRenderSubState(m_uSize, m_sName, PipelineStage::PIXEL, ResourceFrequency::MATERIAL);
+    ConstantBufferBase::SetupRenderSubState(m_uSize, m_sName, STAGE_PIXEL, ResourceFrequency::MATERIAL);
   }
 
   void Update() const
@@ -111,9 +111,9 @@ public:
 
 protected:
 
-  void SetupRenderSubState(const std::string& _sName, PipelineStage _eStage, ResourceFrequency _eFrequency) const override
+  void SetupRenderSubState(const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const override
   {
-    ConstantBufferBase::SetupRenderSubState(m_uSize, _sName, _eStage, _eFrequency);
+    ConstantBufferBase::SetupRenderSubState(m_uSize, _sName, _uStageFlags, _eFrequency);
   }
 
 private:

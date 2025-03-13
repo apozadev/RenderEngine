@@ -28,7 +28,7 @@ namespace vk
 
     bool Contains(VkDescriptorSetLayoutBinding _oBinding) const;
 
-    uint32_t FindBinding(const std::string& _sName, PipelineStage _eStage, VkDescriptorType _eType) const;
+    uint32_t FindBinding(const std::string& _sName, VkPipelineStageFlags _uStageFlags, VkDescriptorType _eType) const;
 
     void Clear() { m_lstDescriptors.clear();}
 
@@ -72,7 +72,7 @@ namespace vk
     {
       uint32_t m_uSetIdx;      
       uint32_t m_uBinding;
-      PipelineStage m_eStage;
+      PipelineStageFlags m_uStageFlags;
       std::vector<VkDescriptorBufferInfo> m_lstBufferInfos;
     };
 
@@ -80,14 +80,14 @@ namespace vk
     {
       uint32_t m_uSetIdx;
       uint32_t m_uBinding;
-      PipelineStage m_eStage;
+      PipelineStageFlags m_uStageFlags;
       std::vector<VkDescriptorImageInfo> m_lstImgInfos;
     };
 
   public:
 
-    void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage);
-    void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStage _eStage);
+    void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStageFlags _uStageFlags);
+    void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStageFlags _uStageFlags);
 
     void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, DescriptorSetLayoutBuilder* _pLayoutBuilder);
 

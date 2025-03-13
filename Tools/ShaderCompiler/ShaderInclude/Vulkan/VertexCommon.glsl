@@ -9,6 +9,7 @@ layout(location = 4) in vec2 inUv;
 layout(set = 0, binding = 0) uniform GlobalBuffer {
     mat4 viewproj;
 	mat4 view;
+	mat4 viewInv;
 	mat4 proj;
 };
 

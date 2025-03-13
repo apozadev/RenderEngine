@@ -29,7 +29,7 @@ void MaterialInstance::SetupSubState(const Material* _pMaterial)
 
   for (int i = 0; i < 4 && i < m_lstTextures.size(); i++)
   {         
-    m_lstTextures[i]->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::MATERIAL_INSTANCE);
+    m_lstTextures[i]->SetupRenderSubState(s_aNames[i], STAGE_PIXEL, ResourceFrequency::MATERIAL_INSTANCE);
   }
 
   /*for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)

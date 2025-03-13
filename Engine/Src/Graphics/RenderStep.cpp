@@ -49,7 +49,7 @@ void RenderStep::SetupInternal()
 
   for (int i = 0; i < m_lstInputs.size(); i++)
   {    
-    m_lstInputs[i]->SetupRenderSubState(s_aNames[i], PipelineStage::PIXEL, ResourceFrequency::RENDER_STEP);
+    m_lstInputs[i]->SetupRenderSubState(s_aNames[i], STAGE_PIXEL, ResourceFrequency::RENDER_STEP);
   }
 }
 

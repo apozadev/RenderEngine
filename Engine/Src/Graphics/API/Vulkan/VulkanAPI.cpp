@@ -1264,7 +1264,7 @@ namespace vk
       oBufferInfo.offset = 0;
       oBufferInfo.range = _uSize;
 
-      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, pWindow->m_uCurrFrameIdx, _oBindInfo.m_eStage);
+      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, pWindow->m_uCurrFrameIdx, _oBindInfo.m_uStageFlags);
     }
     else
     {
@@ -1276,7 +1276,7 @@ namespace vk
         oBufferInfo.offset = 0;
         oBufferInfo.range = _uSize;
 
-        s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, i, _oBindInfo.m_eStage);
+        s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, i, _oBindInfo.m_uStageFlags);
       }
     }
   }
@@ -1297,7 +1297,7 @@ namespace vk
       oImageInfo.imageView = _pTexture->m_hImageView;
       oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, pWindow->m_uCurrFrameIdx, _oBindInfo.m_eStage);
+      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, pWindow->m_uCurrFrameIdx, _oBindInfo.m_uStageFlags);
     }
     else
     {
@@ -1308,7 +1308,7 @@ namespace vk
         oImageInfo.imageView = _pTexture->m_hImageView;
         oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, i, _oBindInfo.m_eStage);
+        s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, i, _oBindInfo.m_uStageFlags);
       }
     }
   }

@@ -39,20 +39,22 @@ VkFormat GetVKFormat(ImageFormat _eFormat)
   return VK_FORMAT_MAX_ENUM;
 }
 
-VkShaderStageFlagBits GetVkStageFlag(PipelineStage _eStage)
+VkShaderStageFlags GetVkShaderFlags(PipelineStageFlags _eStageFlags)
 {
-  switch (_eStage)
+
+  VkShaderStageFlags uFlag = 0u;
+
+  if ((_eStageFlags & STAGE_VERTEX) != 0)
   {
-  case PipelineStage::VERTEX:
-    return VK_SHADER_STAGE_VERTEX_BIT;
-    break;
-  case PipelineStage::PIXEL:
-    return VK_SHADER_STAGE_FRAGMENT_BIT;
-    break;
-  default:
-    break;
+    uFlag |= VK_SHADER_STAGE_VERTEX_BIT;
   }
-  return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+
+  if ((_eStageFlags & STAGE_PIXEL) != 0)
+  {
+    uFlag |= VK_SHADER_STAGE_FRAGMENT_BIT;
+  }
+
+  return uFlag;
 }
 
 VkBlendOp GetVkBlendOp(BlendOp _eBlendOp)
@@ -286,42 +288,28 @@ uint32_t FindBinding(const APIWindow* _pWindow, const ResourceBindInfo& _oBindIn
   switch (_oBindInfo.m_eLevel)
   {
   case ResourceFrequency::GLOBAL:
-    uBinding = _pWindow->m_oGlobalLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    uBinding = _pWindow->m_oGlobalLayoutBuilder.FindBinding(_oBindInfo.m_sName, GetVkShaderFlags(_oBindInfo.m_uStageFlags), _eType);
     break;
   case ResourceFrequency::MATERIAL:
     if (s_oGlobalData.m_pUsingRenderState == nullptr)
     {
       THROW_GENERIC_EXCEPTION("[API] Tried to set up resource with frequency MATERIAL but BeginRenderStateSetup was not called");
     }
-    uBinding = s_oGlobalData.m_pUsingRenderState->m_oMaterialLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    uBinding = s_oGlobalData.m_pUsingRenderState->m_oMaterialLayoutBuilder.FindBinding(_oBindInfo.m_sName, GetVkShaderFlags(_oBindInfo.m_uStageFlags), _eType);
     break;
   case ResourceFrequency::RENDER_STEP:
-    uBinding = _pWindow->m_oStepLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    uBinding = _pWindow->m_oStepLayoutBuilder.FindBinding(_oBindInfo.m_sName, GetVkShaderFlags(_oBindInfo.m_uStageFlags), _eType);
     break;
   case ResourceFrequency::MATERIAL_INSTANCE:
-    uBinding = _pWindow->m_oMatInstanceLayoutBuilder.FindBinding(_oBindInfo.m_sName, _oBindInfo.m_eStage, _eType);
+    uBinding = _pWindow->m_oMatInstanceLayoutBuilder.FindBinding(_oBindInfo.m_sName, GetVkShaderFlags(_oBindInfo.m_uStageFlags), _eType);
     break;
   default:
     break;
   }
 
   if (uBinding == 0xFFFFFFFFu)
-  {
-    std::string sMsg = _oBindInfo.m_sName + ": A descriptor with such name was not found in stage ";
-    switch (_oBindInfo.m_eStage)
-    {
-    case PipelineStage::VERTEX:
-      sMsg += "VERTEX";
-      break;
-    case PipelineStage::PIXEL:
-      sMsg += "PIXEL";
-      break;
-    default:
-      sMsg += "INVALID";
-      break;
-    }
-
-    THROW_GENERIC_EXCEPTION(sMsg.c_str());
+  {    
+    THROW_GENERIC_EXCEPTION((_oBindInfo.m_sName + ": A descriptor with such name was not found").c_str());
   }
 
   return uBinding;
@@ -1184,7 +1172,7 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
       oBinding.binding = 0u;
       oBinding.descriptorCount = 1u;
       oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+      oBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
       oBinding.pImmutableSamplers = NULL;
 
       _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("GlobalBuffer", std::move(oBinding));
@@ -1719,10 +1707,10 @@ void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eS
 
   switch (_eStage)
   {
-  case PipelineStage::VERTEX:
+  case STAGE_VERTEX:
     pReflection = &_pRenderState->m_oVertexReflection;
     break;
-  case PipelineStage::PIXEL:
+  case STAGE_PIXEL:
     pReflection = &_pRenderState->m_oPixelReflection;
     break;
   }

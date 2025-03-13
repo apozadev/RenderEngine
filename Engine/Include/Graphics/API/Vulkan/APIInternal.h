@@ -36,7 +36,7 @@ namespace vk
 
   VkFormat GetVKFormat(ImageFormat _eFormat);
 
-  VkShaderStageFlagBits GetVkStageFlag(PipelineStage _eStage);
+  VkShaderStageFlags GetVkShaderFlags(PipelineStageFlags _eStageFlags);
 
   VkBlendOp GetVkBlendOp(BlendOp _eBlendOp);
 
