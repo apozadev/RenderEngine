@@ -4,7 +4,7 @@ project(RenderEngine VERSION 0.0.1 LANGUAGES CXX)
 set(RENDER_API_VULKAN 0)
 set(RENDER_API_DX11 1)
 
-set(TARGET_RENDER_API ${RENDER_API_VULKAN})  
+set(TARGET_RENDER_API ${RENDER_API_DX11}) 
 
 add_subdirectory(glfw)
 add_subdirectory(glm)

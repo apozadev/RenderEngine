@@ -264,9 +264,21 @@ void Pass::UpdateCache()
       switch (rVar.m_eType)
       {
       case ConstantBufferType::SCALAR:
+      {
         float fValue = 0.f;
         GetFloat(rVar.m_sName.c_str(), &fValue);
         m_lstCBuffCache.push_back(fValue);
+      }
+        break;
+      case ConstantBufferType::VEC4:
+      {
+        float aValues[4] = { 0.f, 0.f, 0.f, 0.f };
+        GetVec4(rVar.m_sName.c_str(), &aValues[0]);
+        m_lstCBuffCache.push_back(aValues[0]);
+        m_lstCBuffCache.push_back(aValues[1]);
+        m_lstCBuffCache.push_back(aValues[2]);
+        m_lstCBuffCache.push_back(aValues[3]);
+      }
         break;
       }
     }

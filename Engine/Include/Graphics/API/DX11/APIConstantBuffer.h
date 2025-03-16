@@ -3,6 +3,8 @@
 #include <d3d11.h>
 #include <wrl.h>
 
+#include "Graphics/PipelineStage.h"
+
 namespace api
 {
   namespace dx11
@@ -15,7 +17,7 @@ namespace api
 
       unsigned int m_slot;
 
-      unsigned int m_stageMask = 0u;     
+      PipelineStageFlags m_uStageFlags;
     };
 
   }

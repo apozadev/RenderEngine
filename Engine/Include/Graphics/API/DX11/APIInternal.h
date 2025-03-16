@@ -50,9 +50,11 @@ namespace dx11
 
   void ResizeSwapchain(APIWindow* _pWindow);
 
-  bool IsGlobalResource(const char* _sName, PipelineStage _eStage);
+  bool IsGlobalResource(const char* _sName, PipelineStageFlags _uStageFlags);
 
   bool GetBufferByIndex(const APIRenderState* _pRenderState, PipelineStage _eStage, uint32_t _uIdx, ID3D11ShaderReflectionConstantBuffer** ppCBuffer_, D3D11_SHADER_BUFFER_DESC& _oDesc);
+
+  uint32_t GetBindFromReflection(ID3D11ShaderReflection* _pReflection, const std::string& _sName);
 
 }
 }

@@ -111,13 +111,27 @@ void ViewMaterial(const std::vector<MaterialLibrary::MatEntry>& _lstMaterials)
             switch (rVar.m_eType)
             {
             case ConstantBufferType::SCALAR:
+            {
               float fValue = 0.f;
               pCBuff->GetFloat(rVar.m_sName.c_str(), &fValue);
               if (ImGui::InputFloat(rVar.m_sName.c_str(), &fValue))
               {
                 pCBuff->SetFloat(rVar.m_sName.c_str(), fValue);
               }
+            }
               break;
+            case ConstantBufferType::VEC4:
+            {
+              float aValues[4] = { 0.f, 0.f, 0.f, 0.f };
+              pCBuff->GetVec4(rVar.m_sName.c_str(), &aValues[0]);
+              if (ImGui::InputFloat4(rVar.m_sName.c_str(), aValues))
+              {
+                pCBuff->SetVec4(rVar.m_sName.c_str(), &aValues[0]);
+              }
+            }
+              break;
+            default:
+              ImGui::Text(rVar.m_sName.c_str());
             }
           }
 

@@ -21,7 +21,7 @@ namespace dx11
     {
       std::string m_sName;
       uint32_t m_uBinding;
-      PipelineStage m_eStage;
+      PipelineStageFlags m_uStageFlags;
     };
 
     std::vector<Resource> m_lstCBuffers;

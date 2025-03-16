@@ -407,12 +407,11 @@ namespace dx11
     CreateWindowRenderTarget(_pWindow, s_oGlobalData.m_uMaxMsaaSamples);            
   }
 
-  bool IsGlobalResource(const char* _sName, PipelineStage _eStage)
+  bool IsGlobalResource(const char* _sName, PipelineStageFlags _uStageFlags)
   {
     for (GlobalLayout::Resource& rGlobalCBuff : s_oGlobalData.m_oGlobalLayout.m_lstCBuffers)
     {
-      if (rGlobalCBuff.m_sName == _sName
-        && rGlobalCBuff.m_eStage == _eStage)
+      if (rGlobalCBuff.m_sName == _sName && (rGlobalCBuff.m_uStageFlags & _uStageFlags) != 0u)
       {
         return true;
       }
@@ -465,6 +464,25 @@ namespace dx11
       }
     }    
     return false;
+  }
+
+  uint32_t GetBindFromReflection(ID3D11ShaderReflection* _pReflection, const std::string& _sName)
+  {
+    D3D11_SHADER_DESC oShaderDesc;
+    DX11_CHECK(_pReflection->GetDesc(&oShaderDesc))
+
+    for (UINT i = 0; i < oShaderDesc.BoundResources; ++i)
+    {
+      D3D11_SHADER_INPUT_BIND_DESC oBindDesc;
+      _pReflection->GetResourceBindingDesc(i, &oBindDesc);
+
+      if (oBindDesc.Type == D3D_SIT_CBUFFER && _sName == oBindDesc.Name)
+      {
+        return oBindDesc.BindPoint;        
+      }
+    }
+
+    return 0xFFFFFFFF;
   }
 
 }

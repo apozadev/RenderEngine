@@ -179,6 +179,10 @@ vec3 LambertDirLighting(vec4 vWorldPos, vec3 vNormal)
 }
 */
 
+
+//Texture2D	BrdfLutTex : register(t14);
+//SamplerState brdfSampler : register(s14);
+
 struct PBRinput
 {
   vec4 normal;
@@ -191,11 +195,7 @@ struct PBRinput
   float roughness;
   float metalness;
   float reflectivity;
-  float shadowFactor;
 };
-
-//Texture2D	BrdfLutTex : register(t14);
-//SamplerState brdfSampler : register(s14);
 
 // Normal distribution function
 float _D(PBRinput _input)
@@ -206,7 +206,7 @@ float _D(PBRinput _input)
   float alphaSqr = alpha * alpha;
   float cosLh = max(dot(_input.normal.xyz, _input.halfVector.xyz), 0);
   float denom = cosLh * cosLh * (alphaSqr - 1) + 1;
-  return alphaSqr / (_PI * denom * denom);//max(denominator, 0.00001);
+  return alphaSqr / max(_PI * denom * denom, 0.0001);
 }
 
 // Geometry shadowing function
@@ -214,7 +214,7 @@ float _G1(vec4 N, vec4 X, float roughness)
 {
   //float k = roughness * 0.5;
   float r = roughness + 1.0;
-  float k = (r * r) / 0.8;
+  float k = (r * r) / 0.5;
   float denominator = max(dot(N.xyz, X.xyz), 0) * (1 - k) + k;
   return max(dot(N.xyz, X.xyz), 0) / denominator;//max(denominator, 0.00001);
 }
@@ -224,7 +224,7 @@ float _G(PBRinput _input)
 }
 
 // Fresnell function
-vec3 _F(PBRinput _input)
+vec3 _F(PBRinput _input) 
 {
   vec3 vF0 = _input.albedo.xyz * lerp(_input.reflectivity, 1.0, _input.metalness);
   float LdotH = max(dot(_input.viewDir, _input.halfVector), 0);
@@ -251,13 +251,13 @@ vec3 PBR(PBRinput _input)
   // Cook-Torrance specular
   float fsDenom = (4 * max(dot(_input.viewDir.xyz, _input.normal.xyz), 0) * max(dot(_input.lightDir.xyz, _input.normal.xyz), 0));
   vec3 fresnell = _F(_input);
-  vec3 fs = _D(_input) * _G(_input) * fresnell / max(fsDenom, 0.00001);
+  vec3 fs = _D(_input) * _G(_input) * fresnell / max(fsDenom, 0.0001);
 
   // Incoming light
   vec3 li = _input.lightColor.xyz;
 
   // BRDF
-  vec3 kd = vec3(1, 1, 1) - fresnell;
+  vec3 kd = mix(vec3(1, 1, 1) - fresnell, vec3(0, 0, 0), _input.metalness);
   vec3 fr = max(kd * fd + fs, vec3(0, 0, 0));
 
   // Cosine Law
@@ -281,6 +281,13 @@ vec3 PBRSpecularIBL(PBRinput _input)
   //float2 envBRDF = BrdfLutTex.Sample(brdfSampler, float2(NdotV, _input.roughness)).xy;
   return (kS /** envBRDF.x + envBRDF.y*/) * _input.lightColor.xyz;
 }
+
+CBuffer(MatBuffer, 2)
+{
+  vec4 vColor;
+  float fMetalness;
+  float fRoughness;
+};
 
 vec2 mod2(vec2 x, vec2 y)
 {
@@ -306,10 +313,28 @@ vec2 c = smoothstep(lineWidth, lineWidth * 0.5, abs(newUv - halfCell));
 
 float lineAlpha = 1 - max(min(c.x + c.y, 1) / fade, 0);
 
-outColor = vec4(lineAlpha, lineAlpha, lineAlpha, 1);
+outColor = vec4(0,0,0,1);
 
-vec3 ambientFactor = vec3(0.3, 0.3, 0.3);
+PBRinput pbrIn;
+pbrIn.normal = vec4(inNormal, 0);
+pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
+pbrIn.albedo = vColor;
+pbrIn.metalness = fMetalness;
+pbrIn.roughness = fRoughness;  
+pbrIn.reflectivity = 0;
 
-outColor = outColor * (vec4(LambertDirLighting(vec4(inWorldPos, 1), inNormal) + ambientFactor, 1));
+for (uint i = 0; i < DirLightCount; i++)
+{
+  vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
+
+  pbrIn.halfVector = normalize((pbrIn.viewDir + DirLightDir(i)) * 0.5);
+  pbrIn.lightDir = DirLightDir(i);
+  pbrIn.lightColor = DirLightColor(i) * ShadowFactor(vLightViewProjPos, i);
+
+  outColor.xyz += PBR(pbrIn); 
+
+}
+
+outColor = outColor * vec4(lineAlpha, lineAlpha, lineAlpha, 1);
 
 PIXEL_MAIN_END

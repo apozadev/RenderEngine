@@ -281,9 +281,39 @@ vec3 PBRSpecularIBL(PBRinput _input)
   //float2 envBRDF = BrdfLutTex.Sample(brdfSampler, float2(NdotV, _input.roughness)).xy;
   return (kS /** envBRDF.x + envBRDF.y*/) * _input.lightColor.xyz;
 }
+CBuffer(MatBuffer, 2)
+{
+  vec4 vAlbedo;
+  float fMetalness;
+  float fRoughness;
+  float fReflectivity;
+};
 
 PIXEL_MAIN_BEGIN
 
-outColor = sampleTex(Skybox, inWorldPos);  
+  PBRinput pbrIn;
+  pbrIn.normal = vec4(inNormal, 0);
+  pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
+  pbrIn.albedo = vAlbedo;
+  pbrIn.metalness = fMetalness;
+  pbrIn.roughness = fRoughness;  
+  pbrIn.reflectivity = fReflectivity;
 
-PIXEL_MAIN_END 
+  vec3 color = vec3(0,0,0);
+
+  for (uint i = 0; i < DirLightCount; i++)
+  {
+    vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
+
+    pbrIn.halfVector = normalize((pbrIn.viewDir + DirLightDir(i)) * 0.5);
+    pbrIn.lightDir = DirLightDir(i);
+    pbrIn.lightColor = DirLightColor(i) * ShadowFactor(vLightViewProjPos, i);
+
+    color += PBR(pbrIn); 
+
+  }
+    
+  outColor = vec4(color, 1); 
+ 
+PIXEL_MAIN_END
+ 

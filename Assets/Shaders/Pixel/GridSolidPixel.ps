@@ -1,4 +1,11 @@
 
+CBuffer(MatBuffer, 2)
+{
+  vec4 vColor;
+  float fMetalness;
+  float fRoughness;
+};
+
 vec2 mod2(vec2 x, vec2 y)
 {
   return x - y * floor(x / y);
@@ -23,10 +30,28 @@ vec2 c = smoothstep(lineWidth, lineWidth * 0.5, abs(newUv - halfCell));
 
 float lineAlpha = 1 - max(min(c.x + c.y, 1) / fade, 0);
 
-outColor = vec4(lineAlpha, lineAlpha, lineAlpha, 1);
+outColor = vec4(0,0,0,1);
 
-vec3 ambientFactor = vec3(0.3, 0.3, 0.3);
+PBRinput pbrIn;
+pbrIn.normal = vec4(inNormal, 0);
+pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
+pbrIn.albedo = vColor;
+pbrIn.metalness = fMetalness;
+pbrIn.roughness = fRoughness;  
+pbrIn.reflectivity = 0;
 
-outColor = outColor * (vec4(LambertDirLighting(vec4(inWorldPos, 1), inNormal) + ambientFactor, 1));
+for (uint i = 0; i < DirLightCount; i++)
+{
+  vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
+
+  pbrIn.halfVector = normalize((pbrIn.viewDir + DirLightDir(i)) * 0.5);
+  pbrIn.lightDir = DirLightDir(i);
+  pbrIn.lightColor = DirLightColor(i) * ShadowFactor(vLightViewProjPos, i);
+
+  outColor.xyz += PBR(pbrIn); 
+
+}
+
+outColor = outColor * vec4(lineAlpha, lineAlpha, lineAlpha, 1);
 
 PIXEL_MAIN_END

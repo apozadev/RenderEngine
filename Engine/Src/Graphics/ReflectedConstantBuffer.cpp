@@ -55,7 +55,7 @@ void ReflectedConstantBuffer::Configure(std::string _sName, std::vector<Variable
       memcpy(((char*)m_pData) + uDataIdx, _pCache + uCacheIdx, uVarSize);
 
       uDataIdx += uPaddedVarSize;
-      uCacheIdx++;
+      uCacheIdx += uVarSize / sizeof(float);
     }
   }
 

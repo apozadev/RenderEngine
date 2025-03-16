@@ -29,7 +29,7 @@
 #include <string>
 
 // TODO:
-// Guardar cbuffer cache
+// CBuffer cache carga mal con vec4
 // [API] Struct de contexto en lugar de usingX
 
 void PostUpdateCallback(float _fDt)

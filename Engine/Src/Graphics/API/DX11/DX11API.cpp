@@ -125,8 +125,7 @@ namespace api
       s_oRenderTargetPool.Initialize();
 
       std::vector<GlobalLayout::Resource>& lstCbuffs = s_oGlobalData.m_oGlobalLayout.m_lstCBuffers;
-      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, STAGE_VERTEX });
-      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, STAGE_PIXEL });
+      lstCbuffs.push_back(GlobalLayout::Resource{ "GlobalBuffer", 0u, STAGE_VERTEX | STAGE_PIXEL });
       lstCbuffs.push_back(GlobalLayout::Resource{ "LightBuffer", 1u, STAGE_PIXEL});
       lstCbuffs.push_back(GlobalLayout::Resource{ "ModelBuffer", 3u, STAGE_VERTEX });
 
@@ -399,7 +398,7 @@ namespace api
 
       ResourceBindInfo oBindInfo = {};
       oBindInfo.m_eLevel = ResourceFrequency::MATERIAL_INSTANCE;
-      oBindInfo.m_eStage = STAGE_VERTEX;
+      oBindInfo.m_uStageFlags = STAGE_VERTEX;
       oBindInfo.m_sName = "ModelBuffer";
 
       SubStateSetupConstantBuffer(pMesh->m_pModelCBuffer, sizeof(MeshConstant), oBindInfo);
@@ -450,13 +449,11 @@ namespace api
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-      uint32_t uStageMsk = _pCbuffer->m_stageMask;
-
-      if ((uStageMsk & static_cast<uint32_t>(STAGE_VERTEX)) != 0u)
+      if ((_pCbuffer->m_uStageFlags & STAGE_VERTEX) != 0u)
       {
         pWindow->m_pContext->VSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
-      if ((uStageMsk & static_cast<uint32_t>(STAGE_PIXEL)) != 0u)
+      if ((_pCbuffer->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
         pWindow->m_pContext->PSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
@@ -602,16 +599,14 @@ namespace api
 
     void BindAPITexture(APITexture* _pTexture)
     {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
+      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;      
 
-      uint32_t uStageMsk = static_cast<uint32_t>(_pTexture->m_eStage);
-
-      if ((uStageMsk & static_cast<uint32_t>(STAGE_VERTEX)) != 0u)
+      if ((_pTexture->m_uStageFlags & STAGE_VERTEX) != 0u)
       {
         pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
         pWindow->m_pContext->VSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
-      if ((uStageMsk & static_cast<uint32_t>(STAGE_PIXEL)) != 0u)
+      if ((_pTexture->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
         pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
         pWindow->m_pContext->PSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
@@ -620,17 +615,15 @@ namespace api
 
     void UnbindAPITexture(APITexture* _pTexture)
     {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-
-      uint32_t uStageMsk = static_cast<uint32_t>(_pTexture->m_eStage);
+      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;      
 
       ID3D11ShaderResourceView* pNullSrv = nullptr;
 
-      if ((uStageMsk & static_cast<uint32_t>(STAGE_VERTEX)) != 0u)
+      if ((_pTexture->m_uStageFlags & STAGE_VERTEX) != 0u)
       {
         pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
-      if ((uStageMsk & static_cast<uint32_t>(STAGE_PIXEL)) != 0u)
+      if ((_pTexture->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
         pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
@@ -1114,7 +1107,7 @@ namespace api
     void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo)
     {      
 
-      _pCBuffer->m_stageMask |= static_cast<unsigned int>(_oBindInfo.m_eStage);      
+      _pCBuffer->m_uStageFlags = _oBindInfo.m_uStageFlags;
 
       
       if (_oBindInfo.m_eLevel == ResourceFrequency::MATERIAL)
@@ -1124,39 +1117,23 @@ namespace api
           THROW_GENERIC_EXCEPTION("[API] Tried to set up resource with frequency MATERIAL but BeginRenderStateSetup was not called");
         }
 
-        ID3D11ShaderReflection* pReflection = nullptr;
+        _pCBuffer->m_slot = 0xFFFFFFFF;
 
-        switch (_oBindInfo.m_eStage)
+        if ((_oBindInfo.m_uStageFlags & STAGE_VERTEX) != 0u)
         {
-        case STAGE_VERTEX:
-          pReflection = s_oGlobalData.m_pUsingRenderState->m_pVertexReflection.Get();
-          break;
-        case STAGE_PIXEL:
-          pReflection = s_oGlobalData.m_pUsingRenderState->m_pPixelReflection.Get();
-          break;
-        default:
-          break;
+          ID3D11ShaderReflection* pReflection = s_oGlobalData.m_pUsingRenderState->m_pVertexReflection.Get();
+          _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
         }
-
-        if (pReflection == nullptr)
+        if (_pCBuffer->m_slot == 0xFFFFFFFF && (_oBindInfo.m_uStageFlags & STAGE_PIXEL) != 0u)
         {
-          THROW_GENERIC_EXCEPTION("[API] Invalid Pipeline Stage in CBuffer Setup")
+          ID3D11ShaderReflection* pReflection = s_oGlobalData.m_pUsingRenderState->m_pPixelReflection.Get();
+          _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
         }
-
-        D3D11_SHADER_DESC oShaderDesc;
-        DX11_CHECK(pReflection->GetDesc(&oShaderDesc))
-
-        for (UINT i = 0; i < oShaderDesc.BoundResources; ++i)
+        
+        if (_pCBuffer->m_slot != 0xFFFFFFFF)
         {
-          D3D11_SHADER_INPUT_BIND_DESC oBindDesc;
-          pReflection->GetResourceBindingDesc(i, &oBindDesc);
-
-          if (oBindDesc.Type == D3D_SIT_CBUFFER && _oBindInfo.m_sName == oBindDesc.Name)
-          {
-            _pCBuffer->m_slot = oBindDesc.BindPoint;
-            return;
-          }
-        }
+          return;
+        }        
         
       }
       else
@@ -1164,7 +1141,7 @@ namespace api
         for (GlobalLayout::Resource& rGlobalCBuff : s_oGlobalData.m_oGlobalLayout.m_lstCBuffers)
         {
           if (rGlobalCBuff.m_sName == _oBindInfo.m_sName
-            && rGlobalCBuff.m_eStage == _oBindInfo.m_eStage)
+            && rGlobalCBuff.m_uStageFlags == _oBindInfo.m_uStageFlags)
           {
             _pCBuffer->m_slot = rGlobalCBuff.m_uBinding;
             return;
@@ -1177,7 +1154,7 @@ namespace api
 
     void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
     {      
-      _pTexture->m_eStage = _oBindInfo.m_eStage;
+      _pTexture->m_uStageFlags = _oBindInfo.m_uStageFlags;
 
       if (_oBindInfo.m_eLevel == ResourceFrequency::MATERIAL)
       {
@@ -1201,7 +1178,7 @@ namespace api
         for (GlobalLayout::Resource& rGlobalTexture : s_oGlobalData.m_oGlobalLayout.m_lstTextures)
         {
           if (rGlobalTexture.m_sName == _oBindInfo.m_sName
-            && rGlobalTexture.m_eStage == _oBindInfo.m_eStage)
+            && rGlobalTexture.m_uStageFlags == _oBindInfo.m_uStageFlags)
           {
             _pTexture->m_uSlot = rGlobalTexture.m_uBinding;
             return;
