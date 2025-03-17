@@ -11,6 +11,7 @@ namespace api
   {
 
     struct APIRenderTarget;
+    struct APITexture;
 
     struct APIWindow
     {
@@ -25,6 +26,8 @@ namespace api
 
       Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pColorTexture;
       Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pDSTexture;      
+
+      APITexture* m_pDummyTexture;
 
       unsigned int m_uWidth, m_uHeight;
 

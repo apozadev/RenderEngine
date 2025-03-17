@@ -220,6 +220,35 @@ namespace api
 
       pWindow->m_pContext->RSSetViewports(1, &oViewport);
 
+      SamplerConfig oSamplerCfg = {};
+      oSamplerCfg.m_eAddressMode = TextureAddressMode::CLAMP;
+      oSamplerCfg.m_eMagFilterMode = TextureFilterMode::POINT;
+      oSamplerCfg.m_eMinFilterMode = TextureFilterMode::POINT;
+      oSamplerCfg.m_eMipmapFilterMode = TextureFilterMode::POINT;
+
+      SetUsingAPIWindow(pWindow);
+
+      uint8_t aDummyBuffer[4] = { 255u, 20u, 0u, 255u };
+      void* pDummyBuffer = &(aDummyBuffer[0]);
+      pWindow->m_pDummyTexture = CreateAPITexture(&pDummyBuffer, 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE, oSamplerCfg, false);
+
+#ifndef NDEBUG
+      Microsoft::WRL::ComPtr<ID3D11Debug> d3dDebug;
+      DX11_CHECK(pWindow->m_pDevice.As(&d3dDebug))
+
+      Microsoft::WRL::ComPtr<ID3D11InfoQueue> d3dInfoQueue;
+      DX11_CHECK(d3dDebug.As(&d3dInfoQueue))      
+      D3D11_MESSAGE_ID hide[] =
+      {
+        D3D11_MESSAGE_ID_DEVICE_DRAW_RENDERTARGETVIEW_NOT_SET,
+      };
+      D3D11_INFO_QUEUE_FILTER filter;
+      memset(&filter, 0, sizeof(filter));
+      filter.DenyList.NumIDs = _countof(hide);
+      filter.DenyList.pIDList = hide;
+      d3dInfoQueue->AddStorageFilterEntries(&filter);      
+#endif
+
       return pWindow;
     }
 
@@ -294,7 +323,9 @@ namespace api
       RestoreOriginalWndProc(_pAPIWindow->m_pGlfwWindow);
 
       ImGui_ImplDX11_Shutdown();
-      ImGui_ImplWin32_Shutdown();            
+      ImGui_ImplWin32_Shutdown();       
+
+      DestroyAPITexture(_pAPIWindow->m_pDummyTexture);
 
       _pAPIWindow->m_pRtv = nullptr;
       _pAPIWindow->m_pDsv = nullptr;
@@ -1229,6 +1260,22 @@ namespace api
 
         return 1;
       }        
+
+      // Bind dummy texture for all slots. We will override later if used
+      // Not very efficient...
+      for (auto& rResource : s_oGlobalData.m_oGlobalLayout.m_lstTextures)
+      {
+        if ((rResource.m_uStageFlags & STAGE_VERTEX) != 0)
+        {
+          _pWindow->m_pContext->VSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
+          _pWindow->m_pContext->VSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
+        }
+        if ((rResource.m_uStageFlags & STAGE_PIXEL) != 0)
+        {
+          _pWindow->m_pContext->PSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
+          _pWindow->m_pContext->PSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
+        }
+      }
       
       return 0;
     }
