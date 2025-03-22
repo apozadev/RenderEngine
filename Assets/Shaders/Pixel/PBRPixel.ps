@@ -3,6 +3,7 @@ CBuffer(MatBuffer, 2)
 {
   float fMetalness;
   float fRoughness;
+  float fReflectivity;
 };
 
 PIXEL_MAIN_BEGIN
@@ -26,7 +27,7 @@ PIXEL_MAIN_BEGIN
   pbrIn.albedo = vAlbedo;
   pbrIn.metalness = fMetalness;
   pbrIn.roughness = fRoughness;  
-  pbrIn.reflectivity = 0;
+  pbrIn.reflectivity = fReflectivity;
 
   vec3 color = vec3(0,0,0);
 
@@ -34,12 +35,11 @@ PIXEL_MAIN_BEGIN
   {
     vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
 
-    pbrIn.halfVector = normalize((pbrIn.viewDir + DirLightDir(i)) * 0.5);
     pbrIn.lightDir = DirLightDir(i);
+    pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0.0);    
     pbrIn.lightColor = DirLightColor(i) * ShadowFactor(vLightViewProjPos, i);
 
     color += PBR(pbrIn); 
-
   }
     
   outColor = vec4(color, 1); 

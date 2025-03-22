@@ -8,9 +8,10 @@ CBuffer(MatBuffer, 2)
 
 PIXEL_MAIN_BEGIN
 
+  vec3 vCamPos = CameraPos;
   PBRinput pbrIn;
-  pbrIn.normal = vec4(inNormal, 0);
-  pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
+  pbrIn.normal = vec4(normalize(inNormal), 0);
+  pbrIn.viewDir = vec4(normalize(vCamPos - inWorldPos), 0);  
   pbrIn.albedo = vAlbedo;
   pbrIn.metalness = fMetalness;
   pbrIn.roughness = fRoughness;  
@@ -22,8 +23,8 @@ PIXEL_MAIN_BEGIN
   {
     vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
 
-    pbrIn.halfVector = normalize((pbrIn.viewDir + DirLightDir(i)) * 0.5);
     pbrIn.lightDir = DirLightDir(i);
+    pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0);
     pbrIn.lightColor = DirLightColor(i) * ShadowFactor(vLightViewProjPos, i);
 
     color += PBR(pbrIn); 
