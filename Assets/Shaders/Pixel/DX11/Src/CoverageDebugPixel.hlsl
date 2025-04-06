@@ -340,43 +340,22 @@ vec3 PBRSpecularIBL(PBRinput _input)
   return (kS /** envBRDF.x + envBRDF.y*/) * _input.lightColor.xyz;
 }
 
+//float4 main(uint coverage : SV_Coverage) : SV_Target
+//{
+//    return float4(coverage / 255.0, 0, 0, 1); // Visualize MSAA coverage
+//}
+
+//void main()
+//{
+//    uint coverage = gl_SampleMaskIn[0]; // Gets active sample mask
+//    outColor = vec4(coverage / 255.0, 0, 0, 1);
+//}
+
+
 PIXEL_MAIN_BEGIN
 
-  vec3 ambientFactor = vec3(0.3, 0.3, 0.3);  
+outColor = vec4(1,0,0,1); 
 
-  vec3 vN = normalize(inNormal);
-  vec3 vT = normalize(inTangent - dot(inTangent, vN) * vN);
-  vec3 vB = normalize(cross(inNormal, inTangent));
-  mat3 mTBN = buildmat3(vT, vB, vN);
+PIXEL_MAIN_END 
 
-  vec3 vWN = sampleTex(Texture1, vec2(inUv.x, inUv.y)).rgb * 2.0 - 1.0;
 
-  vWN = normalize(mul(mTBN, vWN)); 
-
-  vec4 vAlbedo = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
-
-  PBRinput pbrIn;
-  pbrIn.normal = vec4(vWN, 0);
-  pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
-  pbrIn.albedo = vAlbedo;
-  pbrIn.metalness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).b;
-  pbrIn.roughness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).g;  
-  pbrIn.reflectivity = 0.04;
-
-  vec3 color = vec3(0,0,0);
-
-  for (uint i = 0; i < DirLightCount; i++)
-  {
-    vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
-
-    pbrIn.lightDir = DirLightDir(i);
-    pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0.0);
-    pbrIn.lightColor = DirLightColor(i);// * ShadowFactor(vLightViewProjPos, i);
-
-    color += PBR(pbrIn); 
-  }
-    
-  outColor = vec4(color, 1); 
- 
-PIXEL_MAIN_END
- 

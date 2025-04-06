@@ -15,7 +15,7 @@ class Window
 
 public:
   
-  Window(int _iWidth, int _iHeight, const char* _sTitle);
+  Window(int _iWidth, int _iHeight, int _iMsaaSamples, const char* _sTitle);
   ~Window();      
 
   uint8_t GetId() const;

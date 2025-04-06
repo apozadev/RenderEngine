@@ -32,8 +32,14 @@ namespace dx11
     case ImageFormat::R8G8B8:
       return DXGI_FORMAT_R8G8B8A8_UNORM;
       break;
+    case ImageFormat::R8G8B8_SRGB:
+      return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+      break;
     case ImageFormat::R8G8B8A8:
       return DXGI_FORMAT_R8G8B8A8_UNORM;
+      break;
+    case ImageFormat::R8G8B8A8_SRGB:
+      return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
       break;
     case ImageFormat::R32:
       return DXGI_FORMAT_R32_TYPELESS;
@@ -50,8 +56,14 @@ namespace dx11
     case ImageFormat::R8G8B8:
       return DXGI_FORMAT_R8G8B8A8_UNORM;
       break;
+    case ImageFormat::R8G8B8_SRGB:
+      return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+      break;
     case ImageFormat::R8G8B8A8:
       return DXGI_FORMAT_R8G8B8A8_UNORM;
+      break;
+    case ImageFormat::R8G8B8A8_SRGB:
+      return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
       break;
     case ImageFormat::R32:
       return DXGI_FORMAT_R32_FLOAT;
@@ -318,14 +330,13 @@ namespace dx11
   }
 
   uint32_t QueryMaxSupportedMsaaSamples(APIWindow* _pWindow)
-  {
-    DXGI_FORMAT eFormat = DXGI_FORMAT_R8G8B8A8_UNORM; // or any other render target format you're interested in
+  {    
     UINT uMaxSampleCount = 0;
 
-    for (UINT uSampleCount = 1; uSampleCount <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; ++uSampleCount)
+    for (UINT uSampleCount = 1; uSampleCount <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; uSampleCount = uSampleCount<<1)
     {
       UINT numQualityLevels = 0;
-      HRESULT hr = _pWindow->m_pDevice->CheckMultisampleQualityLevels(eFormat, uSampleCount, &numQualityLevels);
+      HRESULT hr = _pWindow->m_pDevice->CheckMultisampleQualityLevels(_pWindow->m_eSwapchainFormat, uSampleCount, &numQualityLevels);
       if (SUCCEEDED(hr) && numQualityLevels > 0)
       {
         uMaxSampleCount = uSampleCount; // Update to the highest supported sample count
@@ -339,7 +350,7 @@ namespace dx11
     return uMaxSampleCount;
   }
 
-  void CreateWindowRenderTarget(APIWindow* _pWindow, uint32_t _uMsaaSamples)
+  void CreateWindowRenderTarget(APIWindow* _pWindow)
   {
 
     // Create Depth buffer
@@ -350,7 +361,7 @@ namespace dx11
     oDSTexDesc.MipLevels = 1;
     oDSTexDesc.ArraySize = 1;
     oDSTexDesc.Format = DXGI_FORMAT_D32_FLOAT;
-    oDSTexDesc.SampleDesc.Count = _uMsaaSamples;
+    oDSTexDesc.SampleDesc.Count = _pWindow->m_uMsaaSamples;
     oDSTexDesc.SampleDesc.Quality = 0;
     oDSTexDesc.Usage = D3D11_USAGE_DEFAULT;
     oDSTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
@@ -366,30 +377,49 @@ namespace dx11
     descDSV.Texture2D.MipSlice = 0u;
     DX11_CHECK(_pWindow->m_pDevice->CreateDepthStencilView(_pWindow->m_pDSTexture.Get(), &descDSV, _pWindow->m_pDsv.GetAddressOf()));
 
-    // Create color texture
+    if (_pWindow->m_uMsaaSamples > 1u)
+    {
+      // Create color texture
 
-    D3D11_TEXTURE2D_DESC oTexDesc = {};
-    oTexDesc.Width = _pWindow->m_uWidth;
-    oTexDesc.Height = _pWindow->m_uHeight;
-    oTexDesc.Format = _pWindow->m_eSwapchainFormat;
-    oTexDesc.MipLevels = 1;
-    oTexDesc.ArraySize = 1;
-    oTexDesc.SampleDesc.Count = _uMsaaSamples;
-    oTexDesc.SampleDesc.Quality = 0;
-    oTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    oTexDesc.Usage = D3D11_USAGE_DEFAULT;
-    oTexDesc.CPUAccessFlags = 0;
+      D3D11_TEXTURE2D_DESC oTexDesc = {};
+      oTexDesc.Width = _pWindow->m_uWidth;
+      oTexDesc.Height = _pWindow->m_uHeight;
+      oTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;// _pWindow->m_eSwapchainFormat;
+      oTexDesc.MipLevels = 1;
+      oTexDesc.ArraySize = 1;
+      oTexDesc.SampleDesc.Count = _pWindow->m_uMsaaSamples;
+      oTexDesc.SampleDesc.Quality = 0;
+      oTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+      oTexDesc.Usage = D3D11_USAGE_DEFAULT;
+      oTexDesc.CPUAccessFlags = 0;
 
-    DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oTexDesc, NULL, _pWindow->m_pColorTexture.GetAddressOf()));
+      DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oTexDesc, NULL, _pWindow->m_pColorTexture.GetAddressOf()));
 
-    // Create Render Target View
+      // Create Render Target View
 
-    D3D11_RENDER_TARGET_VIEW_DESC oRtvDesc = {};
-    oRtvDesc.Format = _pWindow->m_eSwapchainFormat;
-    oRtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-    oRtvDesc.Texture2D.MipSlice = 0;
+      D3D11_RENDER_TARGET_VIEW_DESC oRtvDesc = {};
+      oRtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//_pWindow->m_eSwapchainFormat;
+      oRtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+      oRtvDesc.Texture2D.MipSlice = 0;
 
-    DX11_CHECK(_pWindow->m_pDevice->CreateRenderTargetView(_pWindow->m_pColorTexture.Get(), &oRtvDesc, _pWindow->m_pRtv.GetAddressOf()))
+      DX11_CHECK(_pWindow->m_pDevice->CreateRenderTargetView(_pWindow->m_pColorTexture.Get(), &oRtvDesc, _pWindow->m_pRtv.GetAddressOf()))
+    }
+    else
+    {
+      // Get back buffer
+      ID3D11Texture2D* pBackBuffer = nullptr;
+      DX11_CHECK(_pWindow->m_pSwapchain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
+
+      // Create Render Target View
+
+      D3D11_RENDER_TARGET_VIEW_DESC oRtvDesc = {};
+      oRtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//_pWindow->m_eSwapchainFormat;
+      oRtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+      oRtvDesc.Texture2D.MipSlice = 0;
+
+      DX11_CHECK(_pWindow->m_pDevice->CreateRenderTargetView(pBackBuffer, &oRtvDesc, _pWindow->m_pRtv.GetAddressOf()))
+
+    }
 
   }
 
@@ -402,9 +432,9 @@ namespace dx11
     _pWindow->m_pColorTexture = nullptr;
     _pWindow->m_pDSTexture = nullptr;
 
-    DX11_CHECK(_pWindow->m_pSwapchain->ResizeBuffers(_pWindow->m_uNumSwapchainImages, _pWindow->m_uWidth, _pWindow->m_uHeight, _pWindow->m_eSwapchainFormat, 0u))    
+    DX11_CHECK(_pWindow->m_pSwapchain->ResizeBuffers(_pWindow->m_uNumSwapchainImages, _pWindow->m_uWidth, _pWindow->m_uHeight, _pWindow->m_eSwapchainFormat, 0u))
 
-    CreateWindowRenderTarget(_pWindow, s_oGlobalData.m_uMaxMsaaSamples);            
+    CreateWindowRenderTarget(_pWindow);
   }
 
   bool IsGlobalResource(const char* _sName, PipelineStageFlags _uStageFlags)

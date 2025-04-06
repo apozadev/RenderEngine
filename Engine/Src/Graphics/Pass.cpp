@@ -10,6 +10,7 @@
 #include "Graphics/RenderStep.h"
 #include "Graphics/RenderTarget.h"
 #include "Core/Exception.h"
+#include "Core/Engine.h"
 #include "Reflection/ReflectionImplMacros.h"
 
 namespace pass_internal
@@ -91,7 +92,7 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
   else
   {
     api::SetUsingAPIRenderTarget(nullptr);
-    uMsaaSamples = api::GetDefaultMsaaSamples();
+    uMsaaSamples = Engine::GetInstance()->GetWindow()->GetMsaaSamples();
   }
 
   if (m_pAPIRenderState != nullptr)

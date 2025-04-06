@@ -13,7 +13,7 @@
 #include "Graphics/MaterialLibrary.h"
 #include "Memory/Factory.h"
 
-int Engine::Initialize(int _iWidth, int _iHeight, const char* _sTitle)
+int Engine::Initialize(int _iWidth, int _iHeight, int _iMsaaSamples, const char* _sTitle)
 {    
   m_fTargetFPS = 120.f;
 
@@ -23,7 +23,7 @@ int Engine::Initialize(int _iWidth, int _iHeight, const char* _sTitle)
   Renderer::GetInstance()->Initialize();
   InputManager::GetInstance()->Initialize();
 
-  m_pWindow = std::make_unique<Window>(_iWidth, _iHeight, _sTitle);
+  m_pWindow = std::make_unique<Window>(_iWidth, _iHeight, _iMsaaSamples, _sTitle);
 
   m_pWindow->SetUsing();
 

@@ -33,7 +33,7 @@ int main(){
   {
 
   // Startup
-  Engine::GetInstance()->Initialize(1080, 920, "App");   
+  Engine::GetInstance()->Initialize(1080, 920, 1, "App");   
 
   Scene* pScene = Engine::GetInstance()->CreateScene();
 

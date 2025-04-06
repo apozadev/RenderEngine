@@ -22,16 +22,16 @@ namespace api
     API::ShutDownAPI();
   } 
 
-  uint32_t GetDefaultMsaaSamples()
+  uint32_t GetMaxMsaaSamples()
   {
-    return API::GetDefaultMsaaSamples();
+    return API::GetMaxMsaaSamples();
   }
 
   // Window
 
-  APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
+  APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow, uint32_t _uMsaaSamples)
   {    
-    return API::CreateAPIWindow(_pGlfwWindow);
+    return API::CreateAPIWindow(_pGlfwWindow, _uMsaaSamples);
   }
 
   void SetUsingAPIWindow(APIWindow* _pWindow)
@@ -52,6 +52,11 @@ namespace api
   uint32_t GetWindowHeight(APIWindow* _pWindow)
   {
     return API::GetWindowHeight(_pWindow);
+  }
+
+  uint32_t GetWindowMSAASamples(APIWindow* _pWindow)
+  {
+    return API::GetWindowMSAASamples(_pWindow);
   }
 
   void ClearDefaultRenderTarget(APIWindow* _pWindow)

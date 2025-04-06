@@ -31,8 +31,12 @@ VkFormat GetVKFormat(ImageFormat _eFormat)
     return VK_FORMAT_D32_SFLOAT;
   case ImageFormat::R8G8B8:
     return VK_FORMAT_R8G8B8_UNORM;
+  case ImageFormat::R8G8B8_SRGB:
+    return VK_FORMAT_R8G8B8_SRGB;
   case ImageFormat::R8G8B8A8:
     return VK_FORMAT_R8G8B8A8_UNORM;
+  case ImageFormat::R8G8B8A8_SRGB:
+    return VK_FORMAT_R8G8B8A8_SRGB;
   default:
     break;
   }
@@ -419,7 +423,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
   aStages[0].module = hVSShaderModule;
   aStages[0].pName = "main";
 
-  // Pixel stage
+ // Pixel stage
 
   VkShaderModuleCreateInfo oPSCreateInfo{};
   oPSCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -463,12 +467,17 @@ void CreatePipeline(const file::InFile& _oVSFile,
 
   // Dynamic state for viewport and scissors
 
+  //VkPipelineViewportDepthClipControlCreateInfoEXT oDepthClipControl = {};
+  //oDepthClipControl.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_DEPTH_CLIP_CONTROL_CREATE_INFO_EXT;
+  //oDepthClipControl.negativeOneToOne = VK_TRUE;  // Enables DirectX-style [-1, 1] depth range
+
   VkPipelineViewportStateCreateInfo oViewportState = {};
   oViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   oViewportState.viewportCount = 1;
   oViewportState.pViewports = nullptr; // Set to nullptr for dynamic state
   oViewportState.scissorCount = 1;
   oViewportState.pScissors = nullptr;  // Set to nullptr for dynamic state
+  //oViewportState.pNext = &oDepthClipControl;
 
   VkPipelineDynamicStateCreateInfo oDynamicState = {};
   oDynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -496,14 +505,45 @@ void CreatePipeline(const file::InFile& _oVSFile,
 
   // Multisampling
 
+  VkSampleLocationEXT customSampleLocations[8] = {
+      {0.5625f * 0.9375f, 0.3125f * 0.9375f},  // (1, -3) 
+      {0.4375f * 0.9375f, 0.6875f * 0.9375f},  // (-1, 3) 
+      {0.8125f * 0.9375f, 0.5625f * 0.9375f},  // (5, 1) 
+      {0.3125f * 0.9375f, 0.1875f * 0.9375f},  // (-3, -5) 
+      {0.1875f * 0.9375f, 0.8125f * 0.9375f},  // (-5, 5) 
+      {0.0625f * 0.9375f, 0.4375f * 0.9375f},  // (-7, -1) 
+      {0.6875f * 0.9375f, 0.9375f * 0.9375f},  // (3, 7) 
+      {0.9375f * 0.9375f, 0.0625f * 0.9375f}   // (7, -7) 
+  };
+
+  // Describe the sample locations
+  //VkSampleLocationsInfoEXT sampleLocInfo = {};
+  //sampleLocInfo.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
+  //sampleLocInfo.sampleLocationsPerPixel = VK_SAMPLE_COUNT_8_BIT; // 8x MSAA
+  //sampleLocInfo.sampleLocationGridSize = { 1, 1 }; // Single sample location grid
+  //sampleLocInfo.sampleLocationsCount = 8;
+  //sampleLocInfo.pSampleLocations = customSampleLocations;
+
+  //// Enable sample locations in pipeline creation
+  //VkPipelineSampleLocationsStateCreateInfoEXT sampleLocState = {};
+  //sampleLocState.sType = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
+  //sampleLocState.sampleLocationsEnable = VK_TRUE;
+  //sampleLocState.sampleLocationsInfo = sampleLocInfo;  
+
+  VkSampleMask uSampleMask = 0xFFFFFFFF;
+
   VkPipelineMultisampleStateCreateInfo oMultisampling{};
   oMultisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   oMultisampling.sampleShadingEnable = VK_FALSE;
   oMultisampling.rasterizationSamples = _uMsaaSamples;
   oMultisampling.minSampleShading = 1.0f; // Optional
-  oMultisampling.pSampleMask = NULL; // Optional
+  oMultisampling.pSampleMask = &uSampleMask; // Optional
   oMultisampling.alphaToCoverageEnable = VK_FALSE; // Optional
   oMultisampling.alphaToOneEnable = VK_FALSE; // Optional
+  /*if (_uMsaaSamples > VK_SAMPLE_COUNT_1_BIT)
+  {
+    oMultisampling.pNext = &sampleLocState;
+  }*/
 
   // Depth stencil 
 
@@ -598,10 +638,12 @@ void CreateLogicalDevice(APIWindow* _pWindow)
 {
 
   const char* aDeviceExtensions[] = {
-  VK_KHR_SWAPCHAIN_EXTENSION_NAME
+  VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+  //VK_EXT_DEPTH_CLIP_CONTROL_EXTENSION_NAME
+  VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME
   };
 
-  uint32_t uDeviceExtensionCount = 1u;  
+  uint32_t uDeviceExtensionCount = 2u;  
 
   VkDeviceQueueCreateInfo aDeviceQueueCreateInfos[2];
 
@@ -670,8 +712,17 @@ void CreateLogicalDevice(APIWindow* _pWindow)
     }
   }
 
-  VkPhysicalDeviceFeatures oDeviceFeatures{};
-  vkGetPhysicalDeviceFeatures(s_oGlobalData.m_hPhysicalDevice, &oDeviceFeatures);
+  VkPhysicalDeviceDepthClipControlFeaturesEXT oDepthClipControlFeatures = {};
+  oDepthClipControlFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT;
+
+  VkPhysicalDeviceSampleLocationsPropertiesEXT oSampleLocationsFeatures = {};
+  oSampleLocationsFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
+
+  VkPhysicalDeviceFeatures2 oDeviceFeatures2 = {};
+  oDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+  oDeviceFeatures2.pNext = &oSampleLocationsFeatures;
+
+  vkGetPhysicalDeviceFeatures2(s_oGlobalData.m_hPhysicalDevice, &oDeviceFeatures2);
 
   VkDeviceCreateInfo oDeviceCreateInfo = {};
   oDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -681,8 +732,8 @@ void CreateLogicalDevice(APIWindow* _pWindow)
   oDeviceCreateInfo.enabledLayerCount = 0u;
   oDeviceCreateInfo.enabledExtensionCount = uDeviceExtensionCount;
   oDeviceCreateInfo.ppEnabledExtensionNames = aDeviceExtensions;
-  oDeviceCreateInfo.pEnabledFeatures = &oDeviceFeatures;
-  oDeviceCreateInfo.pNext = NULL;
+  oDeviceCreateInfo.pEnabledFeatures = NULL;
+  //oDeviceCreateInfo.pNext = &oDeviceFeatures2;
 
   VK_CHECK(vkCreateDevice(s_oGlobalData.m_hPhysicalDevice, &oDeviceCreateInfo, NULL, &_pWindow->m_hDevice))  
 }
@@ -739,7 +790,7 @@ void CreateColorBuffer(APIWindow* _pWindow)
     , _pWindow->m_eSwapchainFormat
     , 1u
     , 1u
-    , s_oGlobalData.m_eMaxMsaaSampleCount
+    , _pWindow->m_eMsaaSamples
     , VK_IMAGE_TILING_OPTIMAL
     , VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
     , 0u    
@@ -762,10 +813,10 @@ void CreateDepthBuffer(APIWindow* _pWindow)
     eFormat,
     1u,
     1u,
-    s_oGlobalData.m_eMaxMsaaSampleCount,
+    _pWindow->m_eMsaaSamples,
     VK_IMAGE_TILING_OPTIMAL,
     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-    0u,    
+    VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT,//0u,    
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     _pWindow->m_hDepthImage,
     _pWindow->m_hDepthImageMemory);
@@ -800,7 +851,7 @@ void CreateSwapchain(APIWindow* _pWindow)
     _pWindow->m_eSwapchainFormat = pSurfaceFormats[0].format;
     for (int i = 0; i < uSurfaceFormatCount; i++)
     {
-      if (pSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_UNORM
+      if (pSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB
         && pSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
       {
         _pWindow->m_eSwapchainFormat = pSurfaceFormats[i].format;
@@ -1094,7 +1145,7 @@ void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, VkImageVi
   APITexture oDummyDepthTexture = {};
   oDummyDepthTexture.m_hImageView = _hDepthImageView;
 
-  CreateFramebuffer(_pWindow, _hRenderPass, &pDummyColorTexture, 1u, &oDummyDepthTexture, &pDummyColorResolveTexture, hFrameBuffer_, _pWindow->m_oExtent.width, _pWindow->m_oExtent.height);
+  CreateFramebuffer(_pWindow, _hRenderPass, &pDummyColorTexture, 1u, &oDummyDepthTexture, _hResolveImageView ? &pDummyColorResolveTexture : nullptr, hFrameBuffer_, _pWindow->m_oExtent.width, _pWindow->m_oExtent.height);
 }
 
 void CreateCommandBuffers(APIWindow* _pWindow)
@@ -1278,7 +1329,8 @@ void DestroySwapchain(APIWindow* _pWindow)
 }
 
 void RecreateSwapchain(APIWindow* _pWindow)
-{
+{  
+
   vkDeviceWaitIdle(_pWindow->m_hDevice);
   DestroySwapchain(_pWindow);
   CreateSwapchain(_pWindow);
@@ -1759,7 +1811,7 @@ void SetupImGui(APIWindow* _pWindow)
   oImGuiInfo.Subpass = 0;
   oImGuiInfo.MinImageCount = oSurfaceCapabilities.minImageCount;
   oImGuiInfo.ImageCount = _pWindow->m_uSwapchainImageCount;
-  oImGuiInfo.MSAASamples = s_oGlobalData.m_eMaxMsaaSampleCount;
+  oImGuiInfo.MSAASamples = _pWindow->m_eMsaaSamples;
   oImGuiInfo.Allocator = nullptr;
   oImGuiInfo.CheckVkResultFn = check_vk_result;
   ImGui_ImplVulkan_Init(&oImGuiInfo, _pWindow->m_hRenderPass);

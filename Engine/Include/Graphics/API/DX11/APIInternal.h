@@ -46,7 +46,7 @@ namespace dx11
 
   uint32_t QueryMaxSupportedMsaaSamples(APIWindow* _pWindow);
 
-  void CreateWindowRenderTarget(APIWindow* _pWindow, uint32_t _uMsaaSamples);
+  void CreateWindowRenderTarget(APIWindow* _pWindow);
 
   void ResizeSwapchain(APIWindow* _pWindow);
 

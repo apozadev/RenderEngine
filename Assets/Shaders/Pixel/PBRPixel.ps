@@ -1,11 +1,4 @@
 
-CBuffer(MatBuffer, 2)
-{
-  float fMetalness;
-  float fRoughness;
-  float fReflectivity;
-};
-
 PIXEL_MAIN_BEGIN
 
   vec3 ambientFactor = vec3(0.3, 0.3, 0.3);  
@@ -25,9 +18,9 @@ PIXEL_MAIN_BEGIN
   pbrIn.normal = vec4(vWN, 0);
   pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
   pbrIn.albedo = vAlbedo;
-  pbrIn.metalness = fMetalness;
-  pbrIn.roughness = fRoughness;  
-  pbrIn.reflectivity = fReflectivity;
+  pbrIn.metalness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).b;
+  pbrIn.roughness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).g;  
+  pbrIn.reflectivity = 0.04;
 
   vec3 color = vec3(0,0,0);
 
@@ -36,8 +29,8 @@ PIXEL_MAIN_BEGIN
     vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
 
     pbrIn.lightDir = DirLightDir(i);
-    pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0.0);    
-    pbrIn.lightColor = DirLightColor(i) * ShadowFactor(vLightViewProjPos, i);
+    pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0.0);
+    pbrIn.lightColor = DirLightColor(i);// * ShadowFactor(vLightViewProjPos, i);
 
     color += PBR(pbrIn); 
   }

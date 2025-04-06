@@ -37,6 +37,8 @@ namespace api
 
       bool m_bResize = false;
 
+      uint32_t m_uMsaaSamples;
+
       GLFWwindow* m_pGlfwWindow;
     };
 

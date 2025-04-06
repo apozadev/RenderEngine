@@ -1,0 +1,19 @@
+
+//float4 main(uint coverage : SV_Coverage) : SV_Target
+//{
+//    return float4(coverage / 255.0, 0, 0, 1); // Visualize MSAA coverage
+//}
+
+//void main()
+//{
+//    uint coverage = gl_SampleMaskIn[0]; // Gets active sample mask
+//    outColor = vec4(coverage / 255.0, 0, 0, 1);
+//}
+
+
+PIXEL_MAIN_BEGIN
+
+outColor = vec4(1,0,0,1); 
+
+PIXEL_MAIN_END 
+

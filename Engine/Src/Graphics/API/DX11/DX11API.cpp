@@ -163,15 +163,15 @@ namespace api
       s_oRenderTargetPool.Clear();
     }
 
-    uint32_t GetDefaultMsaaSamples()
+    uint32_t GetMaxMsaaSamples()
     {
       return s_oGlobalData.m_uMaxMsaaSamples;
     }
 
     // Window
 
-    APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
-    {
+    APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow, uint32_t _uMsaaSamples)
+    {      
 
       APIWindow* pWindow = new APIWindow();  
 
@@ -181,7 +181,7 @@ namespace api
 
       pWindow->m_uNumSwapchainImages = 2u;
 
-      pWindow->m_eSwapchainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;      
+      pWindow->m_eSwapchainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;            
       
       PollWindowSize(pWindow);
       CreateDeviceAndSwapChain(pWindow);      
@@ -190,8 +190,17 @@ namespace api
       {
         s_oGlobalData.m_uMaxMsaaSamples = QueryMaxSupportedMsaaSamples(pWindow);
       }
+      
+      if (_uMsaaSamples > s_oGlobalData.m_uMaxMsaaSamples)
+      {
+        pWindow->m_uMsaaSamples = s_oGlobalData.m_uMaxMsaaSamples;
+      }
+      else
+      {
+        pWindow->m_uMsaaSamples = _uMsaaSamples;
+      }
 
-      CreateWindowRenderTarget(pWindow, s_oGlobalData.m_uMaxMsaaSamples);
+      CreateWindowRenderTarget(pWindow);
 
       // Default to triangle list just in case
       pWindow->m_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -272,6 +281,11 @@ namespace api
     uint32_t GetWindowHeight(APIWindow* _pWindow)
     {
       return _pWindow->m_uHeight;
+    }
+
+    uint32_t GetWindowMSAASamples(APIWindow* _pWindow)
+    {
+      return _pWindow->m_uMsaaSamples;
     }
 
     void ClearDefaultRenderTarget(APIWindow* _pWindow)
@@ -617,8 +631,8 @@ namespace api
       oSamplerDesc.AddressU = GetD3D11AdressMode(_rSamplerConfig.m_eAddressMode);
       oSamplerDesc.AddressV = GetD3D11AdressMode(_rSamplerConfig.m_eAddressMode);
       oSamplerDesc.AddressW = GetD3D11AdressMode(_rSamplerConfig.m_eAddressMode);
-      oSamplerDesc.Filter = GetD3D11Filter(_rSamplerConfig.m_eMipmapFilterMode, _rSamplerConfig.m_eMinFilterMode, _rSamplerConfig.m_eMagFilterMode);
-      oSamplerDesc.MaxAnisotropy = 1;
+      oSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;//GetD3D11Filter(_rSamplerConfig.m_eMipmapFilterMode, _rSamplerConfig.m_eMinFilterMode, _rSamplerConfig.m_eMagFilterMode);
+      oSamplerDesc.MaxAnisotropy = 16;
       oSamplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
       oSamplerDesc.MinLOD = 0;
       oSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;      
@@ -789,7 +803,7 @@ namespace api
 
     // Render state
 
-    APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t /*_uMsaaSamples*/)
+    APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples)
     {
 
       APIRenderState* pRenderState = s_oRenderStatePool.PullElement();
@@ -836,7 +850,7 @@ namespace api
       oRasterizerDesc.DepthBiasClamp = 0;//-0.001;
       oRasterizerDesc.SlopeScaledDepthBias = 0;// 1.f;
       oRasterizerDesc.DepthClipEnable = true;
-      oRasterizerDesc.MultisampleEnable = true;
+      oRasterizerDesc.MultisampleEnable = _uMsaaSamples > 1u;
       oRasterizerDesc.AntialiasedLineEnable = true;      
 
       DX11_CHECK(pWindow->m_pDevice->CreateRasterizerState(&oRasterizerDesc, pRenderState->m_pRasterizer.GetAddressOf()))
@@ -1300,13 +1314,15 @@ namespace api
 
     void EndDraw(APIWindow* _pWindow)
     {
+      if (_pWindow->m_pColorTexture)
+      {
+        ID3D11Texture2D* pBackBuffer = nullptr;
+        DX11_CHECK(_pWindow->m_pSwapchain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
 
-      ID3D11Texture2D* pBackBuffer = nullptr;
-      DX11_CHECK(_pWindow->m_pSwapchain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
-      
-      _pWindow->m_pContext->ResolveSubresource(pBackBuffer, 0u, _pWindow->m_pColorTexture.Get(), 0u, _pWindow->m_eSwapchainFormat);
+        _pWindow->m_pContext->ResolveSubresource(pBackBuffer, 0u, _pWindow->m_pColorTexture.Get(), 0u, _pWindow->m_eSwapchainFormat);
 
-      pBackBuffer->Release();
+        pBackBuffer->Release();
+      }
 
       DX11_CHECK(_pWindow->m_pSwapchain->Present(1u, 0u))
 

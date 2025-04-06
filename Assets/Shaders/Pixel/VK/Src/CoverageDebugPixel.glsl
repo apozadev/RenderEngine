@@ -1,121 +1,85 @@
-#pragma pack_matrix( column_major )
+#version 450
 
-struct VSout
-{
-	float4 pos : SV_Position;	
-	float3 normal : NORMAL;	
-	float3 worldPos : WORLDPOS;
-	float2 uv : TEXCOORD;
-	float3 tangent : TANGENT;
+#define lerp(a, b, t) mix(a, b, t)
+
+#define mul(mat, v) (mat * v)
+
+#define buildmat3(x, y, z) mat3(x, y, z)
+
+#define sampleTex(tex, uv) texture(tex, uv)
+
+#define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
+
+#define CubeTexture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform samplerCube name;
+
+#define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name
+#pragma shader_stage(fragment)
+
+layout(location = 0) in vec3 fragColor;
+layout(location = 1) in vec3 fragNormal;
+layout(location = 2) in vec3 fragTangent;
+layout(location = 3) in vec2 fragTexCoord;
+layout(location = 4) in vec3 fragWorldPos;
+
+layout(location = 0) out vec4 outColor;
+
+layout(set = 0, binding = 0) uniform GlobalBuffer {
+    mat4 viewproj;
+	mat4 view;
+	mat4 viewInv;
+	mat4 proj;
 };
 
-#define vec2 float2
-#define vec3 float3
-#define vec4 float4
+struct DirLightData {
+    vec4 vDirLightDir;
+    vec4 vDirLightColor;
+};
 
-#define mat4 matrix
-#define mat3 float3x3
-#define buildmat3(x, y, z) transpose(float3x3(x, y, z))
+layout(set = 1, binding = 4) uniform LightBuffer {
+    DirLightData aDirLights[5];
+    mat4 mLightViewProj[5];
+    uint uNumLights;
+    uint uNumShadows;
+};
 
-//#define mul(mat, v) mul(mat, v)
+Texture(ShadowMap0, 0, 1)
+Texture(ShadowMap1, 0, 2)
+Texture(ShadowMap2, 0, 3)
+Texture(ShadowMap3, 0, 4)
 
-#define sampleTex(tex, uv) tex.Sample(tex##_Sampler, uv)
+CubeTexture(Skybox, 0, 5)
 
-#define Texture(name, set, bind) Texture2D name : register(t##bind);
+Texture(Input0, 1, 0)
+Texture(Input1, 1, 1)
+Texture(Input2, 1, 2)
+Texture(Input3, 1, 3)
 
-#define CubeTexture(name, setIdx, bindIdx) TextureCube name : register(t##bind);
-
-#define CBuffer(name, bind) cbuffer name : register(b##bind)
+Texture(Texture0, 3, 0)
+Texture(Texture1, 3, 1)
+Texture(Texture2, 3, 2)
+Texture(Texture3, 3, 3)
 
 #define PIXEL_MAIN_BEGIN \
-  struct PS_OUTPUT  \
-  { \
-    float4 color: SV_Target0; \
-  }; \
-  PS_OUTPUT main(VSout __input) { \
-    PS_OUTPUT o;
+  void main() {
 
-#define PIXEL_MAIN_END  \
-  return o; \
-  } 
+#define PIXEL_MAIN_END } 
 
-cbuffer GlobalBuffer : register(b0)
-{
-  matrix viewproj;
-  matrix view;
-  matrix viewInv;
-  matrix proj;
-};
+#define inPos       fragColor
+#define inUv        fragTexCoord
+#define inNormal    fragNormal
+#define inTangent   fragTangent
+#define inWorldPos  fragWorldPos
 
-struct DirLight
-{
-  float4 vDirLightDir;
-  float4 vDirLightColor;
-};
-
-CBuffer(LightBuffer, 1)
-{
-  DirLight aDirLights[5];  
-  mat4 mLightViewProj[5];
-  uint uNumLights;
-  uint uNumShadows;
-}
-
-Texture2D Input0 : register(t0);
-Texture2D Input1 : register(t1);
-Texture2D Input2 : register(t2);
-Texture2D Input3 : register(t3);
-
-Texture2D Texture0 : register(t4);
-Texture2D Texture1 : register(t5);
-Texture2D Texture2 : register(t6);
-Texture2D Texture3 : register(t7);
-
-Texture2D ShadowMap0 : register(t8);
-Texture2D ShadowMap1 : register(t9);
-Texture2D ShadowMap2 : register(t10);
-Texture2D ShadowMap3 : register(t11);
-
-TextureCube Skybox : register(t12);
-
-sampler Input0_Sampler : register(s0);
-sampler Input1_Sampler : register(s1);
-sampler Input2_Sampler : register(s2);
-sampler Input3_Sampler : register(s3);
-
-sampler Texture0_Sampler : register(s4);
-sampler Texture1_Sampler : register(s5);
-sampler Texture2_Sampler : register(s6);
-sampler Texture3_Sampler : register(s7);
-
-sampler ShadowMap0_Sampler : register(s8);
-sampler ShadowMap1_Sampler : register(s9);
-sampler ShadowMap2_Sampler : register(s10);
-sampler ShadowMap3_Sampler : register(s11);
-
-sampler Skybox_Sampler : register(s12);
-
-#define viewProj	viewproj
-
-#define inPos       __input.pos
-#define inUv        __input.uv
-#define inNormal    __input.normal
-#define inTangent   __input.tangent
-#define inWorldPos  __input.worldPos
-
-#define outColor  o.color
-
-//#define ddx(x)	ddx(x)
-//#define ddy(x)	ddy(x)
+#define ddx(x)	dFdx(x)
+#define ddy(x)	dFdy(x)
 
 #define DirLightDir(i) aDirLights[i].vDirLightDir
 #define DirLightColor(i) aDirLights[i].vDirLightColor
-#define DirLightCount uNumLights
 #define DirLightViewProj(i) mLightViewProj[i]
 #define DirLightCount uNumLights
 #define DirLightShadowCount uNumShadows
 
-#define CameraPos float3(viewInv._14, viewInv._24, viewInv._34)
+#define CameraPos viewInv[3].xyz
 
 float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 {
@@ -340,43 +304,21 @@ vec3 PBRSpecularIBL(PBRinput _input)
   return (kS /** envBRDF.x + envBRDF.y*/) * _input.lightColor.xyz;
 }
 
+//float4 main(uint coverage : SV_Coverage) : SV_Target
+//{
+//    return float4(coverage / 255.0, 0, 0, 1); // Visualize MSAA coverage
+//}
+
+//void main()
+//{
+//    uint coverage = gl_SampleMaskIn[0]; // Gets active sample mask
+//    outColor = vec4(coverage / 255.0, 0, 0, 1);
+//}
+
+
 PIXEL_MAIN_BEGIN
 
-  vec3 ambientFactor = vec3(0.3, 0.3, 0.3);  
+outColor = vec4(1,0,0,1); 
 
-  vec3 vN = normalize(inNormal);
-  vec3 vT = normalize(inTangent - dot(inTangent, vN) * vN);
-  vec3 vB = normalize(cross(inNormal, inTangent));
-  mat3 mTBN = buildmat3(vT, vB, vN);
+PIXEL_MAIN_END 
 
-  vec3 vWN = sampleTex(Texture1, vec2(inUv.x, inUv.y)).rgb * 2.0 - 1.0;
-
-  vWN = normalize(mul(mTBN, vWN)); 
-
-  vec4 vAlbedo = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
-
-  PBRinput pbrIn;
-  pbrIn.normal = vec4(vWN, 0);
-  pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
-  pbrIn.albedo = vAlbedo;
-  pbrIn.metalness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).b;
-  pbrIn.roughness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).g;  
-  pbrIn.reflectivity = 0.04;
-
-  vec3 color = vec3(0,0,0);
-
-  for (uint i = 0; i < DirLightCount; i++)
-  {
-    vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
-
-    pbrIn.lightDir = DirLightDir(i);
-    pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0.0);
-    pbrIn.lightColor = DirLightColor(i);// * ShadowFactor(vLightViewProjPos, i);
-
-    color += PBR(pbrIn); 
-  }
-    
-  outColor = vec4(color, 1); 
- 
-PIXEL_MAIN_END
- 

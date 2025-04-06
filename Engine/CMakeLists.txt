@@ -217,10 +217,16 @@ target_include_directories(${PROJECT_NAME}
 	"${CMAKE_SOURCE_DIR}/assimp/include"	
  )
 
-if(${TARGET_RENDER_API} MATCHES ${RENDER_API_VULKAN})
-	target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_VULKAN) 
-else()
-target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_DX11) 
+option(RENDER_API_VULKAN "Use Vulkan API" OFF)
+option(RENDER_API_DX11 "Use DirectX 11 API" OFF)
+
+# Define preprocessor macros based on the selected API
+if(RENDER_API_VULKAN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_VULKAN)
+endif()
+
+if(RENDER_API_DX11)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE RENDER_API_DX11)
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE CURR_WORKING_DIR=${CMAKE_SOURCE_DIR}) 
@@ -236,7 +242,7 @@ function(CompileHLSL FILE TYPE_ARG)
   get_filename_component(FILE_NAME ${FILE} NAME_WE)
   get_filename_component(FILE_PATH ${FILE} PATH)    
   set(API_ARG)
-  if(${TARGET_RENDER_API} MATCHES ${RENDER_API_DX11})    
+  if(RENDER_API_DX11)    
 	set(CSO "${FILE_PATH}/${FILE_NAME}.cso")    
 	add_custom_command(OUTPUT ${CSO} 
                      COMMAND python3 ${CMAKE_SOURCE_DIR}/Tools/ShaderCompiler/ShaderCompiler.py ${TYPE_ARG} dx11 ${FILE}

@@ -78,37 +78,55 @@ namespace vk
     vkDestroyInstance(s_oGlobalData.m_hInstance, NULL);
   }
 
-  uint32_t GetDefaultMsaaSamples()
+  uint32_t GetMaxMsaaSamples()
   {
     return static_cast<uint32_t>(s_oGlobalData.m_eMaxMsaaSampleCount);
   }
 
   // Window
 
-  APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow)
+  APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow, uint32_t _uMsaaSamples)
   {
+
+    bool bMsaa = _uMsaaSamples > 1u;
+
     APIWindow* pWindow = new APIWindow();
 
     pWindow->m_pGlfwWindow = _pGlfwWindow;
+
+    pWindow->m_eMsaaSamples = static_cast<VkSampleCountFlagBits>(_uMsaaSamples);
+
+    if (_uMsaaSamples > static_cast<uint32_t>(s_oGlobalData.m_eMaxMsaaSampleCount))
+    {
+      pWindow->m_eMsaaSamples = s_oGlobalData.m_eMaxMsaaSampleCount;
+    }
 
     CreateLogicalDevice(pWindow);
     RetrieveQueues(pWindow);
     CreateSurface(pWindow, _pGlfwWindow);
     CreateCommandBuffers(pWindow);
     CreateSwapchain(pWindow);
-    CreateColorBuffer(pWindow);
-    CreateDepthBuffer(pWindow);          
-    CreateSyncObjects(pWindow);  
+    if (bMsaa)
+    {
+      CreateColorBuffer(pWindow);
+    }
+    CreateDepthBuffer(pWindow);
+    CreateSyncObjects(pWindow);
     CreateDescriptorPool(pWindow);
     CreateGlobalDescriptorLayout(pWindow);
 
-    CreateRenderPass(pWindow, 1u, pWindow->m_eSwapchainFormat, true, VK_FORMAT_D32_SFLOAT, s_oGlobalData.m_eMaxMsaaSampleCount, pWindow->m_hRenderPass, false);
+    CreateRenderPass(pWindow, 1u, pWindow->m_eSwapchainFormat, true, VK_FORMAT_D32_SFLOAT, pWindow->m_eMsaaSamples, pWindow->m_hRenderPass, false);
 
     pWindow->m_pFramebuffers = new VkFramebuffer[pWindow->m_uSwapchainImageCount];
 
     for (int i = 0; i < pWindow->m_uSwapchainImageCount; i++)
     {
-      CreateFramebuffer(pWindow, pWindow->m_hRenderPass, pWindow->m_hColorImageView, pWindow->m_hDepthImageView, pWindow->m_pSwapChainImageViews[i], pWindow->m_pFramebuffers[i]);
+      CreateFramebuffer(pWindow, 
+        pWindow->m_hRenderPass, 
+        bMsaa ? pWindow->m_hColorImageView : pWindow->m_pSwapChainImageViews[i],
+        pWindow->m_hDepthImageView, 
+        bMsaa ? pWindow->m_pSwapChainImageViews[i] : VK_NULL_HANDLE,
+        pWindow->m_pFramebuffers[i]);
     }    
 
     if (s_oGlobalData.m_pUsingWindow == NULL)
@@ -152,6 +170,11 @@ namespace vk
     return _pWindow->m_oExtent.height;
   }
 
+  uint32_t GetWindowMSAASamples(APIWindow* _pWindow)
+  {
+    return _pWindow->m_eMsaaSamples;
+  }
+
   void ClearDefaultRenderTarget(APIWindow* _pWindow)
   {
     uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
@@ -174,18 +197,36 @@ namespace vk
 
     // Color buffer
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    if (_pWindow->m_hColorImage != VK_NULL_HANDLE)
+    {
+      TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    oRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    oRange.baseMipLevel = 0;
-    oRange.levelCount = VK_REMAINING_MIP_LEVELS;
-    oRange.baseArrayLayer = 0;
-    oRange.layerCount = 1;
-  
-    VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-    vkCmdClearColorImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hColorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+      oRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+      oRange.baseMipLevel = 0;
+      oRange.levelCount = VK_REMAINING_MIP_LEVELS;
+      oRange.baseArrayLayer = 0;
+      oRange.layerCount = 1;
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+      VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+      vkCmdClearColorImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hColorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+
+      TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    }
+    else
+    {
+      TransitionImageLayout(_pWindow, _pWindow->m_pSwapchainImages[uFrameIdx], _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+      oRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+      oRange.baseMipLevel = 0;
+      oRange.levelCount = VK_REMAINING_MIP_LEVELS;
+      oRange.baseArrayLayer = 0;
+      oRange.layerCount = 1;
+
+      VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+      vkCmdClearColorImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_pSwapchainImages[uFrameIdx], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+
+      TransitionImageLayout(_pWindow, _pWindow->m_pSwapchainImages[uFrameIdx], _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    }
   }
 
   void BindDefaultRenderTarget(APIWindow* _pWindow)

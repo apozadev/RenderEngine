@@ -54,10 +54,12 @@ void Renderer::InitializePostWindow()
   aImages[4] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/4.png");
   aImages[5] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/5.png");
 
+  aImages[0].m_eFormat = ImageFormat::R8G8B8A8_SRGB;
+
   SamplerConfig oSampler = {};
   oSampler.m_eAddressMode = TextureAddressMode::CLAMP;
-  oSampler.m_eMagFilterMode = TextureFilterMode::POINT;
-  oSampler.m_eMinFilterMode = TextureFilterMode::POINT;
+  oSampler.m_eMagFilterMode = TextureFilterMode::LINEAR;
+  oSampler.m_eMinFilterMode = TextureFilterMode::LINEAR;
   oSampler.m_eMipmapFilterMode = TextureFilterMode::POINT;
 
   m_pEnvMap->ConfigureAsCubemap(aImages, oSampler, 1u, 1u);

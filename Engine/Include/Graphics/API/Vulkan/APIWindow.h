@@ -71,6 +71,8 @@ namespace vk
 
     bool m_bResized = false;
 
+    VkSampleCountFlagBits m_eMsaaSamples;
+
     GLFWwindow* m_pGlfwWindow;
   };
 

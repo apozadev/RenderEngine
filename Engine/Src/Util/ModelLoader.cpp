@@ -81,7 +81,7 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
         aiTextureType_NORMALS, // t1
         aiTextureType_METALNESS, // t2
         //aiTextureType_DIFFUSE_ROUGHNESS, // t3
-        aiTextureType_UNKNOWN // t3
+        //aiTextureType_UNKNOWN // t3
     };
 
     SamplerConfig aSamplerConfigs[4];
@@ -103,6 +103,8 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
       if (aiMat->GetTextureCount(types[j]) == 0) continue;
       aiString str;
       aiMat->Get(AI_MATKEY_TEXTURE(types[j], 0), str);
+
+      Image oImage = {};
       
       if (const aiTexture* aiTex = _pAssimpScene->GetEmbeddedTexture(str.C_Str()))
       {
@@ -110,33 +112,38 @@ void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, 
         if (aiTex->mHeight == 0)
         {
           // Compressed image data, we need to decode it
-          const Image& oImage = ImageManager::GetInstance()->DecodeFromMemory(aiTex->mFilename.C_Str(), (unsigned char*)aiTex->pcData, aiTex->mWidth);
-          if (oImage.m_pData)
-          {
-            owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-            pTexture->Configure(oImage, aSamplerConfigs[j]);
-            pMatInstance->AddTexture(std::move(pTexture));
-          }
+          oImage = ImageManager::GetInstance()->DecodeFromMemory(aiTex->mFilename.C_Str(), (unsigned char*)aiTex->pcData, aiTex->mWidth);          
         }
         else
-        {
-          Image oImage{};
+        {          
           oImage.m_pData = aiTex->pcData;
           oImage.m_iWidth = aiTex->mWidth;
           oImage.m_iHeight = aiTex->mHeight;
-          oImage.m_eFormat = ImageFormat::R8G8B8A8;
-
-          owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-          pTexture->Configure(oImage, aSamplerConfigs[j]);
-          pMatInstance->AddTexture(std::move(pTexture));          
+          oImage.m_eFormat = ImageFormat::R8G8B8A8;        
         }
       }
       else //if (INVALID_FILE_ATTRIBUTES != GetFileAttributes(str.C_Str()))
       {
+        //regular file, read it from disk                        
+        oImage = ImageManager::GetInstance()->LoadImage(_sDirectory + str.C_Str(), true);
+      }
 
-        //regular file, read it from disk                
+      if (oImage.m_pData)
+      {
+        if (types[j] == aiTextureType_DIFFUSE)
+        {
+          switch (oImage.m_eFormat)
+          {
+          case ImageFormat::R8G8B8:
+            oImage.m_eFormat = ImageFormat::R8G8B8_SRGB;
+            break;
+          case ImageFormat::R8G8B8A8:
+            oImage.m_eFormat = ImageFormat::R8G8B8A8_SRGB;
+            break;
+          }
+        }
         owner_ptr<Texture2D> pTexture = Factory::Create<Texture2D>();
-        pTexture->Configure(_sDirectory + str.C_Str(), aSamplerConfigs[j]);
+        pTexture->Configure(oImage, aSamplerConfigs[j]);
         pMatInstance->AddTexture(std::move(pTexture));
       }
     }  

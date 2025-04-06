@@ -12,7 +12,7 @@ namespace window_internal
   uint8_t s_uCurrId = 0u;
 }
 
-Window::Window(int _fWidth, int _fHeight, const char* _sTitle)
+Window::Window(int _fWidth, int _fHeight, int _iMsaaSamples, const char* _sTitle)
 {   
   m_pGlfwWindow = nullptr;
   m_uId = window_internal::s_uCurrId++;
@@ -30,7 +30,7 @@ Window::Window(int _fWidth, int _fHeight, const char* _sTitle)
     THROW_GENERIC_EXCEPTION("Could not create GLFW window")
   }
 
-  m_pAPIWindow = api::CreateAPIWindow(m_pGlfwWindow);
+  m_pAPIWindow = api::CreateAPIWindow(m_pGlfwWindow, static_cast<uint32_t>(_iMsaaSamples));
 }
 
 Window::~Window()
@@ -113,7 +113,7 @@ bool Window::IsDefaultRenderTargetBound() const
 
 uint32_t Window::GetMsaaSamples() const
 {
-  return api::GetDefaultMsaaSamples();
+  return api::GetWindowMSAASamples(m_pAPIWindow);
 }
 
 bool Window::ShouldClose() const 

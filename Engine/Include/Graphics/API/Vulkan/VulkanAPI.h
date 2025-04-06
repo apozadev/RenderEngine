@@ -33,11 +33,11 @@ namespace vk
 
 	void ShutDownAPI();
 
-	uint32_t GetDefaultMsaaSamples();
+	uint32_t GetMaxMsaaSamples();
 
 	// Window
 
-	APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow);	
+	APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow, uint32_t _uMsaaSamples);	
 
 	void SetUsingAPIWindow(APIWindow* _pWindow);	
 
@@ -46,6 +46,8 @@ namespace vk
 	uint32_t GetWindowWidth(APIWindow* _pWindow);
 
 	uint32_t GetWindowHeight(APIWindow* _pWindow);
+
+	uint32_t GetWindowMSAASamples(APIWindow* _pWindow);
 
 	void ClearDefaultRenderTarget(APIWindow* _pWindow);
 

@@ -29,7 +29,7 @@
 #include <string>
 
 // TODO:
-// CBuffer cache carga mal con vec4
+// Diferencia visual entre APIs. MSAA?
 // [API] Struct de contexto en lugar de usingX
 
 void PostUpdateCallback(float _fDt)
@@ -48,7 +48,7 @@ int main()
   try
   {        
     // Startup
-    Engine::GetInstance()->Initialize(1080, 920, "App");
+    Engine::GetInstance()->Initialize(1080, 920, 1, "App");
 
     RenderPipelineConfig oConfig = {};
     reflection::ReflectionHelper::Deserialize("Assets/RenderInfos/RenderInfo.xml", &oConfig);

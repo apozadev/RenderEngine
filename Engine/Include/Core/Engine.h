@@ -14,7 +14,7 @@ class Engine : public Singleton<Engine>
 {
 
 public:
-  int Initialize(int _iWidth, int _iHeight, const char* _sTitle);
+  int Initialize(int _iWidth, int _iHeight, int _iMsaaSamples, const char* _sTitle);
   int Run();
   int ScheduleShutDown(); 
 
