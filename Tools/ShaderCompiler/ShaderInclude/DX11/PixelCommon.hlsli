@@ -1,10 +1,19 @@
 
+struct PSin
+{
+	float4 pos : SV_Position;
+	float3 normal : NORMAL;
+	float3 worldPos : WORLDPOS;
+	float2 uv : TEXCOORD;
+	float3 tangent : TANGENT;
+};
+
 #define PIXEL_MAIN_BEGIN \
   struct PS_OUTPUT  \
   { \
     float4 color: SV_Target0; \
   }; \
-  PS_OUTPUT main(VSout __input) { \
+  PS_OUTPUT main(PSin __input) { \
     PS_OUTPUT o;
 
 #define PIXEL_MAIN_END  \

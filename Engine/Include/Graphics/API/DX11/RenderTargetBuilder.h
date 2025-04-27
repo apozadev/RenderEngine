@@ -37,6 +37,8 @@ namespace api
 
       uint32_t m_uWidth, m_uHeight;
 
+      bool m_bIsCubemap = false;
+
     private:
 
       std::vector<APITexture*> m_lstColorTextures;

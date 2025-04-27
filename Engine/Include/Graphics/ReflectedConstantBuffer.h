@@ -13,16 +13,17 @@ public:
   struct Variable
   {
     ConstantBufferType m_eType;
+    uint32_t m_uArraySize;
     std::string m_sName;
   };
 
   ~ReflectedConstantBuffer();
 
-  void Configure(std::string _sName, std::vector<Variable>&& _lstVariables, float* _pCache);
+  void Configure(std::string _sName, PipelineStage _eStage, std::vector<Variable>&& _lstVariables, float* _pCache);
 
   void SetupRenderSubState() const
   {
-    ConstantBufferBase::SetupRenderSubState(m_uSize, m_sName, STAGE_PIXEL, ResourceFrequency::MATERIAL);
+    ConstantBufferBase::SetupRenderSubState(m_uSize, m_sName, m_eStage, ResourceFrequency::MATERIAL);
   }
 
   void Update() const
@@ -59,7 +60,7 @@ public:
     {
       const Variable& rVar = m_lstVariables[i];
 
-      size_t uVarSize = GetConstantBufferTypeSize(rVar.m_eType);      
+      size_t uVarSize = GetConstantBufferTypeSize(rVar.m_eType) * m_lstVariables[i].m_uArraySize;
 
       if (rVar.m_eType == TYPE && rVar.m_sName == _sName)
       {
@@ -88,7 +89,7 @@ public:
     {
       const Variable& rVar = m_lstVariables[i];
 
-      size_t uVarSize = GetConstantBufferTypeSize(rVar.m_eType);
+      size_t uVarSize = GetConstantBufferTypeSize(rVar.m_eType) * m_lstVariables[i].m_uArraySize;
 
       if (rVar.m_eType == TYPE && rVar.m_sName == _sName)
       {
@@ -125,5 +126,7 @@ private:
   size_t m_uSize = 0u;
 
   std::string m_sName;
+
+  PipelineStage m_eStage;
 
 };

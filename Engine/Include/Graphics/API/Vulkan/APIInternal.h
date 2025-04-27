@@ -62,7 +62,7 @@ namespace vk
 
   void CreatePhysicalDevice();
 
-  void CreatePipeline(const file::InFile& _oVSFile, const file::InFile& _oPSFile, const RenderStateInfo& _oInfo, VkRenderPass _hRenderPass, VkSampleCountFlagBits _uMsaaSamples, APIRenderState* _pRenderState_);
+  void CreatePipeline(const file::InFile& _oVSFile, const file::InFile& _oPSFile, const file::InFile* _pGSFile, const RenderStateInfo& _oInfo, VkRenderPass _hRenderPass, VkSampleCountFlagBits _uMsaaSamples, APIRenderState* _pRenderState_);
 
   void CreateLogicalDevice(APIWindow* _pWindow);
 
@@ -76,11 +76,7 @@ namespace vk
 
   void CreateSwapchain(APIWindow* _pWindow);
 
-  void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen);
-
-  void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITexture** _pColorTextures, uint32_t _uNumColorTextures, APITexture* _pDepthTexture, APITexture** _pColorResolveTextures, VkFramebuffer& hFrameBuffer_, uint32_t _uWidth, uint32_t _uHeight);
-
-  void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, VkImageView _hColorImageView, VkImageView _hDepthImageView, VkImageView _hResolveImageView, VkFramebuffer& hFrameBuffer_);
+  void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen, bool _bMultiview = false);  
 
   void CreateCommandBuffers(APIWindow* _pWindow);
 
@@ -100,7 +96,7 @@ namespace vk
 
   void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkImageCreateFlags _uCreateFlags, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
 
-  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, bool _bIsCubeTexture, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
+  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageViewType _eViewType, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
 
   void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig);
 

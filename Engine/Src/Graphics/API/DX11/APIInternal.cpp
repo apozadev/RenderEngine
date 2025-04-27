@@ -41,6 +41,12 @@ namespace dx11
     case ImageFormat::R8G8B8A8_SRGB:
       return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
       break;
+    case ImageFormat::R32G32B32:
+      return DXGI_FORMAT_R32G32B32_FLOAT;
+      break;
+    case ImageFormat::R32G32B32A32:
+      return DXGI_FORMAT_R32G32B32A32_FLOAT;
+      break;
     case ImageFormat::R32:
       return DXGI_FORMAT_R32_TYPELESS;
       break;
@@ -64,6 +70,12 @@ namespace dx11
       break;
     case ImageFormat::R8G8B8A8_SRGB:
       return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+      break;
+    case ImageFormat::R32G32B32:
+      return DXGI_FORMAT_R32G32B32_FLOAT;
+      break;
+    case ImageFormat::R32G32B32A32:
+      return DXGI_FORMAT_R32G32B32A32_FLOAT;
       break;
     case ImageFormat::R32:
       return DXGI_FORMAT_R32_FLOAT;
@@ -456,11 +468,15 @@ namespace dx11
 
     switch (_eStage)
     {
-    case STAGE_VERTEX:
-      break;
+    case STAGE_VERTEX:      
       pReflection = _pRenderState->m_pVertexReflection.Get();
+      break;
+    case STAGE_GEOM:
+      pReflection = _pRenderState->m_pGeometryReflection.Get();
+      break;
     case STAGE_PIXEL:
       pReflection = _pRenderState->m_pPixelReflection.Get();
+      break;
     default:
       break;
     }

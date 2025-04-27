@@ -22,20 +22,15 @@ struct MeshConstant
 
 class Mesh : public BaseObject
 {
-
-  friend class GeometryRenderStep;
-
 public:      
 
   REFLECT_BASE()
   
   ~Mesh();
 
-  void Initialize(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices);
+  void Initialize(const std::vector<Vertex>& _lstVertices, const std::vector<uint16_t>& _lstIndices);
 
   void UpdateTransform(const Transform& _oParentTransform);  
-
-private: 
 
   void Draw() const;  
 

@@ -6,7 +6,7 @@
 
 #include "Reflection/ReflectionImplMacros.h"
 
-void Mesh::Initialize(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices)
+void Mesh::Initialize(const std::vector<Vertex>& _lstVertices, const std::vector<uint16_t>& _lstIndices)
 {
   m_uVertexCount = static_cast<uint32_t>(_lstVertices.size());
   m_uIndexCount = static_cast<uint32_t>(_lstIndices.size());

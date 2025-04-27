@@ -23,7 +23,9 @@ public:
   void WaitForNextImage();
 
   int BeginDraw();
+  void BeginDrawOffline();
   void EndDraw() const;  
+  void Present() const;  
 
   void PollEvents() const;
   void SwapBuffers() const;

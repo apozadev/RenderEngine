@@ -7,6 +7,7 @@
 #include "Core/Engine.h"
 #include "Graphics/Window.h"
 #include "Graphics/Texture2D.h"
+#include "Graphics/RenderTarget.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/RenderPipeline.h"
 #include "Graphics/RenderPipelineConfig.h"
@@ -64,7 +65,8 @@ void Camera::PreRenderSetup()
   api::BeginSubStateSetup(m_pSubState);
   m_pCBuffer->SetupRenderSubState("GlobalBuffer", STAGE_VERTEX | STAGE_PIXEL, ResourceFrequency::GLOBAL);
   Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);
-  Renderer::GetInstance()->GetEnvMap()->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
+  //Renderer::GetInstance()->GetEnvMap()->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
+  Renderer::GetInstance()->GetEnvMap2()->GetColorTextures()[0]->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
   api::EndSubStateSetup(ResourceFrequency::GLOBAL);
 }
 

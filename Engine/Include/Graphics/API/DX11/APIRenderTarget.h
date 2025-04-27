@@ -20,7 +20,7 @@ namespace dx11
 
     int m_iWidth, m_iHeight;
 
-    unsigned int m_uSampleCount = 1u;
+    unsigned int m_uMsaaSamples = 1u;
                  
   };
 

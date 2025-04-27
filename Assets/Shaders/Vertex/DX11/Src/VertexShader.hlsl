@@ -1,14 +1,5 @@
 #pragma pack_matrix( column_major )
 
-struct VSout
-{
-	float4 pos : SV_Position;	
-	float3 normal : NORMAL;	
-	float3 worldPos : WORLDPOS;
-	float2 uv : TEXCOORD;
-	float3 tangent : TANGENT;
-};
-
 #define vec2 float2
 #define vec3 float3
 #define vec4 float4
@@ -27,6 +18,8 @@ struct VSout
 
 #define CBuffer(name, bind) cbuffer name : register(b##bind)
 
+#define atan  atan2
+
 struct VSin
 {
 	float3 p : Position;
@@ -34,6 +27,15 @@ struct VSin
 	float3 t : TANGENT;
 	float3 c : COLOR;
 	float2 uv : TexCoord;
+};
+
+struct VSout
+{
+	float4 pos : SV_Position;
+	float3 normal : NORMAL;
+	float3 worldPos : WORLDPOS;
+	float2 uv : TEXCOORD;
+	float3 tangent : TANGENT;
 };
 
 cbuffer GlobalBuffer : register(b0)

@@ -14,6 +14,8 @@ namespace vk
     VkImageView m_hImageView;
     VkSampler m_hSampler;
     VkFormat m_eFormat;
+    uint32_t m_uMipLevels;
+    uint32_t m_uLayers;
 
     APIWindow* m_pOwnerWindow;
   };

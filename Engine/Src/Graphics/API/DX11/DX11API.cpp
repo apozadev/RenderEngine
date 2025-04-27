@@ -397,7 +397,7 @@ namespace api
 
     // Mesh
 
-    APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize)
+    APIMesh* CreateAPIMesh(const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize)
     {
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
@@ -498,6 +498,10 @@ namespace api
       {
         pWindow->m_pContext->VSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
+      if ((_pCbuffer->m_uStageFlags & STAGE_GEOM) != 0u)
+      {
+        pWindow->m_pContext->GSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
+      }
       if ((_pCbuffer->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
         pWindow->m_pContext->PSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
@@ -534,8 +538,10 @@ namespace api
         uBindFlags |= D3D11_BIND_RENDER_TARGET;
       }      
 
+      uint32_t uLayers = _bIsCubemap ? 6u : 1u;
+
       D3D11_TEXTURE2D_DESC oTexDesc = {};
-      oTexDesc.ArraySize = _bIsCubemap ? 6u : 1u;
+      oTexDesc.ArraySize = uLayers;
       oTexDesc.BindFlags = uBindFlags;
       oTexDesc.CPUAccessFlags = 0;
       oTexDesc.Format = eDXGIFormat;
@@ -626,6 +632,7 @@ namespace api
       pTexture->m_eFormat = eDXGIFormat;
       pTexture->m_iWidth = _uWidth;
       pTexture->m_iHeight = _uHeight;
+      pTexture->m_uLayers = uLayers;
 
       D3D11_SAMPLER_DESC oSamplerDesc{};
       oSamplerDesc.AddressU = GetD3D11AdressMode(_rSamplerConfig.m_eAddressMode);
@@ -651,6 +658,11 @@ namespace api
         pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
         pWindow->m_pContext->VSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
+      if ((_pTexture->m_uStageFlags & STAGE_GEOM) != 0u)
+      {
+        pWindow->m_pContext->GSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+        pWindow->m_pContext->GSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
+      }
       if ((_pTexture->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
         pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
@@ -667,6 +679,10 @@ namespace api
       if ((_pTexture->m_uStageFlags & STAGE_VERTEX) != 0u)
       {
         pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
+      }
+      if ((_pTexture->m_uStageFlags & STAGE_GEOM) != 0u)
+      {
+        pWindow->m_pContext->GSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
       if ((_pTexture->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
@@ -693,13 +709,14 @@ namespace api
       return pRenderTarget;
     }
 
-    void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
+    void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples, bool _bIsCubemap)
     {
       s_oGlobalData.m_oRenderTargetBuilder.m_uWidth = _uWidth;
       s_oGlobalData.m_oRenderTargetBuilder.m_uHeight = _uHeight;
       s_oGlobalData.m_oRenderTargetBuilder.m_eColorFormat = GetDXGIFormat(_eFormat);
       s_oGlobalData.m_oRenderTargetBuilder.m_eDepthStencilFormat = GetDXGIFormat(_eDepthStencilFormat);
       s_oGlobalData.m_oRenderTargetBuilder.m_uMsaaSamples = _uMsaaSamples;
+      s_oGlobalData.m_oRenderTargetBuilder.m_bIsCubemap = _bIsCubemap;
       s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
     }
 
@@ -810,26 +827,42 @@ namespace api
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-      size_t uSlashPosVS = _oInfo.m_sVSFilename.find_last_of('/');
+      size_t uSlashPosVS = _oInfo.m_sVSFilename.find_last_of('/');      
       size_t uSlashPosPS = _oInfo.m_sPSFilename.find_last_of('/');
 
-      size_t uDotPosVS = _oInfo.m_sVSFilename.find_last_of('.');
+      size_t uDotPosVS = _oInfo.m_sVSFilename.find_last_of('.');      
       size_t uDotPosPS = _oInfo.m_sPSFilename.find_last_of('.');
 
-      std::string sVSPath = _oInfo.m_sVSFilename.substr(0, uSlashPosVS) + "/DX11";
+      std::string sVSPath = _oInfo.m_sVSFilename.substr(0, uSlashPosVS) + "/DX11";      
       std::string sPSPath = _oInfo.m_sPSFilename.substr(0, uSlashPosPS) + "/DX11";
 
-      std::string sVSFilename = _oInfo.m_sVSFilename.substr(uSlashPosVS, uDotPosVS - uSlashPosVS) + ".cso";
+      std::string sVSFilename = _oInfo.m_sVSFilename.substr(uSlashPosVS, uDotPosVS - uSlashPosVS) + ".cso";      
       std::string sPSFilename = _oInfo.m_sPSFilename.substr(uSlashPosPS, uDotPosPS - uSlashPosPS) + ".cso";
 
-      file::InFile oVsFile((sVSPath + sVSFilename).c_str());
+      file::InFile oVsFile((sVSPath + sVSFilename).c_str());      
       file::InFile oPsFile((sPSPath + sPSFilename).c_str());
       
-      DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));      
-      DX11_CHECK(pWindow->m_pDevice->CreatePixelShader(oPsFile.GetData(), oPsFile.GetSize(), nullptr, pRenderState->m_pPixelShader.ReleaseAndGetAddressOf()));
+      DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));            
+      DX11_CHECK(pWindow->m_pDevice->CreatePixelShader(oPsFile.GetData(), oPsFile.GetSize(), nullptr, pRenderState->m_pPixelShader.ReleaseAndGetAddressOf()));      
 
       DX11_CHECK(D3DReflect(oVsFile.GetData(), oVsFile.GetSize(), IID_ID3D11ShaderReflection, (void**)pRenderState->m_pVertexReflection.ReleaseAndGetAddressOf()));
       DX11_CHECK(D3DReflect(oPsFile.GetData(), oPsFile.GetSize(), IID_ID3D11ShaderReflection, (void**)pRenderState->m_pPixelReflection.ReleaseAndGetAddressOf()));
+
+      pRenderState->m_pGeometryShader = nullptr;
+
+      if (!_oInfo.m_sGSFilename.empty())
+      {
+        size_t uSlashPosGS = _oInfo.m_sGSFilename.find_last_of('/');        
+        size_t uDotPosGS = _oInfo.m_sGSFilename.find_last_of('.');
+        std::string sGSPath = _oInfo.m_sGSFilename.empty() ? "" : _oInfo.m_sGSFilename.substr(0, uSlashPosGS) + "/DX11";
+        std::string sGSFilename = _oInfo.m_sGSFilename.empty() ? "" : _oInfo.m_sGSFilename.substr(uSlashPosGS, uDotPosGS - uSlashPosGS) + ".cso";
+
+        file::InFile oGsFile(_oInfo.m_sGSFilename.empty() ? "" : (sGSPath + sGSFilename).c_str());
+
+        DX11_CHECK(pWindow->m_pDevice->CreateGeometryShader(oGsFile.GetData(), oGsFile.GetSize(), nullptr, pRenderState->m_pGeometryShader.ReleaseAndGetAddressOf()));
+
+        DX11_CHECK(D3DReflect(oGsFile.GetData(), oGsFile.GetSize(), IID_ID3D11ShaderReflection, (void**)pRenderState->m_pGeometryReflection.ReleaseAndGetAddressOf()));
+      }
 
       const D3D11_INPUT_ELEMENT_DESC oInputDesc[] =
       {
@@ -915,7 +948,8 @@ namespace api
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
       pWindow->m_pContext->VSSetShader(_pAPIRenderState->m_pVertexShader.Get(), nullptr, 0u);
-      pWindow->m_pContext->PSSetShader(_pAPIRenderState->m_pPixelShader.Get(), nullptr, 0u);
+      pWindow->m_pContext->PSSetShader(_pAPIRenderState->m_pPixelShader.Get(), nullptr, 0u);      
+      pWindow->m_pContext->GSSetShader(_pAPIRenderState->m_pGeometryShader.Get(), nullptr, 0u);      
       pWindow->m_pContext->IASetInputLayout(_pAPIRenderState->m_pInputLayout.Get());
       pWindow->m_pContext->RSSetState(_pAPIRenderState->m_pRasterizer.Get());
       pWindow->m_pContext->OMSetBlendState(_pAPIRenderState->m_pBlendState.Get(), nullptr, 0xffffffff);
@@ -937,11 +971,15 @@ namespace api
 
       switch (_eStage)
       {
-      case STAGE_VERTEX:
-        break;
+      case STAGE_VERTEX:        
         pReflection = _pAPIRenderState->m_pVertexReflection.Get();
+        break;
+      case STAGE_GEOM:
+        pReflection = _pAPIRenderState->m_pGeometryReflection.Get();
+        break;
       case STAGE_PIXEL:
         pReflection = _pAPIRenderState->m_pPixelReflection.Get();
+        break;
       default:
         break;
       }
@@ -977,11 +1015,15 @@ namespace api
 
       switch (_eStage)
       {
-      case STAGE_VERTEX:
-        break;
+      case STAGE_VERTEX:        
         pReflection  = _pAPIRenderState->m_pVertexReflection.Get();
+        break;
+      case STAGE_GEOM:
+        pReflection = _pAPIRenderState->m_pGeometryReflection.Get();
+        break;
       case STAGE_PIXEL:
         pReflection = _pAPIRenderState->m_pPixelReflection.Get();
+        break;
       default:
         break;
       }
@@ -1138,6 +1180,40 @@ namespace api
       return ConstantBufferType::NONE;
     }
 
+    uint32_t GetConstantBufferMemberArraySize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+    {
+      uint32_t uSize = 0u;
+
+      D3D11_SHADER_BUFFER_DESC oBufferDesc = {};
+
+      ID3D11ShaderReflectionConstantBuffer* pCBuffer = nullptr;
+
+      if (GetBufferByIndex(_pAPIRenderState, _eStage, _uIdx, &pCBuffer, oBufferDesc))
+      {
+        if (_uMemberIdx < oBufferDesc.Variables)
+        {
+          if (ID3D11ShaderReflectionVariable* pVariable = pCBuffer->GetVariableByIndex(_uMemberIdx))
+          {
+            D3D11_SHADER_VARIABLE_DESC oVarDesc = {};
+            pVariable->GetDesc(&oVarDesc);
+
+            ID3D11ShaderReflectionType* pType = pVariable->GetType();
+            D3D11_SHADER_TYPE_DESC oTypeDesc;
+            pType->GetDesc(&oTypeDesc);
+
+            uSize = oTypeDesc.Elements;
+          }
+        }
+      }
+
+      if (uSize < 1)
+      {
+        uSize = 1;
+      }
+
+      return uSize;
+    }
+
     // Render substate
 
     APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)
@@ -1168,6 +1244,13 @@ namespace api
         {
           ID3D11ShaderReflection* pReflection = s_oGlobalData.m_pUsingRenderState->m_pVertexReflection.Get();
           _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
+        }
+        if ((_oBindInfo.m_uStageFlags & STAGE_GEOM) != 0u)
+        {
+          if (ID3D11ShaderReflection* pReflection = s_oGlobalData.m_pUsingRenderState->m_pGeometryReflection.Get())
+          {
+            _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
+          }
         }
         if (_pCBuffer->m_slot == 0xFFFFFFFF && (_oBindInfo.m_uStageFlags & STAGE_PIXEL) != 0u)
         {
@@ -1284,6 +1367,11 @@ namespace api
           _pWindow->m_pContext->VSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
           _pWindow->m_pContext->VSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
         }
+        if ((rResource.m_uStageFlags & STAGE_GEOM) != 0)
+        {
+          _pWindow->m_pContext->GSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
+          _pWindow->m_pContext->GSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
+        }
         if ((rResource.m_uStageFlags & STAGE_PIXEL) != 0)
         {
           _pWindow->m_pContext->PSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
@@ -1292,6 +1380,30 @@ namespace api
       }
       
       return 0;
+    }
+
+    void BeginDrawOffline(APIWindow* _pWindow)
+    {
+      // Bind dummy texture for all slots. We will override later if used
+      // Not very efficient...
+      for (auto& rResource : s_oGlobalData.m_oGlobalLayout.m_lstTextures)
+      {
+        if ((rResource.m_uStageFlags & STAGE_VERTEX) != 0)
+        {
+          _pWindow->m_pContext->VSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
+          _pWindow->m_pContext->VSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
+        }
+        if ((rResource.m_uStageFlags & STAGE_GEOM) != 0)
+        {
+          _pWindow->m_pContext->GSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
+          _pWindow->m_pContext->GSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
+        }
+        if ((rResource.m_uStageFlags & STAGE_PIXEL) != 0)
+        {
+          _pWindow->m_pContext->PSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
+          _pWindow->m_pContext->PSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
+        }
+      }
     }
 
     void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize)
@@ -1312,7 +1424,12 @@ namespace api
 
     }
 
-    void EndDraw(APIWindow* _pWindow)
+    void EndDraw(APIWindow* /*_pWindow*/)
+    {
+      // Nothing to do...
+    }
+
+    void Present(APIWindow* _pWindow)
     {
       if (_pWindow->m_pColorTexture)
       {
@@ -1325,7 +1442,6 @@ namespace api
       }
 
       DX11_CHECK(_pWindow->m_pSwapchain->Present(1u, 0u))
-
     }
 
     // Misc

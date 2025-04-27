@@ -16,6 +16,8 @@ namespace dx11
 
     Microsoft::WRL::ComPtr<ID3D11VertexShader> m_pVertexShader;    
 
+    Microsoft::WRL::ComPtr<ID3D11GeometryShader> m_pGeometryShader;
+    
     Microsoft::WRL::ComPtr<ID3D11PixelShader> m_pPixelShader;
 
     Microsoft::WRL::ComPtr<ID3D11InputLayout> m_pInputLayout;
@@ -27,6 +29,8 @@ namespace dx11
     Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_pDSState;
 
     Microsoft::WRL::ComPtr<ID3D11ShaderReflection> m_pVertexReflection;
+
+    Microsoft::WRL::ComPtr<ID3D11ShaderReflection> m_pGeometryReflection;
 
     Microsoft::WRL::ComPtr<ID3D11ShaderReflection> m_pPixelReflection;
 

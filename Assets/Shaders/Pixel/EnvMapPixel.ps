@@ -1,0 +1,17 @@
+
+//const vec2 invAtan = vec2(0.3183, 0.6366);
+vec2 SampleSphericalMap(vec3 v) {
+  vec2 uv = vec2(atan(v.z, v.x) * 0.3183, v.y);
+  uv += 1;
+  uv *= 0.5;
+  return uv;
+}
+
+PIXEL_MAIN_BEGIN
+
+  vec3 vDir = inWorldPos;
+  vDir.y *= -1;
+  vec2 uv = SampleSphericalMap(normalize(vDir)); 
+  outColor = sampleTex(Texture0, uv);  
+
+PIXEL_MAIN_END 

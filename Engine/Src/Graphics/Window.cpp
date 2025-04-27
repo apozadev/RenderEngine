@@ -65,9 +65,19 @@ int Window::BeginDraw()
   return iResult;
 }
 
+void Window::BeginDrawOffline()
+{
+  api::BeginDrawOffline(m_pAPIWindow);
+}
+
 void Window::EndDraw() const
 {
-  api::EndDraw(m_pAPIWindow);
+  api::EndDraw(m_pAPIWindow);  
+}
+
+void Window::Present() const
+{
+  api::Present(m_pAPIWindow);
 }
 
 void Window::PollEvents() const 

@@ -13,6 +13,9 @@ namespace file
 
   InFile::~InFile()
   {
-    free(m_pData);
+    if (m_pData = nullptr)
+    {
+      free(m_pData);
+    }
   }
 }

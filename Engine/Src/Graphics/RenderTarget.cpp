@@ -4,7 +4,7 @@
 #include "Graphics/SamplerConfig.h"
 #include "Memory/Factory.h"
 
-void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _uWidth, unsigned int _uHeight, ImageFormat _eFormat, bool _bHasDepthStencil, unsigned int _uMipLevels, unsigned int _uMsaaSamples)  
+void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _uWidth, unsigned int _uHeight, ImageFormat _eFormat, bool _bHasDepthStencil, unsigned int _uMipLevels, unsigned int _uMsaaSamples, bool _bIsCubemap)
 {  
 
   static const char s_aNames[4][7] = { "Input0", "Input1", "Input2", "Input3" };
@@ -26,13 +26,27 @@ void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _u
   for (unsigned int i = 0; i < _uNumColorAttachments; i++)
   {
     m_lstColorTextures.push_back(Factory::Create<Texture2D>());
-    m_lstColorTextures.back()->Configure(_uWidth, _uHeight, _eFormat, oSamplerConfig, _uMipLevels, _uMsaaSamples, uColorUsage);
+    if (_bIsCubemap)
+    {
+      m_lstColorTextures.back()->ConfigureAsCubemap(nullptr, _uWidth, _uHeight, _eFormat, oSamplerConfig, _uMipLevels, _uMsaaSamples, uColorUsage);
+    }
+    else
+    {
+      m_lstColorTextures.back()->Configure(_uWidth, _uHeight, _eFormat, oSamplerConfig, _uMipLevels, _uMsaaSamples, uColorUsage);
+    }
   }
 
   if (_bHasDepthStencil)
   {
     m_pDepthStencilTexture = Factory::Create<Texture2D>();
-    m_pDepthStencilTexture->Configure(_uWidth, _uHeight, ImageFormat::R32, oSamplerConfig, 1u, _uMsaaSamples, TextureUsage::SHADER_RESOURCE | TextureUsage::DEPTH_TARGET);
+    if (_bIsCubemap)
+    {
+      m_pDepthStencilTexture->ConfigureAsCubemap(nullptr, _uWidth, _uHeight, ImageFormat::R32, oSamplerConfig, 1u, _uMsaaSamples, TextureUsage::SHADER_RESOURCE | TextureUsage::DEPTH_TARGET);
+    }
+    else
+    {
+      m_pDepthStencilTexture->Configure(_uWidth, _uHeight, ImageFormat::R32, oSamplerConfig, 1u, _uMsaaSamples, TextureUsage::SHADER_RESOURCE | TextureUsage::DEPTH_TARGET);
+    }
   }
 
   if (_uMsaaSamples > 1u)
@@ -40,13 +54,20 @@ void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _u
     for (unsigned int i = 0; i < _uNumColorAttachments; i++)
     {      
       m_lstColorResolveTextures.push_back(Factory::Create<Texture2D>());
-      m_lstColorResolveTextures.back()->Configure(_uWidth, _uHeight, _eFormat, oSamplerConfig, 1u, TextureUsage::SHADER_RESOURCE | TextureUsage::COLOR_TARGET);
+      if (_bIsCubemap)
+      {
+        m_lstColorResolveTextures.back()->ConfigureAsCubemap(nullptr, _uWidth, _uHeight, _eFormat, oSamplerConfig, 1u, TextureUsage::SHADER_RESOURCE | TextureUsage::COLOR_TARGET);
+      }
+      else
+      {
+        m_lstColorResolveTextures.back()->Configure(_uWidth, _uHeight, _eFormat, oSamplerConfig, 1u, TextureUsage::SHADER_RESOURCE | TextureUsage::COLOR_TARGET);
+      }
     }
   }
 
   m_pAPIRenderTarget = api::CreateAPIRenderTarget();
 
-  api::BeginRenderTargetSetup(m_pAPIRenderTarget, _uWidth, _uHeight, _eFormat, ImageFormat::R32, _uMsaaSamples);
+  api::BeginRenderTargetSetup(m_pAPIRenderTarget, _uWidth, _uHeight, _eFormat, ImageFormat::R32, _uMsaaSamples, _bIsCubemap);
 
   for (owner_ptr<Texture2D>& pTexture : m_lstColorTextures)
   {
@@ -58,7 +79,10 @@ void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _u
     pTexture->SetupAsRenderTargetColorResolve();
   }
 
-  m_pDepthStencilTexture->SetupAsRenderTargetDepthStencil();
+  if (m_pDepthStencilTexture)
+  {
+    m_pDepthStencilTexture->SetupAsRenderTargetDepthStencil();
+  }
 
   api::EndRenderTargetSetup();
 }
@@ -102,7 +126,10 @@ void RenderTarget::Clear() const
     pTexture->ClearAsColor();
   }
 
-  m_pDepthStencilTexture->ClearAsDepthStencil();
+  if (m_pDepthStencilTexture)
+  {
+    m_pDepthStencilTexture->ClearAsDepthStencil();
+  }
 }
 
 const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures() const

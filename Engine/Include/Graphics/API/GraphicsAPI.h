@@ -71,7 +71,7 @@ namespace api
 
   // Mesh
 
-  APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize);
+  APIMesh* CreateAPIMesh(const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize);
   void DestroyAPIMesh(APIMesh* _pMesh);
 
   // ConstantBuffer
@@ -100,6 +100,7 @@ namespace api
   std::string GetConstantBufferMemberName(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
   size_t GetConstantBufferMemberSize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
   ConstantBufferType GetConstantBufferMemberType(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
+  uint32_t GetConstantBufferMemberArraySize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
 
   // Render substate
 
@@ -123,7 +124,7 @@ namespace api
 
   APIRenderTarget* CreateAPIRenderTarget();
   void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples, bool _bIsCubemap);
   void RenderTargetAddColorTexture(APITexture* _pTexture);
   void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
   void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
@@ -138,8 +139,10 @@ namespace api
 
   void WaitForNextImage(APIWindow* _pWindow);
   int BeginDraw(APIWindow* _pWindow);
+  void BeginDrawOffline(APIWindow* _pWindow);
   void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, const void* _pConstantData, uint32_t _uConstantSize);
-  void EndDraw(APIWindow* _pWindow);    
+  void EndDraw(APIWindow* _pWindow);   
+  void Present(APIWindow* _pWindow);
 
   // Misc 
 

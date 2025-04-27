@@ -28,19 +28,19 @@ void ModelComponent::Configure()
 
   if (s_sQuad == pModelCompDesc->m_sModelFilename)
   {
-    ModelLoader::GetInstance()->SetupQuadModel(pMaterial, this);
+    SetupQuadModel(pMaterial, this);
   }
   else if (s_sCube == pModelCompDesc->m_sModelFilename)
   {
-    ModelLoader::GetInstance()->SetupCubeModel(pMaterial, this);
+    SetupCubeModel(pMaterial, this);
   }
   else
   {
-    ModelLoader::GetInstance()->LoadModel(pModelCompDesc->m_sModelFilename.c_str(), pMaterial, this);
+    LoadModel(pModelCompDesc->m_sModelFilename.c_str(), pMaterial, this);
   }  
 }
 
-void ModelComponent::AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx)
+void ModelComponent::AddMesh(const std::vector<Vertex>& _lstVertices, const std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx)
 {
 
   owner_ptr<Mesh> pMesh = Factory::Create<Mesh>();

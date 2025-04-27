@@ -31,8 +31,14 @@ VkFormat GetVKFormat(ImageFormat _eFormat)
     return VK_FORMAT_D32_SFLOAT;
   case ImageFormat::R8G8B8:
     return VK_FORMAT_R8G8B8_UNORM;
+  case ImageFormat::R16G16B16:
+    return VK_FORMAT_R16G16B16_SFLOAT;
+  case ImageFormat::R32G32B32:
+    return VK_FORMAT_R32G32B32_SFLOAT;
   case ImageFormat::R8G8B8_SRGB:
     return VK_FORMAT_R8G8B8_SRGB;
+  case ImageFormat::R32G32B32A32:
+    return VK_FORMAT_R32G32B32A32_SFLOAT;
   case ImageFormat::R8G8B8A8:
     return VK_FORMAT_R8G8B8A8_UNORM;
   case ImageFormat::R8G8B8A8_SRGB:
@@ -56,6 +62,11 @@ VkShaderStageFlags GetVkShaderFlags(PipelineStageFlags _eStageFlags)
   if ((_eStageFlags & STAGE_PIXEL) != 0)
   {
     uFlag |= VK_SHADER_STAGE_FRAGMENT_BIT;
+  }
+
+  if ((_eStageFlags & STAGE_GEOM) != 0)
+  {
+    uFlag |= VK_SHADER_STAGE_GEOMETRY_BIT;
   }
 
   return uFlag;
@@ -395,6 +406,7 @@ void CreatePhysicalDevice()
 
 void CreatePipeline(const file::InFile& _oVSFile,
   const file::InFile& _oPSFile,
+  const file::InFile* _pGSFile,
   const RenderStateInfo& _oInfo,
   VkRenderPass _hRenderPass,
   VkSampleCountFlagBits _uMsaaSamples,
@@ -405,7 +417,8 @@ void CreatePipeline(const file::InFile& _oVSFile,
 
   // Create shader modules
 
-  VkPipelineShaderStageCreateInfo aStages[2];
+  uint32_t uStageCount = 2u;
+  VkPipelineShaderStageCreateInfo aStages[3];
 
   // Vertex stage    
 
@@ -417,7 +430,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
   VkShaderModule hVSShaderModule;
   VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oVSCreateInfo, NULL, &hVSShaderModule))
 
-    aStages[0] = {};
+  aStages[0] = {};
   aStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   aStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
   aStages[0].module = hVSShaderModule;
@@ -433,11 +446,33 @@ void CreatePipeline(const file::InFile& _oVSFile,
   VkShaderModule hPSShaderModule;
   VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oPSCreateInfo, NULL, &hPSShaderModule))
 
-    aStages[1] = {};
+  aStages[1] = {};
   aStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   aStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
   aStages[1].module = hPSShaderModule;
   aStages[1].pName = "main";
+
+  // Geometry stage
+
+  VkShaderModule hGSShaderModule = VK_NULL_HANDLE;
+
+  if (_pGSFile)
+  {
+    VkShaderModuleCreateInfo oGSCreateInfo{};
+    oGSCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    oGSCreateInfo.codeSize = _pGSFile->GetSize();
+    oGSCreateInfo.pCode = reinterpret_cast<const uint32_t*>(_pGSFile->GetData());
+    
+    VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oGSCreateInfo, NULL, &hGSShaderModule))
+
+    aStages[2] = {};
+    aStages[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    aStages[2].stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+    aStages[2].module = hGSShaderModule;
+    aStages[2].pName = "main";
+
+    uStageCount++;    
+  }
 
   // Vertex input
 
@@ -610,7 +645,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
 
   VkGraphicsPipelineCreateInfo oPipelineInfo{};
   oPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-  oPipelineInfo.stageCount = 2;
+  oPipelineInfo.stageCount = uStageCount;
   oPipelineInfo.pStages = aStages;
   oPipelineInfo.pVertexInputState = &oVertexInputInfo;
   oPipelineInfo.pInputAssemblyState = &oInputAssemblyInfo;
@@ -620,7 +655,6 @@ void CreatePipeline(const file::InFile& _oVSFile,
   oPipelineInfo.pMultisampleState = &oMultisampling;
   oPipelineInfo.pDepthStencilState = &oDepthStencil; // Optional
   oPipelineInfo.pColorBlendState = &oColorBlending;
-  oPipelineInfo.pDynamicState = NULL;
   oPipelineInfo.layout = _pRenderState_->m_hPipelineLayout;
   oPipelineInfo.renderPass = _hRenderPass;
   oPipelineInfo.subpass = 0u;
@@ -630,8 +664,12 @@ void CreatePipeline(const file::InFile& _oVSFile,
 
   VK_CHECK(vkCreateGraphicsPipelines(pWindow->m_hDevice, VK_NULL_HANDLE, 1u, &oPipelineInfo, NULL, &_pRenderState_->m_hGraphicsPipeline))
 
-    vkDestroyShaderModule(pWindow->m_hDevice, hVSShaderModule, NULL);
+  vkDestroyShaderModule(pWindow->m_hDevice, hVSShaderModule, NULL);  
   vkDestroyShaderModule(pWindow->m_hDevice, hPSShaderModule, NULL);
+  if (hGSShaderModule != VK_NULL_HANDLE)
+  {
+    vkDestroyShaderModule(pWindow->m_hDevice, hGSShaderModule, NULL);
+  }
 }
 
 void CreateLogicalDevice(APIWindow* _pWindow)
@@ -640,10 +678,11 @@ void CreateLogicalDevice(APIWindow* _pWindow)
   const char* aDeviceExtensions[] = {
   VK_KHR_SWAPCHAIN_EXTENSION_NAME,
   //VK_EXT_DEPTH_CLIP_CONTROL_EXTENSION_NAME
-  VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME
+  VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME,
+  VK_KHR_MULTIVIEW_EXTENSION_NAME
   };
 
-  uint32_t uDeviceExtensionCount = 2u;  
+  uint32_t uDeviceExtensionCount = 3u;  
 
   VkDeviceQueueCreateInfo aDeviceQueueCreateInfos[2];
 
@@ -718,9 +757,17 @@ void CreateLogicalDevice(APIWindow* _pWindow)
   VkPhysicalDeviceSampleLocationsPropertiesEXT oSampleLocationsFeatures = {};
   oSampleLocationsFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
 
+  VkPhysicalDeviceMultiviewFeaturesKHR oMultiviewFeatures{};
+  oMultiviewFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES_KHR;
+  oMultiviewFeatures.multiview = VK_TRUE;
+
   VkPhysicalDeviceFeatures2 oDeviceFeatures2 = {};
   oDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
   oDeviceFeatures2.pNext = &oSampleLocationsFeatures;
+
+  VkPhysicalDeviceFeatures oEnabledFeatures = {};
+  oEnabledFeatures.geometryShader = VK_TRUE;
+  oEnabledFeatures.samplerAnisotropy = VK_TRUE;  
 
   vkGetPhysicalDeviceFeatures2(s_oGlobalData.m_hPhysicalDevice, &oDeviceFeatures2);
 
@@ -732,8 +779,8 @@ void CreateLogicalDevice(APIWindow* _pWindow)
   oDeviceCreateInfo.enabledLayerCount = 0u;
   oDeviceCreateInfo.enabledExtensionCount = uDeviceExtensionCount;
   oDeviceCreateInfo.ppEnabledExtensionNames = aDeviceExtensions;
-  oDeviceCreateInfo.pEnabledFeatures = NULL;
-  //oDeviceCreateInfo.pNext = &oDeviceFeatures2;
+  oDeviceCreateInfo.pEnabledFeatures = &oEnabledFeatures;
+  oDeviceCreateInfo.pNext = &oMultiviewFeatures;
 
   VK_CHECK(vkCreateDevice(s_oGlobalData.m_hPhysicalDevice, &oDeviceCreateInfo, NULL, &_pWindow->m_hDevice))  
 }
@@ -798,7 +845,7 @@ void CreateColorBuffer(APIWindow* _pWindow)
     , _pWindow->m_hColorImage
     , _pWindow->m_hColorImageMemory);
 
-  CreateImageView(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, 1u, 1u, false, VK_IMAGE_ASPECT_COLOR_BIT, _pWindow->m_hColorImageView);
+  CreateImageView(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, 1u, 1u, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, _pWindow->m_hColorImageView);
 }
 
 void CreateDepthBuffer(APIWindow* _pWindow)
@@ -821,7 +868,7 @@ void CreateDepthBuffer(APIWindow* _pWindow)
     _pWindow->m_hDepthImage,
     _pWindow->m_hDepthImageMemory);
 
-  CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, false, uAspectFlags, _pWindow->m_hDepthImageView);
+  CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, VK_IMAGE_VIEW_TYPE_2D, uAspectFlags, _pWindow->m_hDepthImageView);
 
   TransitionImageLayoutOffline(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
@@ -970,7 +1017,7 @@ void CreateSwapchain(APIWindow* _pWindow)
   }
 }
 
-void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen)
+void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen, bool _bMultiview)
 {
 
   bool bHasMsaa = _uMsaaSampleCount > 1u;
@@ -1079,6 +1126,25 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
     pAttachments[uAttachmentIdx++] = oDepthAttachmentDesc;
   }
 
+  /*
+    Bit mask that specifies which view rendering is broadcast to
+    0011 = Broadcast to first and second view (layer)
+  */
+  const uint32_t viewMask = 0b00111111;
+
+  /*
+    Bit mask that specifies correlation between views
+    An implementation may use this for optimizations (concurrent render)
+  */
+  const uint32_t correlationMask = 0b00111111;
+
+  VkRenderPassMultiviewCreateInfo oRenderPassMultiViewCreateInfo{};
+  oRenderPassMultiViewCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+  oRenderPassMultiViewCreateInfo.subpassCount = 1;
+  oRenderPassMultiViewCreateInfo.pViewMasks = &viewMask;
+  oRenderPassMultiViewCreateInfo.correlationMaskCount = 1;
+  oRenderPassMultiViewCreateInfo.pCorrelationMasks = &correlationMask;  
+
   VkRenderPassCreateInfo oRenderPassCreateInfo{};
   oRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   oRenderPassCreateInfo.attachmentCount = uNumAttachments;
@@ -1088,64 +1154,17 @@ void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat
   oRenderPassCreateInfo.dependencyCount = 1u;
   oRenderPassCreateInfo.pDependencies = &oSubpassDependency;
 
+  if (_bMultiview)
+  {
+    oRenderPassCreateInfo.pNext = &oRenderPassMultiViewCreateInfo;
+  }
+
   VK_CHECK(vkCreateRenderPass(_pWindow->m_hDevice, &oRenderPassCreateInfo, NULL, &hRenderPass_))
 
   if(pAttachments) s_oVkAttachmentDescriptionPool.ReturnElements(pAttachments);
   if(pColorAttachmentRefs) s_oVkAttachmentReferencePool.ReturnElements(pColorAttachmentRefs);
   if(pColorResolveAttachmentRefs) s_oVkAttachmentReferencePool.ReturnElements(pColorResolveAttachmentRefs);
 
-}
-
-void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, APITexture** _pColorTextures, uint32_t _uNumColorTextures, APITexture* _pDepthTexture, APITexture** _pColorResolveTextures, VkFramebuffer& hFrameBuffer_, uint32_t _uWidth, uint32_t _uHeight)
-{
-  VkImageView aAttachments[3];
-
-  uint32_t uAttachmentCount = 0u;
-
-  for (int i = 0; i < _uNumColorTextures; i++)
-  {
-    aAttachments[uAttachmentCount++] = _pColorTextures[i]->m_hImageView;
-  }  
-
-  if (_pColorResolveTextures != nullptr)
-  {
-    for (int i = 0; i < _uNumColorTextures; i++)
-    {
-      aAttachments[uAttachmentCount++] = _pColorResolveTextures[i]->m_hImageView;
-    }    
-  }
-
-  if (_pDepthTexture)
-  {
-    aAttachments[uAttachmentCount++] = _pDepthTexture->m_hImageView;
-  }  
-
-  VkFramebufferCreateInfo oFramebufferInfo = {};
-  oFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  oFramebufferInfo.attachmentCount = uAttachmentCount;
-  oFramebufferInfo.pAttachments = &aAttachments[0];
-  oFramebufferInfo.renderPass = _hRenderPass;
-  oFramebufferInfo.width = _uWidth;
-  oFramebufferInfo.height = _uHeight;
-  oFramebufferInfo.layers = 1;
-
-  VK_CHECK(vkCreateFramebuffer(_pWindow->m_hDevice, &oFramebufferInfo, NULL, &hFrameBuffer_))
-}
-
-void CreateFramebuffer(APIWindow* _pWindow, VkRenderPass _hRenderPass, VkImageView _hColorImageView, VkImageView _hDepthImageView, VkImageView _hResolveImageView, VkFramebuffer& hFrameBuffer_)
-{
-  APITexture oDummyColorTexture = {};
-  oDummyColorTexture.m_hImageView = _hColorImageView;
-  APITexture* pDummyColorTexture = &oDummyColorTexture;
-
-  APITexture oDummyColorResolveTexture = {};
-  oDummyColorResolveTexture.m_hImageView = _hResolveImageView;
-  APITexture* pDummyColorResolveTexture = &oDummyColorResolveTexture;
-
-  APITexture oDummyDepthTexture = {};
-  oDummyDepthTexture.m_hImageView = _hDepthImageView;
-
-  CreateFramebuffer(_pWindow, _hRenderPass, &pDummyColorTexture, 1u, &oDummyDepthTexture, _hResolveImageView ? &pDummyColorResolveTexture : nullptr, hFrameBuffer_, _pWindow->m_oExtent.width, _pWindow->m_oExtent.height);
 }
 
 void CreateCommandBuffers(APIWindow* _pWindow)
@@ -1337,9 +1356,31 @@ void RecreateSwapchain(APIWindow* _pWindow)
   CreateColorBuffer(_pWindow);
   CreateDepthBuffer(_pWindow);
 
+  bool bMsaa = _pWindow->m_eMsaaSamples > 1u;
+
   for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
   {
-    CreateFramebuffer(_pWindow, _pWindow->m_hRenderPass, _pWindow->m_hColorImageView, _pWindow->m_hDepthImageView, _pWindow->m_pSwapChainImageViews[i], _pWindow->m_pFramebuffers[i]);
+    uint32_t uAttachmentCount = 0u;
+
+    VkImageView aImageViews[3];
+    aImageViews[uAttachmentCount++] = bMsaa ? _pWindow->m_hColorImageView : _pWindow->m_pSwapChainImageViews[i];
+    if (bMsaa)
+    {
+      aImageViews[uAttachmentCount++] = _pWindow->m_pSwapChainImageViews[i];
+    }
+    aImageViews[uAttachmentCount++] = _pWindow->m_hDepthImageView;
+
+
+    VkFramebufferCreateInfo oFramebufferInfo = {};
+    oFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    oFramebufferInfo.attachmentCount = uAttachmentCount;
+    oFramebufferInfo.pAttachments = &aImageViews[0];
+    oFramebufferInfo.renderPass = _pWindow->m_hRenderPass;
+    oFramebufferInfo.width = _pWindow->m_oExtent.width;
+    oFramebufferInfo.height = _pWindow->m_oExtent.height;
+    oFramebufferInfo.layers = 1;
+
+    VK_CHECK(vkCreateFramebuffer(_pWindow->m_hDevice, &oFramebufferInfo, NULL, &_pWindow->m_pFramebuffers[i]))
   }
 }
 
@@ -1443,7 +1484,7 @@ void CreateImageView(APIWindow* _pWindow
   , VkFormat _eFormat
   , uint32_t _uMipLevels  
   , uint32_t _uLayers
-  , bool _bIsCubeTexture
+  , VkImageViewType _eViewType
   , VkImageAspectFlags _uAspectFlags
   , VkImageView& hImageView_)
 {
@@ -1460,7 +1501,7 @@ void CreateImageView(APIWindow* _pWindow
   oCreateInfo.subresourceRange.baseArrayLayer = 0u;
   oCreateInfo.subresourceRange.layerCount = _uLayers;
   oCreateInfo.image = _hImage;
-  oCreateInfo.viewType = _bIsCubeTexture ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
+  oCreateInfo.viewType = _eViewType;
   oCreateInfo.format = _eFormat;
 
   VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &hImageView_))
@@ -1625,6 +1666,14 @@ void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer
     uSrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     uDstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
   }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_UNDEFINED && _eNewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = 0;
+    oBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    uDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  }
   else if (_eOldLayout == VK_IMAGE_LAYOUT_UNDEFINED && _eNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
   {
     oBarrier.srcAccessMask = 0;
@@ -1762,26 +1811,34 @@ void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eS
   case STAGE_VERTEX:
     pReflection = &_pRenderState->m_oVertexReflection;
     break;
+  case STAGE_GEOM:
+    pReflection = &_pRenderState->m_oGeomReflection;
+    break;
   case STAGE_PIXEL:
     pReflection = &_pRenderState->m_oPixelReflection;
     break;
   }
 
-  SpvReflectResult eResult = spvReflectEnumerateEntryPointDescriptorSets(pReflection, "main", &uDescSetCount_, NULL);
-  if (eResult != SPV_REFLECT_RESULT_SUCCESS)
-  {
-    THROW_GENERIC_EXCEPTION("[API] Error: Failed to enumerate descriptor sets from shader: ")
-  }
-  if (uDescSetCount_ > 4u)
-  {
-    THROW_GENERIC_EXCEPTION("[API] Error: the shader has more than 4 descriptor sets : ")
-  }
+  uDescSetCount_ = 0u;
 
-  eResult = spvReflectEnumerateEntryPointDescriptorSets(pReflection, "main", &uDescSetCount_, aDescSets_);
-  if (eResult != SPV_REFLECT_RESULT_SUCCESS)
+  if (pReflection->entry_point_name != nullptr)
   {
-    THROW_GENERIC_EXCEPTION("[API] Error: Failed to get descriptor sets from shader")
-  }
+    SpvReflectResult eResult = spvReflectEnumerateEntryPointDescriptorSets(pReflection, "main", &uDescSetCount_, NULL);
+    if (eResult != SPV_REFLECT_RESULT_SUCCESS)
+    {
+      THROW_GENERIC_EXCEPTION("[API] Error: Failed to enumerate descriptor sets from shader: ")
+    }
+    if (uDescSetCount_ > 4u)
+    {
+      THROW_GENERIC_EXCEPTION("[API] Error: the shader has more than 4 descriptor sets : ")
+    }
+
+    eResult = spvReflectEnumerateEntryPointDescriptorSets(pReflection, "main", &uDescSetCount_, aDescSets_);
+    if (eResult != SPV_REFLECT_RESULT_SUCCESS)
+    {
+      THROW_GENERIC_EXCEPTION("[API] Error: Failed to get descriptor sets from shader")
+    }
+  }  
 }
 
 static void check_vk_result(VkResult err)

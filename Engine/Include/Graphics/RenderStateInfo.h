@@ -16,6 +16,7 @@ struct RenderStateInfo : public BaseObject
   uint32_t m_uMeshConstantSize;
 
   std::string m_sPSFilename;
+  std::string m_sGSFilename;
   std::string m_sVSFilename;
 
   bool m_bBlendEnabled;

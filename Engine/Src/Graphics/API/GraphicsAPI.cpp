@@ -103,7 +103,7 @@ namespace api
 
   // Mesh
 
-  APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize)
+  APIMesh* CreateAPIMesh(const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize)
   {
     return API::CreateAPIMesh(_pVertexData, _uVertexDataSize, _pIndexData, _uIndexDataSize);
   }
@@ -174,9 +174,9 @@ namespace api
     API::BindAPIRenderTarget(_pRenderTarget);
   }
 
-  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples)
+  void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples, bool _bIsCubemap)
   {
-    API::BeginRenderTargetSetup(_pRenderTarget, _uWidth, _uHeight, _eFormat, _eDepthStencilFormat, _uMsaaSamples);
+    API::BeginRenderTargetSetup(_pRenderTarget, _uWidth, _uHeight, _eFormat, _eDepthStencilFormat, _uMsaaSamples, _bIsCubemap);
   }
 
   void RenderTargetAddColorTexture(APITexture* _pTexture)
@@ -299,6 +299,11 @@ namespace api
     return API::GetConstantBufferMemberType(_pAPIRenderState, _eStage, _uIdx, _uMemberIdx);
   }
 
+  uint32_t GetConstantBufferMemberArraySize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx)
+  {
+    return API::GetConstantBufferMemberArraySize(_pAPIRenderState, _eStage, _uIdx, _uMemberIdx);
+  }
+
 
   // Render sub state
 
@@ -349,6 +354,11 @@ namespace api
     return API::BeginDraw(_pWindow);
   }
 
+  void BeginDrawOffline(APIWindow* _pWindow)
+  {
+    return API::BeginDrawOffline(_pWindow);
+  }
+
   void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, const void* _pConstantData, uint32_t _uConstantSize)
   {
     API::DrawMesh(_pMesh, _uVertexCount, _pConstantData, _uConstantSize);
@@ -358,6 +368,11 @@ namespace api
   {
     API::EndDraw(_pWindow);
   }    
+
+  void Present(APIWindow* _pWindow)
+  {
+    API::Present(_pWindow);
+  }
 
   // Misc 
 

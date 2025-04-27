@@ -1,14 +1,5 @@
 #pragma pack_matrix( column_major )
 
-struct VSout
-{
-	float4 pos : SV_Position;	
-	float3 normal : NORMAL;	
-	float3 worldPos : WORLDPOS;
-	float2 uv : TEXCOORD;
-	float3 tangent : TANGENT;
-};
-
 #define vec2 float2
 #define vec3 float3
 #define vec4 float4
@@ -26,3 +17,5 @@ struct VSout
 #define CubeTexture(name, setIdx, bindIdx) TextureCube name : register(t##bind);
 
 #define CBuffer(name, bind) cbuffer name : register(b##bind)
+
+#define atan  atan2

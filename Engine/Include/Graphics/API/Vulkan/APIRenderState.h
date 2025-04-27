@@ -29,6 +29,7 @@ public:
   DescriptorSetLayoutBuilder m_oMaterialLayoutBuilder;  
 
   SpvReflectShaderModule m_oVertexReflection;
+  SpvReflectShaderModule m_oGeomReflection;
   SpvReflectShaderModule m_oPixelReflection;
 };
 

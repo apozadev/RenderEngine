@@ -74,7 +74,7 @@ namespace api
 
 		// Mesh
 
-		APIMesh* CreateAPIMesh(void* _pVertexData, size_t _uVertexDataSize, void* _pIndexData, size_t _uIndexDataSize);
+		APIMesh* CreateAPIMesh(const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize);
 
 		void DestroyAPIMesh(APIMesh* _pMesh);
 
@@ -104,7 +104,7 @@ namespace api
 
 		APIRenderTarget* CreateAPIRenderTarget();
 
-		void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples);
+		void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples, bool _bIsCubemap);
 
 		void RenderTargetAddColorTexture(APITexture* _pTexture);
 
@@ -158,6 +158,8 @@ namespace api
 
 		ConstantBufferType GetConstantBufferMemberType(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
 
+		uint32_t GetConstantBufferMemberArraySize(const APIRenderState* _pAPIRenderState, PipelineStage _eStage, uint32_t _uIdx, uint32_t _uMemberIdx);
+
 		// Render substate
 
 		APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency);
@@ -180,9 +182,13 @@ namespace api
 
 		int BeginDraw(APIWindow* _pWindow);
 
+		void BeginDrawOffline(APIWindow* _pWindow);
+
 		void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize);
 
 		void EndDraw(APIWindow* _pWindow);
+
+		void Present(APIWindow* _pWindow);
 
 		// Misc
 

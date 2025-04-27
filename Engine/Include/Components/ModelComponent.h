@@ -37,7 +37,7 @@ public:
 
   void Configure() override;
 
-  void AddMesh(std::vector<Vertex>& _lstVertices, std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx);
+  void AddMesh(const std::vector<Vertex>& _lstVertices, const std::vector<uint16_t>& _lstIndices, unsigned int _uMaterialIdx);
 
   void AddMaterialInstance(owner_ptr<MaterialInstance>&& _pMaterial)
   {

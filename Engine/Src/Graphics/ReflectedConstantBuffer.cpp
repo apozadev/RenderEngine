@@ -8,16 +8,18 @@ ReflectedConstantBuffer::~ReflectedConstantBuffer()
   }
 }
 
-void ReflectedConstantBuffer::Configure(std::string _sName, std::vector<Variable>&& _lstVariables, float* _pCache)
+void ReflectedConstantBuffer::Configure(std::string _sName, PipelineStage _eStage, std::vector<Variable>&& _lstVariables, float* _pCache)
 {
 
   m_sName = _sName;
+
+  m_eStage = _eStage;
 
   m_uSize = 0u;
 
   for (unsigned int i = 0u; i < _lstVariables.size(); i++)
   {    
-    size_t uVarSize = GetConstantBufferTypeSize(_lstVariables[i].m_eType);
+    size_t uVarSize = GetConstantBufferTypeSize(_lstVariables[i].m_eType) * _lstVariables[i].m_uArraySize;
 
     // padding?
     if (i < _lstVariables.size() - 1u)
@@ -43,7 +45,7 @@ void ReflectedConstantBuffer::Configure(std::string _sName, std::vector<Variable
     size_t uDataIdx = 0u;
     for (unsigned int i = 0u; i < _lstVariables.size(); i++)
     {
-      size_t uVarSize = GetConstantBufferTypeSize(_lstVariables[i].m_eType);
+      size_t uVarSize = GetConstantBufferTypeSize(_lstVariables[i].m_eType) * _lstVariables[i].m_uArraySize;
       size_t uPaddedVarSize = uVarSize;
       // padding?
       if (i < _lstVariables.size() - 1u)

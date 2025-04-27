@@ -27,6 +27,8 @@ public:
 
   ~Pass();
 
+  void Configure(const RenderStateInfo& _rRenderStateInfo, const RenderTarget* _pRenderTarget, uint32_t _uLayer);
+
   void Configure(const std::string& _sVSFilename
     , const std::string& _sPSFilename
     , bool _bBlendEnabled
@@ -85,9 +87,11 @@ public:
 
   bool GetFloat(const char* _sName, float* pOutValue_) const;
   bool GetVec4(const char* _sName, float* pOutValue_) const;
+  bool GetMat4(const char* _sName, float* pOutValue_) const;
 
   bool SetFloat(const char* _sName, float _fValue);
   bool SetVec4(const char* _sName, float* _pValue);
+  bool SetMat4(const char* _sName, float* _pValue);
 
   void UpdateCache();
 
@@ -96,6 +100,8 @@ public:
 private:  
 
   void Configure(const RenderTarget* _pRenderTarget);
+
+  void ReflectCBuffers(PipelineStage _eStage);
 
 private:
 

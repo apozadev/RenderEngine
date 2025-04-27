@@ -20,6 +20,7 @@
 #include "Graphics/GeometryRenderStep.h"
 #include "Core/ImageManager.h"
 #include "Memory/Factory.h"
+#include "Util/ModelLoader.h"
 
 #include "Core/Exception.h"
 
@@ -44,7 +45,7 @@ void Renderer::InitializePostWindow()
   m_pLightCBuff = Factory::Create<ConstantBuffer<LightData>>();
   m_pLightCBuff->Configure();
 
-  m_pEnvMap = Factory::Create<Texture2D>();
+  m_pEnvMapDiff = Factory::Create<Texture2D>();
 
   Image aImages[6];
   aImages[0] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/0.png");
@@ -62,7 +63,94 @@ void Renderer::InitializePostWindow()
   oSampler.m_eMinFilterMode = TextureFilterMode::LINEAR;
   oSampler.m_eMipmapFilterMode = TextureFilterMode::POINT;
 
-  m_pEnvMap->ConfigureAsCubemap(aImages, oSampler, 1u, 1u);
+  m_pEnvMapDiff->ConfigureAsCubemap(&aImages[0], aImages[0].m_iWidth, aImages[0].m_iHeight, aImages[0].m_eFormat, oSampler, 1u, 1u);
+
+  // Radiance map
+
+  SamplerConfig oHDRISamplerConfig = {};
+  oHDRISamplerConfig.m_eAddressMode = TextureAddressMode::CLAMP;
+  oHDRISamplerConfig.m_eMagFilterMode = TextureFilterMode::POINT;
+  oHDRISamplerConfig.m_eMinFilterMode = TextureFilterMode::POINT;
+  oHDRISamplerConfig.m_eMipmapFilterMode = TextureFilterMode::POINT;
+
+  const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/graveyard_pathways_4k.hdr", false);
+
+  owner_ptr<Texture2D> pHDRI = Factory::Create<Texture2D>();
+  pHDRI->Configure(oImage, oHDRISamplerConfig, 1, 1);
+
+  m_pEnvMapSpec = Factory::Create<RenderTarget>();
+  m_pEnvMapSpec->Configure(1u, 1024, 1024, oImage.m_eFormat, false, 1, 1, true);
+
+  Camera oCamera = {};
+  oCamera.Configure("", true);  
+  oCamera.UpdateTransform(Transform::GetIdentity());
+  oCamera.PreRenderSetup();
+
+  Mesh oCubeMesh = {};
+  SetupCubeMesh(&oCubeMesh);
+
+  RenderStateInfo oInfo = {};
+  oInfo.m_sVSFilename = "Assets/Shaders/Vertex/EnvMapVertex.vs";
+  oInfo.m_sGSFilename = "Assets/Shaders/Geometry/EnvMapGeometry.gs";
+  oInfo.m_sPSFilename = "Assets/Shaders/Pixel/EnvMapPixel.ps";
+  oInfo.m_bBlendEnabled = false;
+  oInfo.m_bDepthRead = false;
+  oInfo.m_bDepthWrite = false;
+  oInfo.m_eCullMode = CullMode::BACK;  
+
+  Pass oEnvMapPass = {};
+  oEnvMapPass.Configure(oInfo, m_pEnvMapSpec.get(), 0u);
+  oEnvMapPass.Setup();
+
+  MaterialInstance oMatInstance = {};
+  oMatInstance.AddTexture(std::move(pHDRI));
+  oMatInstance.Configure();
+  oMatInstance.SetupSubState(nullptr);
+
+  /*
+  
+  data.viewProj[0] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationY(_PI2)), proj));
+  data.viewProj[1] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationY(-_PI2)), proj));
+  data.viewProj[2] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationX(-_PI2)), proj));
+  data.viewProj[3] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationX(_PI2)), proj));
+  data.viewProj[4] = DirectX::XMMatrixTranspose(proj);
+  data.viewProj[5] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationY(_PI)), proj));
+  */
+
+  constexpr float _PI2 = glm::half_pi<float>(); // 90 degrees
+  constexpr float _PI = glm::pi<float>();
+
+  glm::mat4 proj = glm::perspectiveLH(_PI2, 1.0f, 0.1f, 10.0f);
+  
+  glm::mat4 aViewProjs[6];
+  aViewProjs[0] = proj * glm::inverse(glm::rotate(glm::mat4(1.0f),  _PI2, glm::vec3(0, 1, 0)));
+  aViewProjs[1] = proj * glm::inverse(glm::rotate(glm::mat4(1.0f), -_PI2, glm::vec3(0, 1, 0)));
+  aViewProjs[2] = proj * glm::inverse(glm::rotate(glm::mat4(1.0f), -_PI2, glm::vec3(1, 0, 0)));
+  aViewProjs[3] = proj * glm::inverse(glm::rotate(glm::mat4(1.0f),  _PI2, glm::vec3(1, 0, 0)));
+  aViewProjs[4] = proj;
+  aViewProjs[5] = proj * glm::inverse(glm::rotate(glm::mat4(1.0f),  _PI,  glm::vec3(0, 1, 0)));
+
+  oEnvMapPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);
+
+  Engine::GetInstance()->GetWindow()->BeginDrawOffline();
+  
+  GeometryRenderStep oEnvMapStep("", std::vector<Texture2D*>(), m_pEnvMapSpec.get(), false, false);
+
+  Job oJob = {};
+  oJob.m_pMaterial = &oMatInstance;
+  oJob.m_pMesh = &oCubeMesh;
+  oJob.m_pMeshTransform = &Transform::GetIdentity();
+  oJob.m_pPass = &oEnvMapPass;  
+
+  oEnvMapStep.SubmitJob(std::move(oJob));
+
+  oEnvMapStep.Setup();
+
+  oEnvMapStep.Execute(&oCamera, &Transform::GetIdentity());
+
+  m_pEnvMapSpec->Unbind();
+
+  Engine::GetInstance()->GetWindow()->EndDraw();
 
   m_pLightCBuff->GetData()->m_uNumLights = 0u;
 }
@@ -77,7 +165,9 @@ void Renderer::ShutDownPreWindow()
 
   m_pLightCBuff.reset();
 
-  m_pEnvMap.reset();
+  m_pEnvMapDiff.reset();
+
+  m_pEnvMapSpec.reset();
 }
 
 void Renderer::ShutDownPostWindow()
@@ -234,7 +324,8 @@ void Renderer::Draw()
       rShadowView.m_pShadowMap->GetDepthStencilTexture()->Bind();
     }
 
-    m_pEnvMap->Bind();
+    //m_pEnvMapDiff->Bind();
+    m_pEnvMapSpec->GetColorTextures()[0]->Bind();
 
     for (CamView& rCamView : m_lstCamViews)
     {
@@ -257,6 +348,7 @@ void Renderer::Draw()
     }
 
     Engine::GetInstance()->GetWindow()->EndDraw();
+    Engine::GetInstance()->GetWindow()->Present();
   }
   
 

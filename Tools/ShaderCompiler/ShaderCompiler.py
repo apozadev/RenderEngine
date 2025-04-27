@@ -5,10 +5,12 @@ import shutil
 
 sDx11CommonFile = "/ShaderInclude/DX11/Common.hlsli"
 sDx11VertexCommonFile = "/ShaderInclude/DX11/VertexCommon.hlsli"
+sDx11GeomCommonFile = "/ShaderInclude/DX11/GeomCommon.hlsli"
 sDx11PixelCommonFile = "/ShaderInclude/DX11/PixelCommon.hlsli"
 
 sVkCommonFile = "/ShaderInclude/Vulkan/Common.glsl"
 sVkVertexCommonFile = "/ShaderInclude/Vulkan/VertexCommon.glsl"
+sVkGeomCommonFile = "/ShaderInclude/Vulkan/GeomCommon.glsl"
 sVkPixelCommonFile = "/ShaderInclude/Vulkan/PixelCommon.glsl"
 
 sLightingFile = "/ShaderInclude/Lighting.hlsli"
@@ -38,12 +40,15 @@ def main():
 		sVCommonFile = sDx11VertexCommonFile if sAPI == "dx11" else sVkVertexCommonFile
 		sCommon = sCommon + open(sScriptDir + sVCommonFile).read()
 	elif sType == "p":
-		sVCommonFile = sDx11PixelCommonFile if sAPI == "dx11" else sVkPixelCommonFile
-		sCommon = sCommon + open(sScriptDir + sVCommonFile).read()
+		sPCommonFile = sDx11PixelCommonFile if sAPI == "dx11" else sVkPixelCommonFile
+		sCommon = sCommon + open(sScriptDir + sPCommonFile).read()
 		sCommon = sCommon + open(sScriptDir + sLightingFile).read()
 		sCommon = sCommon + open(sScriptDir + sPbrFile).read()
+	elif sType == "g":
+		sGCommonFile = sDx11GeomCommonFile if sAPI == "dx11" else sVkGeomCommonFile
+		sCommon = sCommon + open(sScriptDir + sGCommonFile).read()
 	else:
-		print("First parameter must be \"p\" or \"v\" !!! \n It's: " + sType)
+		print("First parameter must be \"p\" , \"g\" or \"v\" !!! \n It's: " + sType)
 		return	
 	
 	sOutFolder = "DX11" if sAPI == "dx11"  else "VK"
@@ -84,7 +89,13 @@ def main():
 		#sCompilerOutputFilename = os.path.splitext(sFilename)[0] + sBinExt		
 		
 		if sAPI == "dx11":
-			sCompilerTypeFlag = "vs_5_0" if sType == "v" else "ps_5_0"
+			sCompilerTypeFlag = ""
+			if sType == "v":
+				sCompilerTypeFlag = "vs_5_0" 
+			elif sType == "g":
+				sCompilerTypeFlag  = "gs_5_0"
+			elif sType == "p":
+				sCompilerTypeFlag  = "ps_5_0"
 			os.system("fxc -E main -T " + sCompilerTypeFlag + " -Fo " + sBinFilename + " -Od -Zi " + sSrcFilename)
 		else:
 			os.system(os.environ["VULKAN_SDK"] + "/Bin/glslc.exe -g " + sSrcFilename + " -o " + sBinFilename)

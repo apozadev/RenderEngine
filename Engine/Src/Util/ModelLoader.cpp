@@ -22,7 +22,66 @@ void ProcessNode(aiNode* _pAssimpNode, const aiScene* _pAssimpScene, ModelCompon
 void ProcessMaterials(const aiScene* _pAssimpScene, const Material* _pMaterial, std::string _sDirectory, ModelComponent* pModelComp_);
 void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, ModelComponent* pModelComp_);
 
-void ModelLoader::LoadModel(const char* _sFilename, const Material* _pMaterial, ModelComponent* pModelComp_)
+std::vector<Vertex> s_lstQuadVertices{
+      {{-1.0f,  1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {0, 0}},
+      {{ 1.0f,  1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {1, 0}},
+      {{ 1.0f, -1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {1, 1}},
+      {{-1.0f, -1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {0, 1}}
+};
+
+std::vector<unsigned short> s_lstQuadIndices{
+  3, 0, 1,
+  2, 3, 1
+};
+
+std::vector<Vertex> s_lstCubeVertices{
+  // + X
+  {{ 1.0f,  1.0f , -1.0f }, {0, 0, 1}, {0, 1, 0}, {0, 0, 0}, {1, 0}}, // 0
+  {{ 1.0f,  1.0f ,  1.0f }, {0, 0, 1}, {0, 1, 0}, {0, 0, 0}, {1, 1}},
+  {{ 1.0f, -1.0f ,  1.0f }, {0, 0, 1}, {0, 1, 0}, {0, 0, 0}, {0, 1}},
+  {{ 1.0f, -1.0f , -1.0f }, {0, 0, 1}, {0, 1, 0}, {0, 0, 0}, {0, 0}},
+
+  // -X
+  {{-1.0f,  1.0f , -1.0f }, {0, 0, -1}, {0, -1, 0}, {0, 0, 0}, {1, 0}}, // 4
+  {{-1.0f,  1.0f ,  1.0f }, {0, 0, -1}, {0, -1, 0}, {0, 0, 0}, {1, 1}},
+  {{-1.0f, -1.0f ,  1.0f }, {0, 0, -1}, {0, -1, 0}, {0, 0, 0}, {0, 1}},
+  {{-1.0f, -1.0f , -1.0f }, {0, 0, -1}, {0, -1, 0}, {0, 0, 0}, {0, 0}},
+
+  // +Y
+  {{ 1.0f,  1.0f , -1.0f }, {0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 0}}, // 8
+  {{ 1.0f,  1.0f ,  1.0f }, {0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1}},
+  {{-1.0f,  1.0f ,  1.0f }, {0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {0, 1}},
+  {{-1.0f,  1.0f , -1.0f }, {0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {0, 0}},
+
+  // -Y  
+  {{ 1.0f,  -1.0f, -1.0f }, {0, -1, 0}, {0, 0, -1}, {0, 0, 0}, {1, 0}}, // 12
+  {{ 1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {0, 0, -1}, {0, 0, 0}, {1, 1}},
+  {{-1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {0, 0, -1}, {0, 0, 0}, {0, 1}},
+  {{-1.0f,  -1.0f, -1.0f }, {0, -1, 0}, {0, 0, -1}, {0, 0, 0}, {0, 0}},
+
+  // +Z  
+  {{ 1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {1, 0}}, // 16
+  {{ 1.0f,   1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {1, 1}},
+  {{-1.0f,   1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {0, 1}},
+  {{-1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {0, 0}},
+
+  // -Z  
+  {{ 1.0f,  -1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {1, 0}}, // 20
+  {{ 1.0f,   1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {1, 1}},
+  {{-1.0f,   1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {0, 1}},
+  {{-1.0f,  -1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {0, 0, 0}, {0, 0}},
+};
+
+std::vector<unsigned short> s_lstCubeIndices{
+  0, 1, 2,      0, 2, 3,      // +X
+  6, 5, 4,      7, 6, 4,      // -X
+  10, 9, 8,     11, 10, 8,    // +Y
+  12, 13, 14,   12, 14, 15,   // -Y
+  16, 17, 18,   16, 18, 19,   // +Z
+  22, 21, 20,   23, 22, 20,   // -Z
+};
+
+void LoadModel(const char* _sFilename, const Material* _pMaterial, ModelComponent* pModelComp_)
 {
 
   Assimp::Importer oImporter;
@@ -223,78 +282,19 @@ void ProcessMesh(aiMesh* _pAssimpMesh, const aiScene* _pAssimpScene, ModelCompon
 
 }
 
-void ModelLoader::SetupQuadModel(const Material* _pMaterial, ModelComponent* pModelComp_)
-{
-
-  std::vector<Vertex> lstVertices{
-      {{-1.0f,  1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {0, 0}},
-      {{ 1.0f,  1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {1, 0}},
-      {{ 1.0f, -1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {1, 1}},
-      {{-1.0f, -1.0f, 0.f}, {0, 0, -1}, {1, 0, 0}, {0, 0, 0}, {0, 1}}
-  };
-
-  std::vector<unsigned short> lstIndices{
-    3, 0, 1,
-    2, 3, 1
-  };
-
+void SetupQuadModel(const Material* _pMaterial, ModelComponent* pModelComp_)
+{  
   owner_ptr<MaterialInstance> pMatInstance = Factory::Create<MaterialInstance>();
 
   pMatInstance->SetupSubState(_pMaterial);
 
   pModelComp_->AddMaterialInstance(std::move(pMatInstance));
 
-  pModelComp_->AddMesh(lstVertices, lstIndices, 0u);
+  pModelComp_->AddMesh(s_lstQuadVertices, s_lstQuadIndices, 0u);
 }
 
-void ModelLoader::SetupCubeModel(const Material* _pMaterial, ModelComponent* pModelComp_)
-{
-  std::vector<Vertex> lstVertices{
-    // + X
-    {{ 1.0f,  1.0f , -1.0f }, {0, 0, 1}, {0, 1, 0}, {1, 0}}, // 0
-    {{ 1.0f,  1.0f ,  1.0f }, {0, 0, 1}, {0, 1, 0}, {1, 1}},
-    {{ 1.0f, -1.0f ,  1.0f }, {0, 0, 1}, {0, 1, 0}, {0, 1}},
-    {{ 1.0f, -1.0f , -1.0f }, {0, 0, 1}, {0, 1, 0}, {0, 0}},
-
-    // -X
-    {{-1.0f,  1.0f , -1.0f }, {0, 0, -1}, {0, -1, 0}, {1, 0}}, // 4
-    {{-1.0f,  1.0f ,  1.0f }, {0, 0, -1}, {0, -1, 0}, {1, 1}},
-    {{-1.0f, -1.0f ,  1.0f }, {0, 0, -1}, {0, -1, 0}, {0, 1}},
-    {{-1.0f, -1.0f , -1.0f }, {0, 0, -1}, {0, -1, 0}, {0, 0}},
-
-    // +Y
-    {{ 1.0f,  1.0f , -1.0f }, {0, 1, 0}, {0, 0, 1}, {1, 0}}, // 8
-    {{ 1.0f,  1.0f ,  1.0f }, {0, 1, 0}, {0, 0, 1}, {1, 1}},
-    {{-1.0f,  1.0f ,  1.0f }, {0, 1, 0}, {0, 0, 1}, {0, 1}},
-    {{-1.0f,  1.0f , -1.0f }, {0, 1, 0}, {0, 0, 1}, {0, 0}},
-
-    // -Y  
-    {{ 1.0f,  -1.0f, -1.0f }, {0, -1, 0}, {0, 0, -1}, {1, 0}}, // 12
-    {{ 1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {0, 0, -1}, {1, 1}},
-    {{-1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {0, 0, -1}, {0, 1}},
-    {{-1.0f,  -1.0f, -1.0f }, {0, -1, 0}, {0, 0, -1}, {0, 0}},
-
-    // +Z  
-    {{ 1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {1, 0}}, // 16
-    {{ 1.0f,   1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {1, 1}},
-    {{-1.0f,   1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {0, 1}},
-    {{-1.0f,  -1.0f,  1.0f }, {0, -1, 0}, {1, 0, 0}, {0, 0}},
-
-    // -Z  
-    {{ 1.0f,  -1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {1, 0}}, // 20
-    {{ 1.0f,   1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {1, 1}},
-    {{-1.0f,   1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {0, 1}},
-    {{-1.0f,  -1.0f,  -1.0f}, {0, -1, 0}, {1, 0, 0}, {0, 0}},
-  };
-
-  std::vector<unsigned short> lstIndices{
-    0, 1, 2,      0, 2, 3,      // +X
-    6, 5, 4,      7, 6, 4,      // -X
-    10, 9, 8,     11, 10, 8,    // +Y
-    12, 13, 14,   12, 14, 15,   // -Y
-    16, 17, 18,   16, 18, 19,   // +Z
-    22, 21, 20,   23, 22, 20,   // -Z
-  };
+void SetupCubeModel(const Material* _pMaterial, ModelComponent* pModelComp_)
+{  
 
   owner_ptr<MaterialInstance> pMatInstance = Factory::Create<MaterialInstance>();
 
@@ -302,5 +302,15 @@ void ModelLoader::SetupCubeModel(const Material* _pMaterial, ModelComponent* pMo
 
   pModelComp_->AddMaterialInstance(std::move(pMatInstance));
 
-  pModelComp_->AddMesh(lstVertices, lstIndices, 0u);
+  pModelComp_->AddMesh(s_lstCubeVertices, s_lstCubeIndices, 0u);
+}
+
+void SetupQuadMesh(Mesh* pMesh_)
+{
+  pMesh_->Initialize(s_lstQuadVertices, s_lstQuadIndices);
+}
+
+void SetupCubeMesh(Mesh* pMesh_)
+{
+  pMesh_->Initialize(s_lstCubeVertices, s_lstCubeIndices);
 }

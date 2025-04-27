@@ -235,6 +235,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE CURR_WORKING_DIR=${CMAKE_SOUR
 
 file(GLOB_RECURSE V_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Vertex/*.vs")
 file(GLOB_RECURSE P_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Pixel/*.ps")  
+file(GLOB_RECURSE G_SHADER_FILES "${CMAKE_SOURCE_DIR}/Assets/Shaders/Geometry/*.gs")  
 
 set(SHADER_BINARY_FILES)
 
@@ -263,6 +264,10 @@ endfunction()
 
 foreach(FILE ${V_SHADER_FILES})  
 CompileHLSL(${FILE} "v")
+endforeach(FILE)
+
+foreach(FILE ${G_SHADER_FILES})  
+CompileHLSL(${FILE} "g")
 endforeach(FILE)
 
 foreach(FILE ${P_SHADER_FILES})  

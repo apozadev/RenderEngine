@@ -18,6 +18,15 @@ namespace pass_internal
   static uint16_t s_uNextId = 0u;
 }
 
+void Pass::Configure(const RenderStateInfo& _rRenderStateInfo, const RenderTarget* _pRenderTarget, uint32_t _uLayer)
+{
+  m_uLayer = _uLayer;
+
+  m_oInfo = _rRenderStateInfo;
+
+  Configure(_pRenderTarget);
+}
+
 void Pass::Configure(const std::string& _sVSFilename
   , const std::string& _sPSFilename
   , bool _bBlendEnabled
@@ -105,14 +114,21 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
   m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
 
   // Reflect constant buffers  
-  uint32_t uCBuffCount = api::GetConstantBufferCount(m_pAPIRenderState, STAGE_PIXEL);
+  ReflectCBuffers(STAGE_VERTEX);
+  ReflectCBuffers(STAGE_PIXEL);
+  ReflectCBuffers(STAGE_GEOM);
+}
+
+void Pass::ReflectCBuffers(PipelineStage _eStage)
+{
+  uint32_t uCBuffCount = api::GetConstantBufferCount(m_pAPIRenderState, _eStage);
 
   size_t uCacheIdx = 0u;
 
   for (uint32_t i = 0u; i < uCBuffCount; i++)
   {
     bool bValid = true;
-    uint32_t uNumVariables = api::GetConstantBufferMemberCount(m_pAPIRenderState, STAGE_PIXEL, i);
+    uint32_t uNumVariables = api::GetConstantBufferMemberCount(m_pAPIRenderState, _eStage, i);
 
     std::vector<ReflectedConstantBuffer::Variable> lstVariables;
     lstVariables.reserve(uNumVariables);
@@ -123,7 +139,9 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
     {
       ReflectedConstantBuffer::Variable oVar = {};
 
-      oVar.m_eType = api::GetConstantBufferMemberType(m_pAPIRenderState, STAGE_PIXEL, i, j);
+      oVar.m_eType = api::GetConstantBufferMemberType(m_pAPIRenderState, _eStage, i, j);
+
+      oVar.m_uArraySize = api::GetConstantBufferMemberArraySize(m_pAPIRenderState, _eStage, i, j);
 
       if (oVar.m_eType == ConstantBufferType::NONE)
       {
@@ -131,28 +149,28 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
         break;
       }
 
-      uSize += GetConstantBufferTypeSize(oVar.m_eType);
+      uSize += GetConstantBufferTypeSize(oVar.m_eType) * oVar.m_uArraySize;
 
-      oVar.m_sName = api::GetConstantBufferMemberName(m_pAPIRenderState, STAGE_PIXEL, i, j);
+      oVar.m_sName = api::GetConstantBufferMemberName(m_pAPIRenderState, _eStage, i, j);
 
       lstVariables.push_back(std::move(oVar));
     }
 
     if (bValid)
     {
-      std::string sName = api::GetConstantBufferName(m_pAPIRenderState, STAGE_PIXEL, i);
+      std::string sName = api::GetConstantBufferName(m_pAPIRenderState, _eStage, i);
 
       owner_ptr<ReflectedConstantBuffer> pCBuffer = Factory::Create<ReflectedConstantBuffer>();
 
       size_t uNumFloats = uSize / sizeof(float);
 
-      float* pCache = (uCacheIdx + uNumFloats <= m_lstCBuffCache.size()) ? &(m_lstCBuffCache[uCacheIdx]) : nullptr;      
+      float* pCache = (uCacheIdx + uNumFloats <= m_lstCBuffCache.size()) ? &(m_lstCBuffCache[uCacheIdx]) : nullptr;
 
-      pCBuffer->Configure(sName, std::move(lstVariables), pCache);
+      pCBuffer->Configure(sName, _eStage, std::move(lstVariables), pCache);
 
       uCacheIdx += uNumFloats;
 
-      m_lstCBuffers.push_back(std::move(pCBuffer));      
+      m_lstCBuffers.push_back(std::move(pCBuffer));
     }
   }
 }
@@ -228,6 +246,19 @@ bool Pass::GetVec4(const char* _sName, float* pOutValue_) const
   return false;
 }
 
+bool Pass::GetMat4(const char* _sName, float* pOutValue_) const
+{
+  for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
+  {
+    if (pCBuffer->GetMat4(_sName, pOutValue_))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool Pass::SetFloat(const char* _sName, float _fValue)
 {
   for (owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
@@ -246,6 +277,19 @@ bool Pass::SetVec4(const char* _sName, float* _pValue)
   for (owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
   {
     if (pCBuffer->SetVec4(_sName, _pValue))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool Pass::SetMat4(const char* _sName, float* _pValue)
+{
+  for (owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
+  {
+    if (pCBuffer->SetMat4(_sName, _pValue))
     {
       return true;
     }

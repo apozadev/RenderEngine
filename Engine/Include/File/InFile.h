@@ -6,7 +6,7 @@ namespace file
 {
   class InFile
   {
-  public:
+  public:    
     InFile(const char* _sFilename, bool _bRelativePath = true);
     ~InFile();
 

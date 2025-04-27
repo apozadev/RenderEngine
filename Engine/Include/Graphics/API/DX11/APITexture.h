@@ -22,6 +22,7 @@ struct APITexture
 	PipelineStageFlags m_uStageFlags;
 	DXGI_FORMAT m_eFormat;
 	int m_iWidth, m_iHeight;
+	unsigned int m_uLayers;
 
 };
 

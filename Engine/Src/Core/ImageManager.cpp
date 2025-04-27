@@ -133,13 +133,11 @@ const Image& ImageManager::LoadImage(const std::string& _sPath, bool _bAbsolute/
       img.format = DXGI_FORMAT_R32G32_FLOAT;
       break;*/
     case 3:
-      //RGB2RGBA((float**)(&img.data), img.width, img.height);
-      //img.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-
-      //img.format = DXGI_FORMAT_R32G32B32_FLOAT;
+      RGB2RGBA((float**)(&img.m_pData), img.m_iWidth, img.m_iHeight);
+      img.m_eFormat = ImageFormat::R32G32B32A32;      
       break;
-    case 4:
-      //img.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    case 4:      
+      img.m_eFormat = ImageFormat::R32G32B32A32;
       break;
     }
   }

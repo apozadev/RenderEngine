@@ -30,5 +30,6 @@ namespace vk
   extern TypedContiguousPool<VkDescriptorSet, 256>        s_oVkDescriptorSetPool;  
   extern TypedContiguousPool<VkAttachmentReference, 3>    s_oVkAttachmentReferencePool;
   extern TypedContiguousPool<VkAttachmentDescription, 3>  s_oVkAttachmentDescriptionPool;
+  extern TypedContiguousPool<VkImageView, 256>            s_oVkImageViewPool;
 }
 }
