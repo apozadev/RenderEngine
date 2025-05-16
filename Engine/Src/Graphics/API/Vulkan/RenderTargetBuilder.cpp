@@ -22,40 +22,49 @@ namespace vk
 
     uint32_t uAttachmentIdx = 0u;
 
-    for (APITexture* pTexture : m_lstColorTextures)
+    for (uint32_t i = 0; i < m_lstColorTextures.size(); i++)
     {
+      APITexture* pTexture = m_lstColorTextures[i];
+
       CreateImageView(pRenderTarget_->m_pOwnerWindow,
         pTexture->m_hImage,
         pTexture->m_eFormat,
-        pTexture->m_uMipLevels,
+        1u,
         pTexture->m_uLayers,
         pTexture->m_uLayers > 1u ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
         VK_IMAGE_ASPECT_COLOR_BIT,
         pRenderTarget_->m_pImageViews[uAttachmentIdx++]);
+
+      pRenderTarget_->m_aColorTextures[i] = pTexture;
     }
 
-    for (APITexture* pTexture : m_lstColorResolveTextures)
+    for (uint32_t i = 0; i < m_lstColorResolveTextures.size(); i++)
     {
+      APITexture* pTexture = m_lstColorResolveTextures[i];
       CreateImageView(pRenderTarget_->m_pOwnerWindow,
         pTexture->m_hImage,
         pTexture->m_eFormat,
-        pTexture->m_uMipLevels,
+        1u,
         pTexture->m_uLayers,
         pTexture->m_uLayers > 1u ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
         VK_IMAGE_ASPECT_COLOR_BIT,
         pRenderTarget_->m_pImageViews[uAttachmentIdx++]);
-    }
+
+      pRenderTarget_->m_aResolveTextures[i] = pTexture;
+    }    
 
     if(m_pDepthStencilTexture)
     {
       CreateImageView(pRenderTarget_->m_pOwnerWindow,
         m_pDepthStencilTexture->m_hImage,
         m_pDepthStencilTexture->m_eFormat,
-        m_pDepthStencilTexture->m_uMipLevels,
+        1u,
         m_pDepthStencilTexture->m_uLayers,
         m_pDepthStencilTexture->m_uLayers > 1u ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
         VK_IMAGE_ASPECT_DEPTH_BIT,
         pRenderTarget_->m_pImageViews[uAttachmentIdx++]);
+
+      pRenderTarget_->m_pDepthTexture = m_pDepthStencilTexture;
     }
 
     VkFramebufferCreateInfo oFramebufferInfo = {};

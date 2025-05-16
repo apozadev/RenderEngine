@@ -81,9 +81,6 @@ public:
   void SetupSubStateLightCBuffers(ResourceFrequency _eFrequency);
 
   void SetupSubStateShadowMaps(ResourceFrequency _eFrequency);  
-
-  const owner_ptr<Texture2D>& GetEnvMap() const { return m_pEnvMapDiff; }
-  const owner_ptr<RenderTarget>& GetEnvMap2() const { return m_pEnvMapSpec; }
   
   void Draw();  
 
@@ -99,6 +96,6 @@ private:
 
   std::vector<Job> m_lstShadowJobs;    
 
-  owner_ptr<Texture2D> m_pEnvMapDiff;
+  owner_ptr<RenderTarget> m_pEnvMapDiff;
   owner_ptr<RenderTarget> m_pEnvMapSpec;
 };

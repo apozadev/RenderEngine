@@ -8,11 +8,17 @@
 
 #define sampleTex(tex, uv) texture(tex, uv)
 
+#define sampleTexLevel(tex, uv, level) textureLod(tex, uv, level)
+
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
 
 #define CubeTexture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform samplerCube name;
 
 #define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name
+
+#define _PI  3.1416f
+#define _2PI 6.2832f
+#define _PI2 1.5708f
 #pragma shader_stage(fragment)
 
 layout(location = 0) in vec3 fragColor;
@@ -114,7 +120,7 @@ float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 
   float fBias = 0.00002f;
 
-  float fShadow = step(fMapDepth /*+ fBias*/, vProjCoords.z);
+  float fShadow = step(fMapDepth + fBias, vProjCoords.z);
   fShadow = 1 - max(0, min(1, fShadow));
 
   return fShadow;
@@ -200,7 +206,7 @@ struct PBRinput
 // Normal distribution function (Cook-Torrance)
 float _D(PBRinput _input)
 {
-  /*float _PI = 3.14159;
+  /*
 
   float alpha2 = _input.roughness * _input.roughness * _input.roughness * _input.roughness;
   float NdotH = max(dot(_input.normal.xyz, _input.halfVector.xyz), 0);
@@ -220,9 +226,7 @@ float _D(PBRinput _input)
 
 // Blinn-Phong
 float _DBlinn(PBRinput _input)
-{
-  float _PI = 3.14159;
-
+{  
   float fAlphaSqr = _input.roughness * _input.roughness * _input.roughness * _input.roughness;
   float fDenom = _PI * fAlphaSqr;
   float fPower = (2.0 / fAlphaSqr) - 2.0;
@@ -262,9 +266,7 @@ vec3 _FRoughness(PBRinput _input)
 
 // PBR lighting
 vec3 PBR(PBRinput _input)
-{
-  
-  float _PI = 3.14159;
+{    
 
   // Lambert diffuse
   vec3 fd = _input.albedo.xyz / _PI;
@@ -303,12 +305,6 @@ vec3 PBRSpecularIBL(PBRinput _input)
   //float2 envBRDF = BrdfLutTex.Sample(brdfSampler, float2(NdotV, _input.roughness)).xy;
   return (kS /** envBRDF.x + envBRDF.y*/) * _input.lightColor.xyz;
 }
-
-
-CBuffer(ViewProjs, 3)
-{
-  mat4[6] aViewProjs;
-};
 
 //const vec2 invAtan = vec2(0.3183, 0.6366);
 vec2 SampleSphericalMap(vec3 v) {

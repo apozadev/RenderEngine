@@ -30,6 +30,8 @@ public:
   void SetupAsRenderTargetDepthStencil() const;
   void SetupAsRenderTargetColorResolve() const;
 
+  void GenerateMipMaps() const;
+
   void Bind() const;
   void Unbind() const;
 

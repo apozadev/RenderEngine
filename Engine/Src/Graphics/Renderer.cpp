@@ -45,7 +45,7 @@ void Renderer::InitializePostWindow()
   m_pLightCBuff = Factory::Create<ConstantBuffer<LightData>>();
   m_pLightCBuff->Configure();
 
-  m_pEnvMapDiff = Factory::Create<Texture2D>();
+  /*m_pEnvMapDiff = Factory::Create<Texture2D>();
 
   Image aImages[6];
   aImages[0] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/0.png");
@@ -56,14 +56,14 @@ void Renderer::InitializePostWindow()
   aImages[5] = ImageManager::GetInstance()->LoadImage("Assets/Images/skybox/5.png");
 
   aImages[0].m_eFormat = ImageFormat::R8G8B8A8_SRGB;
-
+  
   SamplerConfig oSampler = {};
   oSampler.m_eAddressMode = TextureAddressMode::CLAMP;
   oSampler.m_eMagFilterMode = TextureFilterMode::LINEAR;
   oSampler.m_eMinFilterMode = TextureFilterMode::LINEAR;
   oSampler.m_eMipmapFilterMode = TextureFilterMode::POINT;
 
-  m_pEnvMapDiff->ConfigureAsCubemap(&aImages[0], aImages[0].m_iWidth, aImages[0].m_iHeight, aImages[0].m_eFormat, oSampler, 1u, 1u);
+  m_pEnvMapDiff->ConfigureAsCubemap(&aImages[0], aImages[0].m_iWidth, aImages[0].m_iHeight, aImages[0].m_eFormat, oSampler, 1u, 1u);*/
 
   // Radiance map
 
@@ -73,13 +73,17 @@ void Renderer::InitializePostWindow()
   oHDRISamplerConfig.m_eMinFilterMode = TextureFilterMode::POINT;
   oHDRISamplerConfig.m_eMipmapFilterMode = TextureFilterMode::POINT;
 
-  const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/graveyard_pathways_4k.hdr", false);
+  const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/pine_attic_4k.hdr", false);
+  //const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/graveyard_pathways_4k.hdr", false);
 
   owner_ptr<Texture2D> pHDRI = Factory::Create<Texture2D>();
   pHDRI->Configure(oImage, oHDRISamplerConfig, 1, 1);
 
   m_pEnvMapSpec = Factory::Create<RenderTarget>();
-  m_pEnvMapSpec->Configure(1u, 1024, 1024, oImage.m_eFormat, false, 1, 1, true);
+  m_pEnvMapSpec->Configure(1u, 512, 512, oImage.m_eFormat, false, 0, 1, true);
+
+  m_pEnvMapDiff = Factory::Create<RenderTarget>();
+  m_pEnvMapDiff->Configure(1u, 128, 128, oImage.m_eFormat, false, 1, 1, true);
 
   Camera oCamera = {};
   oCamera.Configure("", true);  
@@ -98,26 +102,33 @@ void Renderer::InitializePostWindow()
   oInfo.m_bDepthWrite = false;
   oInfo.m_eCullMode = CullMode::BACK;  
 
-  Pass oEnvMapPass = {};
-  oEnvMapPass.Configure(oInfo, m_pEnvMapSpec.get(), 0u);
-  oEnvMapPass.Setup();
+  Pass oCubemapPass = {};
+  oCubemapPass.Configure(oInfo, m_pEnvMapSpec.get(), 0u);
+  oCubemapPass.Setup(); 
 
-  MaterialInstance oMatInstance = {};
-  oMatInstance.AddTexture(std::move(pHDRI));
-  oMatInstance.Configure();
-  oMatInstance.SetupSubState(nullptr);
+  oInfo = {};
+  oInfo.m_sVSFilename = "Assets/Shaders/Vertex/EnvMapVertex.vs";
+  oInfo.m_sGSFilename = "Assets/Shaders/Geometry/EnvMapGeometry.gs";
+  oInfo.m_sPSFilename = "Assets/Shaders/Pixel/CubemapConvolutionPixel.ps";
+  oInfo.m_bBlendEnabled = false;
+  oInfo.m_bDepthRead = false;
+  oInfo.m_bDepthWrite = false;
+  oInfo.m_eCullMode = CullMode::BACK;
 
-  /*
-  
-  data.viewProj[0] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationY(_PI2)), proj));
-  data.viewProj[1] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationY(-_PI2)), proj));
-  data.viewProj[2] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationX(-_PI2)), proj));
-  data.viewProj[3] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationX(_PI2)), proj));
-  data.viewProj[4] = DirectX::XMMatrixTranspose(proj);
-  data.viewProj[5] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, DirectX::XMMatrixRotationY(_PI)), proj));
-  */
+  Pass oConvolutionPass = {};
+  oConvolutionPass.Configure(oInfo, m_pEnvMapSpec.get(), 0u);
+  oConvolutionPass.Setup();
 
-  constexpr float _PI2 = glm::half_pi<float>(); // 90 degrees
+  MaterialInstance oCubemapMatInstance = {};
+  oCubemapMatInstance.AddTexture(std::move(pHDRI));
+  oCubemapMatInstance.Configure();
+  oCubemapMatInstance.SetupSubState(nullptr);
+
+  MaterialInstance oConvoMatInstance = {};  
+  oConvoMatInstance.Configure();
+  oConvoMatInstance.SetupSubState(nullptr);
+
+  constexpr float _PI2 = glm::half_pi<float>();
   constexpr float _PI = glm::pi<float>();
 
   glm::mat4 proj = glm::perspectiveLH(_PI2, 1.0f, 0.1f, 10.0f);
@@ -130,27 +141,57 @@ void Renderer::InitializePostWindow()
   aViewProjs[4] = proj;
   aViewProjs[5] = proj * glm::inverse(glm::rotate(glm::mat4(1.0f),  _PI,  glm::vec3(0, 1, 0)));
 
-  oEnvMapPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);
+  oCubemapPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);
+  oConvolutionPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);  
+  
+  GeometryRenderStep oCubemapStep("", std::vector<Texture2D*>(), m_pEnvMapSpec.get(), false, false);
+
+  {
+    Job oJob = {};
+    oJob.m_pMaterial = &oCubemapMatInstance;
+    oJob.m_pMesh = &oCubeMesh;
+    oJob.m_pMeshTransform = &Transform::GetIdentity();
+    oJob.m_pPass = &oCubemapPass;
+
+    oCubemapStep.SubmitJob(std::move(oJob));
+  }
+
+  oCubemapStep.Setup();  
+
+  GeometryRenderStep oConvolutionStep("", { m_pEnvMapSpec->GetColorTextures()[0].get() }, m_pEnvMapDiff.get(), false, false);
+
+  {
+    Job oJob = {};
+    oJob.m_pMaterial = &oConvoMatInstance;
+    oJob.m_pMesh = &oCubeMesh;
+    oJob.m_pMeshTransform = &Transform::GetIdentity();
+    oJob.m_pPass = &oConvolutionPass;
+
+    oConvolutionStep.SubmitJob(std::move(oJob));
+  }
+
+  oConvolutionStep.Setup();
+
+  // Draw specular envmap from 2D HDRI
 
   Engine::GetInstance()->GetWindow()->BeginDrawOffline();
-  
-  GeometryRenderStep oEnvMapStep("", std::vector<Texture2D*>(), m_pEnvMapSpec.get(), false, false);
 
-  Job oJob = {};
-  oJob.m_pMaterial = &oMatInstance;
-  oJob.m_pMesh = &oCubeMesh;
-  oJob.m_pMeshTransform = &Transform::GetIdentity();
-  oJob.m_pPass = &oEnvMapPass;  
-
-  oEnvMapStep.SubmitJob(std::move(oJob));
-
-  oEnvMapStep.Setup();
-
-  oEnvMapStep.Execute(&oCamera, &Transform::GetIdentity());
+  oCubemapStep.Execute(&oCamera, &Transform::GetIdentity());
 
   m_pEnvMapSpec->Unbind();
 
-  Engine::GetInstance()->GetWindow()->EndDraw();
+  m_pEnvMapSpec->GetColorTextures()[0]->GenerateMipMaps();
+
+  // Perform convolution on specular envMap to generate diffuse envmap
+
+  oCamera.SetSkybox(m_pEnvMapSpec->GetColorTextures()[0].get());
+  oCamera.PreRenderSetup();
+
+  oConvolutionStep.Execute(&oCamera, &Transform::GetIdentity());
+
+  m_pEnvMapDiff->Unbind();
+
+  Engine::GetInstance()->GetWindow()->EndDraw();  
 
   m_pLightCBuff->GetData()->m_uNumLights = 0u;
 }
@@ -287,6 +328,7 @@ void Renderer::Draw()
 
     for (CamView& rCamView : m_lstCamViews)
     {
+      rCamView.m_pCamera->SetSkybox(m_pEnvMapDiff->GetColorTextures()[0].get());
       rCamView.m_pCamera->PreRenderSetup();
     }
 
@@ -323,9 +365,8 @@ void Renderer::Draw()
     {      
       rShadowView.m_pShadowMap->GetDepthStencilTexture()->Bind();
     }
-
-    //m_pEnvMapDiff->Bind();
-    m_pEnvMapSpec->GetColorTextures()[0]->Bind();
+    
+    m_pEnvMapDiff->GetColorTextures()[0]->Bind();
 
     for (CamView& rCamView : m_lstCamViews)
     {

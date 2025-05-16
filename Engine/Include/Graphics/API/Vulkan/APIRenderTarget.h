@@ -8,6 +8,7 @@ namespace vk
 {
 
   struct APIWindow;
+  struct APITexture;
 
   struct APIRenderTarget
   {
@@ -18,9 +19,13 @@ namespace vk
 
     VkImageView* m_pImageViews;
 
-    APIWindow* m_pOwnerWindow;
-
     uint32_t m_uWidth, m_uHeight;
+
+    APITexture* m_aColorTextures[4];
+    APITexture* m_aResolveTextures[4];
+    APITexture* m_pDepthTexture;
+
+    APIWindow* m_pOwnerWindow;    
   };
 
 }

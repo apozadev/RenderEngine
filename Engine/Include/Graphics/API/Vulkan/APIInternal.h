@@ -108,15 +108,17 @@ namespace vk
 
   void EndTempCmdBuffer(APIWindow* _pWindow, VkCommandBuffer _hCmdBuffer);
 
-  void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize);
+  void CopyBuffer(VkCommandBuffer _hCmdBuffer, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize);
 
-  void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uLayers);
+  void CopyBufferToImage(VkCommandBuffer _hCmdBuffer, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uLayers);
 
-  void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
+  void TransitionImageLayout(VkCommandBuffer _hCmdBuffer, VkImage _hImage, VkFormat _eFormat, uint32_t _uBaseMip, uint32_t _uMipLevels, uint32_t _uBaseLayer, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
 
-  void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout);
+  void TransitionTextureImageLayout(VkCommandBuffer _hCmdBuffer, APITexture* _pTexture, uint32_t _uBaseMip, uint32_t _uMipLevels, uint32_t _uBaseLayer, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eNewLayout, bool _bForce = false);
 
-  void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels, uint32_t _uLayers);
+  void SetTextureLayoutAllMipLevels(APITexture* _pTexture, VkImageLayout _eNewLayout);
+  
+  void GenerateMipmaps(VkCommandBuffer _hCmdBuffer, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels, uint32_t _uLayers);
 
   void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t& uDescSetCount_);
 

@@ -1,8 +1,9 @@
 <Material>
 	<m_lstPasses>
-		<Pass_Ptr PtrId="849682680" Type="Pass">
+		<Pass_Ptr PtrId="2931549080" Type="Pass">
 			<m_oInfo>
 				<m_sVSFilename>Assets/Shaders/Vertex/VertexShader.vs</m_sVSFilename>
+				<m_sGSFilename/>
 				<m_sPSFilename>Assets/Shaders/Pixel/PBRSolidPixel.ps</m_sPSFilename>
 				<m_bBlendEnabled>false</m_bBlendEnabled>
 				<m_eBlendOp>BLEND_OP_ADD</m_eBlendOp>
@@ -20,7 +21,7 @@
 				<float>1.000000</float>
 				<float>0.000000</float>
 				<float>0.000000</float>
-				<float>1.000000</float>
+				<float>0.000000</float>
 				<float>0.000000</float>
 				<float>0.200000</float>
 				<float>0.040000</float>

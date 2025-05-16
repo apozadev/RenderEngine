@@ -8,11 +8,17 @@
 
 #define sampleTex(tex, uv) texture(tex, uv)
 
+#define sampleTexLevel(tex, uv, level) textureLod(tex, uv, level)
+
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
 
 #define CubeTexture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform samplerCube name;
 
 #define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name
+
+#define _PI  3.1416f
+#define _2PI 6.2832f
+#define _PI2 1.5708f
 #pragma shader_stage(vertex)
 
 layout(location = 0) in vec3 inPosition;

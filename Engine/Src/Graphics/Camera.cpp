@@ -64,9 +64,11 @@ void Camera::PreRenderSetup()
 {
   api::BeginSubStateSetup(m_pSubState);
   m_pCBuffer->SetupRenderSubState("GlobalBuffer", STAGE_VERTEX | STAGE_PIXEL, ResourceFrequency::GLOBAL);
-  Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);
-  //Renderer::GetInstance()->GetEnvMap()->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
-  Renderer::GetInstance()->GetEnvMap2()->GetColorTextures()[0]->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
+  Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);  
+  if (m_pSkyboxTex != nullptr)
+  {
+    m_pSkyboxTex->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
+  }
   api::EndSubStateSetup(ResourceFrequency::GLOBAL);
 }
 
@@ -74,6 +76,10 @@ void Camera::Bind() const
 {  
   api::BindAPICamera(m_pAPICamera);
   api::BindAPIRenderSubState(m_pSubState, ResourceFrequency::GLOBAL);
+  if (m_pSkyboxTex != nullptr)
+  {
+    m_pSkyboxTex->Bind();
+  }
   m_pCBuffer->Bind();  
 }
 

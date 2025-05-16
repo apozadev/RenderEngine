@@ -8,11 +8,17 @@
 
 #define sampleTex(tex, uv) texture(tex, uv)
 
+#define sampleTexLevel(tex, uv, level) textureLod(tex, uv, level)
+
 #define Texture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform sampler2D name;
 
 #define CubeTexture(name, setIdx, bindIdx) layout(set = setIdx, binding = bindIdx) uniform samplerCube name;
 
 #define CBuffer(name, bind) layout(set = 2, binding = bind) uniform name
+
+#define _PI  3.1416f
+#define _2PI 6.2832f
+#define _PI2 1.5708f
 #pragma shader_stage(geometry)
 
 layout(triangles) in;
@@ -50,23 +56,15 @@ out gl_PerVertex {
 #define GEOM_MAIN_END \
     }
 
-#define BEGIN_VERTEX
-
 #define END_VERTEX  \
     EmitVertex();
 
 #define END_PRIMITIVE   \
     EndPrimitive();
 
-#define SET_VERTEX_LAYER(x) \
-    gl_Layer = x;
-
-#define SET_VERTEX_POS(x)   \
-    gl_Position = x;
-
 CBuffer(ViewProjs, 2)
 {
-  mat4[6] aViewProjs;
+  mat4 aViewProjs[6];
 };
 
 GEOM_MAIN_BEGIN
@@ -75,7 +73,6 @@ for (int i = 0; i < 6; ++i)
 {	
 	for (int j = 0; j < 3; ++j) 
 	{
-		BEGIN_VERTEX
 		outLayer = i;
 		outPos = mul(aViewProjs[i], inPos(j));
 		outWorldPos = inPos(j).xyz;

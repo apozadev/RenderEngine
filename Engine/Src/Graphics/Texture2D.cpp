@@ -85,6 +85,11 @@ void Texture2D::SetupAsRenderTargetColorResolve() const
   api::RenderTargetAddColorResolveTexture(m_pAPITexture);
 }
 
+void Texture2D::GenerateMipMaps() const
+{
+  api::GenerateMipMaps(m_pAPITexture);
+}
+
 void Texture2D::Bind() const
 {
   api::BindAPITexture(m_pAPITexture);

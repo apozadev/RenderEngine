@@ -12,6 +12,8 @@
 
 #define sampleTex(tex, uv) tex.Sample(tex##_Sampler, uv)
 
+#define sampleTexLevel(tex, uv, level) tex.SampleLevel(tex##_Sampler, uv, level)
+
 #define Texture(name, set, bind) Texture2D name : register(t##bind);
 
 #define CubeTexture(name, setIdx, bindIdx) TextureCube name : register(t##bind);
@@ -19,6 +21,10 @@
 #define CBuffer(name, bind) cbuffer name : register(b##bind)
 
 #define atan  atan2
+
+#define _PI  3.1416f
+#define _2PI 6.2832f
+#define _PI2 1.5708f
 
 struct VSin
 {

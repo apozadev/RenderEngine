@@ -142,6 +142,11 @@ namespace api
     return API::CreateAPITexture(_ppData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage, _rSamplerConfig, _bIsCubemap);
   }
 
+  void GenerateMipMaps(APITexture* _pTexture)
+  {
+    API::GenerateMipMaps(_pTexture);
+  }
+
   void BindAPITexture(APITexture* _pTexture)
   {
     API::BindAPITexture(_pTexture);

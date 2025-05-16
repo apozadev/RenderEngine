@@ -13,6 +13,7 @@
 class Window;
 class Transform;
 class RenderPipeline;
+class Texture2D;
 
 class Camera
 {
@@ -36,6 +37,8 @@ public:
 
   void UpdateTransform(const Transform& _oParentTransform);
 
+  void SetSkybox(const Texture2D* _pTexture) { m_pSkyboxTex = _pTexture; }
+
   void PreRenderSetup();
 
   void Bind() const;  
@@ -56,6 +59,8 @@ private:
   api::APIRenderSubState* m_pSubState;
 
   owner_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
+
+  const Texture2D* m_pSkyboxTex;
 
   std::string m_sRenderPipelineId;
 

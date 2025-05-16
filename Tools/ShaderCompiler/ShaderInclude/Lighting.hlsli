@@ -32,7 +32,7 @@ float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 
   float fBias = 0.00002f;
 
-  float fShadow = step(fMapDepth /*+ fBias*/, vProjCoords.z);
+  float fShadow = step(fMapDepth + fBias, vProjCoords.z);
   fShadow = 1 - max(0, min(1, fShadow));
 
   return fShadow;

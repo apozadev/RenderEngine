@@ -870,7 +870,9 @@ void CreateDepthBuffer(APIWindow* _pWindow)
 
   CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, VK_IMAGE_VIEW_TYPE_2D, uAspectFlags, _pWindow->m_hDepthImageView);
 
-  TransitionImageLayoutOffline(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
+  TransitionImageLayout(hCmdBuffer, _pWindow->m_hDepthImage, eFormat, 0u, 1u, 0u, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+  EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }
 
 void CreateSwapchain(APIWindow* _pWindow)
@@ -1208,8 +1210,8 @@ void CreateSyncObjects(APIWindow* _pWindow)
   for (int i = 0; i < uNumImages; i++)
   {
     VK_CHECK(vkCreateSemaphore(_pWindow->m_hDevice, &oSemaphoreInfo, NULL, &_pWindow->m_pImageAvailableSemaphores[i]))
-      VK_CHECK(vkCreateSemaphore(_pWindow->m_hDevice, &oSemaphoreInfo, NULL, &_pWindow->m_pRenderFinishedSemaphores[i]))
-      VK_CHECK(vkCreateFence(_pWindow->m_hDevice, &oFenceInfo, NULL, &_pWindow->m_pInFlightFences[i]))
+    VK_CHECK(vkCreateSemaphore(_pWindow->m_hDevice, &oSemaphoreInfo, NULL, &_pWindow->m_pRenderFinishedSemaphores[i]))
+    VK_CHECK(vkCreateFence(_pWindow->m_hDevice, &oFenceInfo, NULL, &_pWindow->m_pInFlightFences[i]))
   }
 }
 
@@ -1586,28 +1588,22 @@ void EndTempCmdBuffer(APIWindow* _pWindow, VkCommandBuffer _hCmdBuffer)
   oSubmitInfo.pCommandBuffers = &_hCmdBuffer;
 
   VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, VK_NULL_HANDLE))
-    VK_CHECK(vkQueueWaitIdle(_pWindow->m_hRenderQueue))
+  VK_CHECK(vkQueueWaitIdle(_pWindow->m_hRenderQueue))
 
-    vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hCmdPool, 1u, &_hCmdBuffer);
+  vkFreeCommandBuffers(_pWindow->m_hDevice, _pWindow->m_hCmdPool, 1u, &_hCmdBuffer);
 }
 
-void CopyBuffer(APIWindow* _pWindow, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize)
+void CopyBuffer(VkCommandBuffer _hCmdBuffer, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize)
 {
-  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
-
   VkBufferCopy oCopyRegion{};
   oCopyRegion.srcOffset = 0; // Optional
   oCopyRegion.dstOffset = 0; // Optional
   oCopyRegion.size = _uSize;
-  vkCmdCopyBuffer(hCmdBuffer, _hSrcBuffer, _hDstBuffer, 1, &oCopyRegion);
-
-  EndTempCmdBuffer(_pWindow, hCmdBuffer);
+  vkCmdCopyBuffer(_hCmdBuffer, _hSrcBuffer, _hDstBuffer, 1, &oCopyRegion);
 }
 
-void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uLayers)
-{
-  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
-
+void CopyBufferToImage(VkCommandBuffer _hCmdBuffer, VkBuffer _hBuffer, VkImage _hImage, uint32_t _uWidth, uint32_t _uHeight, uint32_t _uLayers)
+{  
   VkBufferImageCopy oCopyRegion{};
   oCopyRegion.bufferOffset = 0;
   oCopyRegion.bufferRowLength = 0;
@@ -1619,15 +1615,57 @@ void CopyBufferToImage(APIWindow* _pWindow, VkBuffer _hBuffer, VkImage _hImage, 
   oCopyRegion.imageSubresource.layerCount = _uLayers;
   oCopyRegion.imageSubresource.mipLevel = 0;
 
-  vkCmdCopyBufferToImage(hCmdBuffer, _hBuffer, _hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &oCopyRegion);
-
-  EndTempCmdBuffer(_pWindow, hCmdBuffer);
+  vkCmdCopyBufferToImage(_hCmdBuffer, _hBuffer, _hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &oCopyRegion);
 }
 
-void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer
+void GetLayoutAccessAndStage(VkImageLayout _eLayout, VkAccessFlags& uAccessMask_, VkPipelineStageFlags& uStageMask_)
+{
+  switch (_eLayout)
+  {
+  case VK_IMAGE_LAYOUT_UNDEFINED:
+    uAccessMask_ = 0;
+    uStageMask_ = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    break;
+  case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+    uAccessMask_ = VK_ACCESS_TRANSFER_WRITE_BIT;
+    uStageMask_ = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    break;
+  case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+    uAccessMask_ = VK_ACCESS_TRANSFER_READ_BIT;
+    uStageMask_ = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    break;
+  case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+    uAccessMask_ = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    uStageMask_ = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    break;
+  case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+    uAccessMask_ = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    uStageMask_ = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    break;
+  case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+    uAccessMask_ = VK_ACCESS_SHADER_READ_BIT;
+    uStageMask_ = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    break;
+  case VK_IMAGE_LAYOUT_GENERAL:
+    uAccessMask_ = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    uStageMask_ = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    break;
+  case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+    uAccessMask_ = 0;
+    uStageMask_ = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    break;
+  default:
+    THROW_GENERIC_EXCEPTION("[API] Unsupported layout in transition");
+    break;
+  }
+}
+
+void TransitionImageLayout(VkCommandBuffer _hCmdBuffer
   , VkImage _hImage
   , VkFormat _eFormat
+  , uint32_t _uBaseMip  
   , uint32_t _uMipLevels  
+  , uint32_t _uBaseLayer
   , uint32_t _uLayers
   , VkImageAspectFlags _uAspectFlags
   , VkImageLayout _eOldLayout
@@ -1642,20 +1680,36 @@ void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer
   oBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   oBarrier.image = _hImage;
   oBarrier.subresourceRange.aspectMask = _uAspectFlags;
-  oBarrier.subresourceRange.baseMipLevel = 0;
+  oBarrier.subresourceRange.baseMipLevel = _uBaseMip;
   oBarrier.subresourceRange.levelCount = _uMipLevels;
-  oBarrier.subresourceRange.baseArrayLayer = 0;
+  oBarrier.subresourceRange.baseArrayLayer = _uBaseLayer;
   oBarrier.subresourceRange.layerCount = _uLayers;
 
   VkPipelineStageFlags uSrcStage;
   VkPipelineStageFlags uDstStage;
 
-  if (_eOldLayout == VK_IMAGE_LAYOUT_UNDEFINED && _eNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+  /*if (_eOldLayout == VK_IMAGE_LAYOUT_UNDEFINED && _eNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
   {
     oBarrier.srcAccessMask = 0;
     oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
     uSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    uDstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    uDstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     uDstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
   }
   else if (_eOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -1698,32 +1752,94 @@ void PerformTransitionImageLayout(VkCommandBuffer _hCmdBuffer
     uSrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     uDstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
   }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    uDstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    uDstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  }
+  else if (_eOldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && _eNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+  {
+    oBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    oBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    uSrcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    uDstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  }
   else
   {
     THROW_GENERIC_EXCEPTION("[API] Unsupported layout transition")
-  }
+  }*/
+
+  GetLayoutAccessAndStage(_eOldLayout, oBarrier.srcAccessMask, uSrcStage);
+  GetLayoutAccessAndStage(_eNewLayout, oBarrier.dstAccessMask, uDstStage);
 
   vkCmdPipelineBarrier(_hCmdBuffer, uSrcStage, uDstStage, 0, 0, NULL, 0, NULL, 1, &oBarrier);  
 }
 
-void TransitionImageLayout(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+void TransitionTextureImageLayout(VkCommandBuffer _hCmdBuffer
+  , APITexture* _pTexture
+  , uint32_t _uBaseMip
+  , uint32_t _uMipLevels
+  , uint32_t _uBaseLayer
+  , uint32_t _uLayers
+  , VkImageAspectFlags _uAspectFlags
+  , VkImageLayout _eNewLayout
+  , bool _bForce)
 {  
-  PerformTransitionImageLayout(_pWindow->m_pCmdBuffers[_pWindow->m_uCurrFrameIdx], _hImage, _eFormat, _uMipLevels, _uLayers, _uAspectFlags, _eOldLayout, _eNewLayout);
+  // The top mip level + 1
+  uint32_t uEndMipLevel = _uBaseMip + _uMipLevels;
+
+  // Accumulate layers until the layout is different or last layer reached 
+  uint32_t uBaseMip = 0;
+  for (uint32_t i = _uBaseMip; i <= uEndMipLevel; i++)
+  {     
+    // clamp index
+    uint32_t uIdx = i >= uEndMipLevel ? (uEndMipLevel - 1) : i;
+
+    if (_pTexture->m_aCurrLayouts[uBaseMip] != _pTexture->m_aCurrLayouts[uIdx]
+      || i >= uEndMipLevel)
+    {
+      if (_pTexture->m_aCurrLayouts[uBaseMip] != _eNewLayout)
+      {
+        TransitionImageLayout(_hCmdBuffer
+          , _pTexture->m_hImage
+          , _pTexture->m_eFormat          
+          , uBaseMip, (i - uBaseMip)
+          , _uBaseLayer, _uLayers
+          , _uAspectFlags
+          , _pTexture->m_aCurrLayouts[uBaseMip], _eNewLayout);
+
+        for(uint32_t j = uBaseMip; j < i; j++)
+        {
+          _pTexture->m_aCurrLayouts[j] = _eNewLayout; 
+        }
+      }
+      uBaseMip = i;
+    }
+  }
 }
 
-void TransitionImageLayoutOffline(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageAspectFlags _uAspectFlags, VkImageLayout _eOldLayout, VkImageLayout _eNewLayout)
+void SetTextureLayoutAllMipLevels(APITexture* _pTexture, VkImageLayout _eNewLayout)
 {
-  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
-
-  PerformTransitionImageLayout(hCmdBuffer, _hImage, _eFormat, _uMipLevels, _uLayers, _uAspectFlags, _eOldLayout, _eNewLayout);
-
-  EndTempCmdBuffer(_pWindow, hCmdBuffer);
+  for (uint32_t i = 0; i < _pTexture->m_uMipLevels; i++)
+  {
+    _pTexture->m_aCurrLayouts[i] = _eNewLayout;
+  }
 }
 
-void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels, uint32_t _uLayers)
+void GenerateMipmaps(VkCommandBuffer _hCmdBuffer, VkImage _hImage, int32_t _iWidth, int32_t _iHeight, uint32_t _uMipLevels, uint32_t _uLayers)
 {
-  VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
-
   VkImageMemoryBarrier oBarrier{};
   oBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   oBarrier.image = _hImage;
@@ -1745,7 +1861,7 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
     oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-    vkCmdPipelineBarrier(hCmdBuffer,
+    vkCmdPipelineBarrier(_hCmdBuffer,
       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
       0, nullptr,
       0, nullptr,
@@ -1765,7 +1881,7 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
     oBlit.dstSubresource.baseArrayLayer = 0;
     oBlit.dstSubresource.layerCount = _uLayers;
 
-    vkCmdBlitImage(hCmdBuffer,
+    vkCmdBlitImage(_hCmdBuffer,
       _hImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       _hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       1u, &oBlit,
@@ -1776,7 +1892,7 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
     oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
     oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-    vkCmdPipelineBarrier(hCmdBuffer,
+    vkCmdPipelineBarrier(_hCmdBuffer,
       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
       0, nullptr,
       0, nullptr,
@@ -1793,13 +1909,11 @@ void GenerateMipmaps(APIWindow* _pWindow, VkImage _hImage, int32_t _iWidth, int3
   oBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
   oBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-  vkCmdPipelineBarrier(hCmdBuffer,
+  vkCmdPipelineBarrier(_hCmdBuffer,
     VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
     0, nullptr,
     0, nullptr,
     1, &oBarrier);
-
-  EndTempCmdBuffer(_pWindow, hCmdBuffer);
 }
 
 void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t& uDescSetCount_)

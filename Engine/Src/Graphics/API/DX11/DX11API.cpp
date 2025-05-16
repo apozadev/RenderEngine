@@ -530,10 +530,10 @@ namespace api
       DXGI_FORMAT eDXGISrvFormat = GetDXGISrvFormat(_eFormat);
 
       uint32_t uMaxMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_uWidth, _uWidth)))) + 1;
-      _uMipLevels = _uMipLevels == 0u ? uMaxMipLevels : std::min(_uMipLevels, uMaxMipLevels);
+      pTexture->m_uMipLevels = _uMipLevels == 0u ? uMaxMipLevels : std::min(_uMipLevels, uMaxMipLevels);
 
       uint32_t uBindFlags = GetTextureUsage(_uUsage);
-      if (_uMipLevels > 1u)
+      if (pTexture->m_uMipLevels > 1u)
       {
         uBindFlags |= D3D11_BIND_RENDER_TARGET;
       }      
@@ -548,11 +548,11 @@ namespace api
       oTexDesc.SampleDesc.Count = _uMsaaSamples;
       oTexDesc.SampleDesc.Quality = 0;
       oTexDesc.Usage = D3D11_USAGE_DEFAULT;
-      oTexDesc.MipLevels = _uMipLevels;
+      oTexDesc.MipLevels = pTexture->m_uMipLevels;
       oTexDesc.Width = _uWidth;
       oTexDesc.Height = _uHeight;      
 
-      if (_uMipLevels != 1)
+      if (pTexture->m_uMipLevels != 1)
       {
         oTexDesc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
       }
@@ -562,7 +562,7 @@ namespace api
         oTexDesc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
       }
 
-      if (_uMipLevels == 1)
+      if (pTexture->m_uMipLevels == 1)
       {
         if (_bIsCubemap)
         {          
@@ -598,26 +598,26 @@ namespace api
 
       if (_bIsCubemap)
       {
-        oSrvDesc.TextureCube.MipLevels = _uMipLevels;
+        oSrvDesc.TextureCube.MipLevels = pTexture->m_uMipLevels;
         oSrvDesc.TextureCube.MostDetailedMip = 0u;
         oSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
       }
       else
       {                
-        oSrvDesc.Texture2D.MipLevels = _uMipLevels;
+        oSrvDesc.Texture2D.MipLevels = pTexture->m_uMipLevels;
         oSrvDesc.Texture2D.MostDetailedMip = 0u;
         oSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;        
       }
 
       DX11_CHECK(pWindow->m_pDevice->CreateShaderResourceView(pTexture->m_pTexture.Get(), &oSrvDesc, pTexture->m_pSRV.GetAddressOf()));
 
-      if (_ppData != nullptr && _uMipLevels != 1)
+      if (_ppData != nullptr && pTexture->m_uMipLevels != 1)
       {
         if (_bIsCubemap)
         {
           for (int i = 0; i < 6; i++)
           {
-            UINT uSubResource = D3D11CalcSubresource(0, i, _uMipLevels);
+            UINT uSubResource = D3D11CalcSubresource(0, i, pTexture->m_uMipLevels);
             pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), uSubResource, nullptr, _ppData[i], uMemPitch, 0u);
           }
         }
@@ -647,6 +647,11 @@ namespace api
       pWindow->m_pDevice->CreateSamplerState(&oSamplerDesc, pTexture->m_pSampler.GetAddressOf());
 
       return pTexture;
+    }
+
+    void GenerateMipMaps(APITexture* _pTexture)
+    {
+      s_oGlobalData.m_pUsingWindow->m_pContext->GenerateMips(_pTexture->m_pSRV.Get());
     }
 
     void BindAPITexture(APITexture* _pTexture)

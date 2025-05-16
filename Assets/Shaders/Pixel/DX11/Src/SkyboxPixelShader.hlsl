@@ -12,6 +12,8 @@
 
 #define sampleTex(tex, uv) tex.Sample(tex##_Sampler, uv)
 
+#define sampleTexLevel(tex, uv, level) tex.SampleLevel(tex##_Sampler, uv, level)
+
 #define Texture(name, set, bind) Texture2D name : register(t##bind);
 
 #define CubeTexture(name, setIdx, bindIdx) TextureCube name : register(t##bind);
@@ -19,6 +21,10 @@
 #define CBuffer(name, bind) cbuffer name : register(b##bind)
 
 #define atan  atan2
+
+#define _PI  3.1416f
+#define _2PI 6.2832f
+#define _PI2 1.5708f
 
 struct PSin
 {
@@ -152,7 +158,7 @@ float ShadowFactor(vec4 vLightViewProjPos, uint idx)
 
   float fBias = 0.00002f;
 
-  float fShadow = step(fMapDepth /*+ fBias*/, vProjCoords.z);
+  float fShadow = step(fMapDepth + fBias, vProjCoords.z);
   fShadow = 1 - max(0, min(1, fShadow));
 
   return fShadow;
@@ -238,7 +244,7 @@ struct PBRinput
 // Normal distribution function (Cook-Torrance)
 float _D(PBRinput _input)
 {
-  /*float _PI = 3.14159;
+  /*
 
   float alpha2 = _input.roughness * _input.roughness * _input.roughness * _input.roughness;
   float NdotH = max(dot(_input.normal.xyz, _input.halfVector.xyz), 0);
@@ -258,9 +264,7 @@ float _D(PBRinput _input)
 
 // Blinn-Phong
 float _DBlinn(PBRinput _input)
-{
-  float _PI = 3.14159;
-
+{  
   float fAlphaSqr = _input.roughness * _input.roughness * _input.roughness * _input.roughness;
   float fDenom = _PI * fAlphaSqr;
   float fPower = (2.0 / fAlphaSqr) - 2.0;
@@ -300,9 +304,7 @@ vec3 _FRoughness(PBRinput _input)
 
 // PBR lighting
 vec3 PBR(PBRinput _input)
-{
-  
-  float _PI = 3.14159;
+{    
 
   // Lambert diffuse
   vec3 fd = _input.albedo.xyz / _PI;
@@ -344,7 +346,7 @@ vec3 PBRSpecularIBL(PBRinput _input)
 
 PIXEL_MAIN_BEGIN
 
-outColor = sampleTex(Skybox, inWorldPos);  
+outColor = sampleTexLevel(Skybox, inWorldPos, 0);  
 
 PIXEL_MAIN_END 
 

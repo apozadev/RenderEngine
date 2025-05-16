@@ -196,9 +196,18 @@ namespace vk
   {
     uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
 
+    VkCommandBuffer hCmdBuffer = _pWindow->m_pCmdBuffers[uFrameIdx];
+
     // Depth buffer
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    TransitionImageLayout(hCmdBuffer
+      , _pWindow->m_hDepthImage
+      , VK_FORMAT_D32_SFLOAT
+      , 0u, 1u
+      , 0u, 1u
+      , VK_IMAGE_ASPECT_DEPTH_BIT
+      , VK_IMAGE_LAYOUT_UNDEFINED
+      , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkImageSubresourceRange oRange = {};
     oRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -208,15 +217,29 @@ namespace vk
     oRange.layerCount = 1;
     
     VkClearDepthStencilValue oDepthClearColor = { 1.f, 0.f };
-    vkCmdClearDepthStencilImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hDepthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oDepthClearColor, 1u, &oRange);    
+    vkCmdClearDepthStencilImage(hCmdBuffer, _pWindow->m_hDepthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oDepthClearColor, 1u, &oRange);
 
-    TransitionImageLayout(_pWindow, _pWindow->m_hDepthImage, VK_FORMAT_D32_SFLOAT, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    TransitionImageLayout(hCmdBuffer
+      , _pWindow->m_hDepthImage
+      , VK_FORMAT_D32_SFLOAT
+      , 0u, 1u
+      , 0u, 1u
+      , VK_IMAGE_ASPECT_DEPTH_BIT
+      , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+      , VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
     // Color buffer
 
     if (_pWindow->m_hColorImage != VK_NULL_HANDLE)
     {
-      TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      TransitionImageLayout(hCmdBuffer
+        , _pWindow->m_hColorImage
+        , _pWindow->m_eSwapchainFormat
+        , 0u, 1u
+        , 0u, 1u
+        , VK_IMAGE_ASPECT_COLOR_BIT
+        , VK_IMAGE_LAYOUT_UNDEFINED
+        , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
       oRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
       oRange.baseMipLevel = 0;
@@ -225,14 +248,28 @@ namespace vk
       oRange.layerCount = 1;
 
       VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-      vkCmdClearColorImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_hColorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+      vkCmdClearColorImage(hCmdBuffer, _pWindow->m_hColorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
 
-      TransitionImageLayout(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+      TransitionImageLayout(hCmdBuffer
+        , _pWindow->m_hColorImage
+        , _pWindow->m_eSwapchainFormat
+        , 0u, 1u
+        , 0u, 1u
+        , VK_IMAGE_ASPECT_COLOR_BIT
+        , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+        , VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     }
     else
     {
-      TransitionImageLayout(_pWindow, _pWindow->m_pSwapchainImages[uFrameIdx], _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
+      TransitionImageLayout(hCmdBuffer
+        , _pWindow->m_pSwapchainImages[uFrameIdx]
+        , _pWindow->m_eSwapchainFormat
+        , 0u, 1u
+        , 0u, 1u
+        , VK_IMAGE_ASPECT_COLOR_BIT
+        , VK_IMAGE_LAYOUT_UNDEFINED
+        , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+       
       oRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
       oRange.baseMipLevel = 0;
       oRange.levelCount = VK_REMAINING_MIP_LEVELS;
@@ -240,9 +277,16 @@ namespace vk
       oRange.layerCount = 1;
 
       VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-      vkCmdClearColorImage(_pWindow->m_pCmdBuffers[uFrameIdx], _pWindow->m_pSwapchainImages[uFrameIdx], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
+      vkCmdClearColorImage(hCmdBuffer, _pWindow->m_pSwapchainImages[uFrameIdx], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &oClearColor, 1u, &oRange);
 
-      TransitionImageLayout(_pWindow, _pWindow->m_pSwapchainImages[uFrameIdx], _pWindow->m_eSwapchainFormat, VK_REMAINING_MIP_LEVELS, 1u, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+      TransitionImageLayout(hCmdBuffer
+        , _pWindow->m_pSwapchainImages[uFrameIdx]
+        , _pWindow->m_eSwapchainFormat
+        , 0u, 1u
+        , 0u, 1u
+        , VK_IMAGE_ASPECT_COLOR_BIT
+        , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+        , VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     }
   }
 
@@ -378,51 +422,53 @@ namespace vk
   {
     APIMesh* pMesh = s_oMeshPool.PullElement();
 
-    pMesh->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;    
+    pMesh->m_pOwnerWindow = s_oGlobalData.m_pUsingWindow;
+
+    VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(s_oGlobalData.m_pUsingWindow);
+
+    VkBuffer hVertexStagingBuffer;
+    VkDeviceMemory hVertexStagingBufferMemory;
+    VkBuffer hIndexStagingBuffer;
+    VkDeviceMemory hIndexStagingBufferMemory;
 
     // Create vertex buffer
-    {
-      VkBuffer hStagingBuffer;
-      VkDeviceMemory hStagingBufferMemory;
-
+    {      
       VkMemoryPropertyFlags uProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
       VkBufferUsageFlags uUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-      CreateBuffer(pMesh->m_pOwnerWindow, _uVertexDataSize, uUsage, uProperties, hStagingBuffer, hStagingBufferMemory);
-      SetBufferData(pMesh->m_pOwnerWindow, _pVertexData, _uVertexDataSize, hStagingBufferMemory);
+      CreateBuffer(pMesh->m_pOwnerWindow, _uVertexDataSize, uUsage, uProperties, hVertexStagingBuffer, hVertexStagingBufferMemory);
+      SetBufferData(pMesh->m_pOwnerWindow, _pVertexData, _uVertexDataSize, hVertexStagingBufferMemory);
 
       uProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
       uUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
       CreateBuffer(pMesh->m_pOwnerWindow, _uVertexDataSize, uUsage, uProperties, pMesh->m_hVertexBuffer, pMesh->m_hVertexBufferMemory);
 
-      CopyBuffer(pMesh->m_pOwnerWindow, hStagingBuffer, pMesh->m_hVertexBuffer, _uVertexDataSize);
-
-      vkDestroyBuffer(pMesh->m_pOwnerWindow->m_hDevice, hStagingBuffer, NULL);
-      vkFreeMemory(pMesh->m_pOwnerWindow->m_hDevice, hStagingBufferMemory, NULL);
+      CopyBuffer(hCmdBuffer, hVertexStagingBuffer, pMesh->m_hVertexBuffer, _uVertexDataSize);      
     }
 
     // Create index buffer
     {
-      VkBuffer hStagingBuffer;
-      VkDeviceMemory hStagingBufferMemory;
-
       VkMemoryPropertyFlags uProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
       VkBufferUsageFlags uUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-      CreateBuffer(pMesh->m_pOwnerWindow, _uIndexDataSize, uUsage, uProperties, hStagingBuffer, hStagingBufferMemory);
-      SetBufferData(pMesh->m_pOwnerWindow, _pIndexData, _uIndexDataSize, hStagingBufferMemory);
+      CreateBuffer(pMesh->m_pOwnerWindow, _uIndexDataSize, uUsage, uProperties, hIndexStagingBuffer, hIndexStagingBufferMemory);
+      SetBufferData(pMesh->m_pOwnerWindow, _pIndexData, _uIndexDataSize, hIndexStagingBufferMemory);
 
       uProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
       uUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 
       CreateBuffer(pMesh->m_pOwnerWindow, _uIndexDataSize, uUsage, uProperties, pMesh->m_hIndexBuffer, pMesh->m_hIndexBufferMemory);
 
-      CopyBuffer(pMesh->m_pOwnerWindow, hStagingBuffer, pMesh->m_hIndexBuffer, _uIndexDataSize);
-
-      vkDestroyBuffer(pMesh->m_pOwnerWindow->m_hDevice, hStagingBuffer, NULL);
-      vkFreeMemory(pMesh->m_pOwnerWindow->m_hDevice, hStagingBufferMemory, NULL);
+      CopyBuffer(hCmdBuffer, hIndexStagingBuffer, pMesh->m_hIndexBuffer, _uIndexDataSize);      
     }
+
+    EndTempCmdBuffer(s_oGlobalData.m_pUsingWindow, hCmdBuffer);
+
+    vkDestroyBuffer(pMesh->m_pOwnerWindow->m_hDevice, hVertexStagingBuffer, NULL);
+    vkFreeMemory(pMesh->m_pOwnerWindow->m_hDevice, hVertexStagingBufferMemory, NULL);
+    vkDestroyBuffer(pMesh->m_pOwnerWindow->m_hDevice, hIndexStagingBuffer, NULL);
+    vkFreeMemory(pMesh->m_pOwnerWindow->m_hDevice, hIndexStagingBufferMemory, NULL);
 
     return pMesh;
   }
@@ -521,7 +567,7 @@ namespace vk
 
     APIWindow* pWindow = pTexture->m_pOwnerWindow;
 
-    VkBuffer hStagingBuffer;
+    VkBuffer hStagingBuffer = VK_NULL_HANDLE;
     VkDeviceMemory hStagingBufferMemory;       
 
     size_t uSize = _uWidth * _uHeight * GetImageFormatSize(_eFormat);
@@ -537,6 +583,11 @@ namespace vk
     _uMipLevels = _uMipLevels == 0u? uMaxMipLevels : std::min(_uMipLevels, uMaxMipLevels);
 
     uint32_t uLayers = _bIsCubemap ? 6u : 1u;
+
+    pTexture->m_uMipLevels = _uMipLevels;
+    pTexture->m_uLayers = uLayers;
+    pTexture->m_uWidth = _uWidth;
+    pTexture->m_uHeight = _uHeight;
 
     if (_ppData != nullptr)
     {
@@ -601,39 +652,41 @@ namespace vk
       uAspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
+    VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(pWindow);
+
     if (_ppData != nullptr)
     {
-      TransitionImageLayoutOffline(pWindow
+      TransitionImageLayout(hCmdBuffer
         , pTexture->m_hImage
         , pTexture->m_eFormat
-        , _uMipLevels
-        , uLayers
+        , 0u, _uMipLevels
+        , 0u, uLayers
         , uAspectFlags
         , VK_IMAGE_LAYOUT_UNDEFINED
         , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-      CopyBufferToImage(pWindow, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight, uLayers);
+      CopyBufferToImage(hCmdBuffer, hStagingBuffer, pTexture->m_hImage, _uWidth, _uHeight, uLayers);
 
 
       // When we generate mipmaps, we also do the transition layout
       if (_uMipLevels > 1u)
       {
-        GenerateMipmaps(pWindow, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels, uLayers);
+        GenerateMipmaps(hCmdBuffer, pTexture->m_hImage, _uWidth, _uHeight, _uMipLevels, uLayers);
       }
       // If no mipmaps, perform layout transition
       else
       {
-        TransitionImageLayoutOffline(pWindow
+        TransitionImageLayout(hCmdBuffer
           , pTexture->m_hImage
           , pTexture->m_eFormat
-          , _uMipLevels          
-          , uLayers
+          , 0u, _uMipLevels
+          , 0u, uLayers
           , uAspectFlags
           , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
           , VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
       }
 
-      DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
+      SetTextureLayoutAllMipLevels(pTexture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
     else
     {
@@ -642,14 +695,23 @@ namespace vk
         ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-      TransitionImageLayoutOffline(pWindow
+      TransitionImageLayout(hCmdBuffer
         , pTexture->m_hImage
         , pTexture->m_eFormat
-        , _uMipLevels
-        , uLayers
+        , 0u, _uMipLevels
+        , 0u, uLayers
         , uAspectFlags
         , VK_IMAGE_LAYOUT_UNDEFINED
         , eFinalLayout);
+      
+      SetTextureLayoutAllMipLevels(pTexture, eFinalLayout);
+    }
+
+    EndTempCmdBuffer(pWindow, hCmdBuffer);
+
+    if (hStagingBuffer != VK_NULL_HANDLE)
+    {
+      DestroyBuffer(pWindow, hStagingBuffer, hStagingBufferMemory);
     }
 
     CreateImageView(pWindow
@@ -664,18 +726,40 @@ namespace vk
     if ((_uUsage & TextureUsage::SHADER_RESOURCE) != 0u)
     {
       CreateTextureSampler(pWindow, pTexture, _uMipLevels, _rSamplerConfig);
-    }
-
-    pTexture->m_uMipLevels = _uMipLevels;
-
-    pTexture->m_uLayers = uLayers;
+    }      
 
     return pTexture;
   }
 
-  void BindAPITexture(APITexture* /*_pTexture*/)
+  void GenerateMipMaps(APITexture* _pTexture)
   {
-    
+    if (_pTexture->m_uMipLevels > 1u)
+    {      
+      APIWindow* pWindow = _pTexture->m_pOwnerWindow;      
+      VkCommandBuffer hCmdBuffer = pWindow->m_pCmdBuffers[pWindow->m_uCurrFrameIdx];
+
+      TransitionTextureImageLayout(hCmdBuffer
+        , _pTexture
+        , 0u, _pTexture->m_uMipLevels
+        , 0u, _pTexture->m_uLayers
+        , VK_IMAGE_ASPECT_COLOR_BIT
+        , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+      GenerateMipmaps(hCmdBuffer, _pTexture->m_hImage, _pTexture->m_uWidth, _pTexture->m_uHeight, _pTexture->m_uMipLevels, _pTexture->m_uLayers);
+      
+      SetTextureLayoutAllMipLevels(_pTexture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    }
+  }
+
+  void BindAPITexture(APITexture* _pTexture)
+  {    
+    TransitionTextureImageLayout(
+      s_oGlobalData.m_pUsingWindow->m_pCmdBuffers[s_oGlobalData.m_pUsingWindow->m_uCurrFrameIdx]
+      , _pTexture
+      , 0u, _pTexture->m_uMipLevels
+      , 0u, _pTexture->m_uLayers
+      , VK_IMAGE_ASPECT_COLOR_BIT
+      , VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
   }
 
   void UnbindAPITexture(APITexture* /*_pTexture*/)
@@ -704,13 +788,13 @@ namespace vk
       break;
     }
 
-    TransitionImageLayout(pWindow, 
-      _pTexture->m_hImage, 
-      _pTexture->m_eFormat, 
-      VK_REMAINING_MIP_LEVELS, 
-      1u, 
+    VkCommandBuffer hCmdBuffer = pWindow->m_pCmdBuffers[uFrameIdx];
+
+    TransitionTextureImageLayout(hCmdBuffer,
+      _pTexture,
+      0u, _pTexture->m_uMipLevels, 
+      0u, 1u, 
       uAspectFlags, 
-      VK_IMAGE_LAYOUT_UNDEFINED, 
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkImageSubresourceRange oRange = {};
@@ -733,7 +817,7 @@ namespace vk
     else
     {
       VkClearColorValue oClearColor = { 0.0f, 0.0f, 0.0f, 1.0f }; 
-      vkCmdClearColorImage(pWindow->m_pCmdBuffers[uFrameIdx], 
+      vkCmdClearColorImage(hCmdBuffer, 
         _pTexture->m_hImage, 
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
         &oClearColor, 
@@ -745,14 +829,12 @@ namespace vk
       ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL 
       : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    TransitionImageLayout(pWindow,
-      _pTexture->m_hImage, 
-      _pTexture->m_eFormat, 
-      VK_REMAINING_MIP_LEVELS,
-      1u,
+    TransitionTextureImageLayout(hCmdBuffer,
+      _pTexture,
+      0u, _pTexture->m_uMipLevels,
+      0u, 1u,
       uAspectFlags,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      eFinalLayout);
+      eFinalLayout);    
   }
 
   void DestroyAPITexture(APITexture* _pTexture)
@@ -874,7 +956,25 @@ namespace vk
 
     const uint32_t uFrameIdx = pWindow->m_uCurrFrameIdx;
 
-    vkCmdEndRenderPass(pWindow->m_pCmdBuffers[uFrameIdx]);
+    vkCmdEndRenderPass(pWindow->m_pCmdBuffers[uFrameIdx]);    
+
+    for (uint32_t i = 0u; i < 4u; i++)
+    {
+      if (_pRenderTarget->m_aColorTextures[i] != nullptr)
+      {
+        _pRenderTarget->m_aColorTextures[i]->m_aCurrLayouts[0] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      }
+
+      if (_pRenderTarget->m_aResolveTextures[i] != nullptr)
+      {
+        _pRenderTarget->m_aResolveTextures[i]->m_aCurrLayouts[0] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      }
+    }
+
+    if (_pRenderTarget->m_pDepthTexture != nullptr)
+    {      
+      _pRenderTarget->m_pDepthTexture->m_aCurrLayouts[0] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
 
     s_oGlobalData.m_pBoundRenderTarget = nullptr;
   }
@@ -1679,7 +1779,7 @@ namespace vk
     oSubmitInfo.pWaitDstStageMask = aWaitStages;
     oSubmitInfo.commandBufferCount = 1u;
     oSubmitInfo.pCommandBuffers = &_pWindow->m_pCmdBuffers[uFrameIdx];
-    oSubmitInfo.signalSemaphoreCount = 1u;
+    oSubmitInfo.signalSemaphoreCount = s_oGlobalData.m_bRenderBegan ? 1 : 0;
     oSubmitInfo.pSignalSemaphores = aSignalSemaphores;
 
     VK_CHECK(vkQueueSubmit(_pWindow->m_hRenderQueue, 1, &oSubmitInfo, _pWindow->m_pInFlightFences[uFrameIdx]))   

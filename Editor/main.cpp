@@ -29,7 +29,7 @@
 #include <string>
 
 // TODO:
-// Cube RenderTarget (dx11)
+// layout transition on Generate Mipmaps. Desde SHADER_READ para mip 0. Desde COLOR_ATTCHMENT para el resto.
 // [API] Struct de contexto en lugar de usingX
 
 void PostUpdateCallback(float _fDt)

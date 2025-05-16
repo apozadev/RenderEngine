@@ -23,7 +23,7 @@ struct APITexture
 	DXGI_FORMAT m_eFormat;
 	int m_iWidth, m_iHeight;
 	unsigned int m_uLayers;
-
+	unsigned int m_uMipLevels;
 };
 
 }
