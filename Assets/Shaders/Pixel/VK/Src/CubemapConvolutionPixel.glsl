@@ -315,7 +315,7 @@ vec3 up = vec3(0.0, 1.0, 0.0);
 vec3 right = normalize(cross(up, normal));
 up = normalize(cross(normal, right));
 
-vec3 irradiance;
+vec3 irradiance = vec3(0,0,0);
 float weightSum = 0;
 
 for (float phi = 0.f; phi < _2PI; phi += angleDelta)

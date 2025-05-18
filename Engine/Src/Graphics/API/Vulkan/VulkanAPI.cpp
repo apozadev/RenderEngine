@@ -1665,7 +1665,7 @@ namespace vk
 
   // Drawing
 
-  void WaitForNextImage(APIWindow* _pWindow)
+  void WaitForLastImage(APIWindow* _pWindow)
   {
     VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, _pWindow->m_uSwapchainImageCount, _pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
     s_oGlobalData.m_bRenderBegan = false;

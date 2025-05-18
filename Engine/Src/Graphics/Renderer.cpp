@@ -182,10 +182,16 @@ void Renderer::InitializePostWindow()
 
   m_pEnvMapSpec->GetColorTextures()[0]->GenerateMipMaps();
 
+  Engine::GetInstance()->GetWindow()->EndDraw();
+
   // Perform convolution on specular envMap to generate diffuse envmap
 
   oCamera.SetSkybox(m_pEnvMapSpec->GetColorTextures()[0].get());
   oCamera.PreRenderSetup();
+
+  Engine::GetInstance()->GetWindow()->WaitForLastImage();
+
+  Engine::GetInstance()->GetWindow()->BeginDrawOffline();
 
   oConvolutionStep.Execute(&oCamera, &Transform::GetIdentity());
 

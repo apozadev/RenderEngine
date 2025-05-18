@@ -20,7 +20,7 @@ public:
 
   uint8_t GetId() const;
 
-  void WaitForNextImage();
+  void WaitForLastImage();
 
   int BeginDraw();
   void BeginDrawOffline();

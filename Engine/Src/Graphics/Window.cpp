@@ -44,9 +44,9 @@ uint8_t Window::GetId() const
   return m_uId;
 }
 
-void Window::WaitForNextImage()
+void Window::WaitForLastImage()
 {
-  api::WaitForNextImage(m_pAPIWindow);
+  api::WaitForLastImage(m_pAPIWindow);
 }
 
 int Window::BeginDraw() 

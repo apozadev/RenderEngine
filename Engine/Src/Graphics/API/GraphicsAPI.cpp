@@ -349,9 +349,9 @@ namespace api
 
   // Drawing
 
-  void WaitForNextImage(APIWindow* _pWindow)
+  void WaitForLastImage(APIWindow* _pWindow)
   {
-    API::WaitForNextImage(_pWindow);
+    API::WaitForLastImage(_pWindow);
   }
 
   int BeginDraw(APIWindow* _pWindow)

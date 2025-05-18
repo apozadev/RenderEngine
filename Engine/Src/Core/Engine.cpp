@@ -63,7 +63,7 @@ int Engine::Run()
 
       if (!m_sScheduledSceneFilename.empty())
       {
-        m_pWindow->WaitForNextImage();
+        m_pWindow->WaitForLastImage();
         m_lstScenes.clear();        
         MaterialLibrary::GetInstance()->Clear();
         LoadScene(m_sScheduledSceneFilename.c_str(), *CreateScene());

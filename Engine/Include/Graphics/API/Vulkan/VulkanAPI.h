@@ -175,7 +175,7 @@ namespace vk
 
 	// Drawing
 
-	void WaitForNextImage(APIWindow* _pWindow);
+	void WaitForLastImage(APIWindow* _pWindow);
 
 	int BeginDraw(APIWindow* _pWindow);
 

@@ -138,7 +138,7 @@ namespace api
 
   // Drawing
 
-  void WaitForNextImage(APIWindow* _pWindow);
+  void WaitForLastImage(APIWindow* _pWindow);
   int BeginDraw(APIWindow* _pWindow);
   void BeginDrawOffline(APIWindow* _pWindow);
   void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, const void* _pConstantData, uint32_t _uConstantSize);
