@@ -30,18 +30,7 @@ namespace dx11
 
   struct DX11Data
   {
-
-    APIWindow* m_pUsingWindow = nullptr;
-
-    APIRenderTarget* m_pUsingRenderTarget = nullptr;
-
-    APIRenderState* m_pUsingRenderState = nullptr;
-
     RenderTargetBuilder m_oRenderTargetBuilder;
-
-    APIRenderTarget* m_pBoundRenderTarget = nullptr;
-
-    bool m_bIsDefaultRenderTargetBound = false;
 
     uint32_t m_uMaxMsaaSamples = 1u;
 

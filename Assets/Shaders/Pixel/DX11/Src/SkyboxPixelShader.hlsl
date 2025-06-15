@@ -346,7 +346,7 @@ vec3 PBRSpecularIBL(PBRinput _input)
 
 PIXEL_MAIN_BEGIN
 
-outColor = sampleTexLevel(Skybox, inWorldPos, 0);  
+outColor = sampleTex(Skybox, inWorldPos);  
 
 PIXEL_MAIN_END 
 

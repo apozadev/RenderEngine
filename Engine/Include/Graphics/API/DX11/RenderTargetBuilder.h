@@ -24,7 +24,7 @@ namespace api
 
       void AddResolveColorTexture(APITexture* _pTexture){ m_lstColorResolveTextures.push_back(_pTexture); }           
 
-      void Build(APIRenderTarget* pRenderTarget_);
+      void Build(const APIWindow* pWindow);
 
       void Clear();
 
@@ -39,11 +39,13 @@ namespace api
 
       bool m_bIsCubemap = false;
 
+      APIRenderTarget* m_pRenderTarget = nullptr;
+
     private:
 
       std::vector<APITexture*> m_lstColorTextures;
       std::vector<APITexture*> m_lstColorResolveTextures;
-      APITexture* m_pDepthStencilTexture = nullptr;
+      APITexture* m_pDepthStencilTexture = nullptr;      
     };
 
   }

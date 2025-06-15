@@ -217,17 +217,7 @@ namespace api
       ImGui::GetIO().DisplaySize.x = static_cast<float>(pWindow->m_uWidth);
       ImGui::GetIO().DisplaySize.y = static_cast<float>(pWindow->m_uHeight);
 
-      HookGLFWWndProc(_pGlfwWindow);    
-
-      D3D11_VIEWPORT oViewport;
-      oViewport.Width = static_cast<FLOAT>(pWindow->m_uWidth);
-      oViewport.Height = static_cast<FLOAT>(pWindow->m_uHeight);
-      oViewport.MinDepth = 0.0f;
-      oViewport.MaxDepth = 1.0f;
-      oViewport.TopLeftX = 0.0f;
-      oViewport.TopLeftY = 0.0f;
-
-      pWindow->m_pContext->RSSetViewports(1, &oViewport);
+      HookGLFWWndProc(_pGlfwWindow);          
 
       SamplerConfig oSamplerCfg = {};
       oSamplerCfg.m_eAddressMode = TextureAddressMode::CLAMP;
@@ -235,11 +225,9 @@ namespace api
       oSamplerCfg.m_eMinFilterMode = TextureFilterMode::POINT;
       oSamplerCfg.m_eMipmapFilterMode = TextureFilterMode::POINT;
 
-      SetUsingAPIWindow(pWindow);
-
       uint8_t aDummyBuffer[4] = { 255u, 20u, 0u, 255u };
       void* pDummyBuffer = &(aDummyBuffer[0]);
-      pWindow->m_pDummyTexture = CreateAPITexture(&pDummyBuffer, 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE, oSamplerCfg, false);
+      pWindow->m_pDummyTexture = CreateAPITexture(pWindow, &pDummyBuffer, 1u, 1u, ImageFormat::R8G8B8A8, 1u, 1u, TextureUsage::SHADER_RESOURCE, oSamplerCfg, false);
 
 #ifndef NDEBUG
       Microsoft::WRL::ComPtr<ID3D11Debug> d3dDebug;
@@ -259,11 +247,6 @@ namespace api
 #endif
 
       return pWindow;
-    }
-
-    void SetUsingAPIWindow(APIWindow* _pWindow)
-    {
-      s_oGlobalData.m_pUsingWindow = _pWindow;
     }
 
     void OnWindowResize(APIWindow* _pWindow)
@@ -310,9 +293,7 @@ namespace api
       oViewport.TopLeftX = 0.0f;
       oViewport.TopLeftY = 0.0f;
 
-      s_oGlobalData.m_pUsingWindow->m_pContext->RSSetViewports(1, &oViewport);
-
-      s_oGlobalData.m_bIsDefaultRenderTargetBound = true;
+      _pWindow->m_pContext->RSSetViewports(1, &oViewport);
     }
 
     void UnbindDefaultRenderTarget(APIWindow* _pWindow)
@@ -323,12 +304,6 @@ namespace api
 
       ID3D11RenderTargetView* pNullView =  nullptr;      
       _pWindow->m_pContext->OMSetRenderTargets(1, &pNullView, nullptr);
-      s_oGlobalData.m_bIsDefaultRenderTargetBound = false;      
-    }
-
-    bool IsDefaultRenderTargetBound(APIWindow* _pWindow)
-    {
-      return s_oGlobalData.m_bIsDefaultRenderTargetBound;
     }
 
     void DestroyAPIWindow(APIWindow* _pAPIWindow)
@@ -339,7 +314,7 @@ namespace api
       ImGui_ImplDX11_Shutdown();
       ImGui_ImplWin32_Shutdown();       
 
-      DestroyAPITexture(_pAPIWindow->m_pDummyTexture);
+      DestroyAPITexture(_pAPIWindow, _pAPIWindow->m_pDummyTexture);
 
       _pAPIWindow->m_pRtv = nullptr;
       _pAPIWindow->m_pDsv = nullptr;
@@ -357,50 +332,10 @@ namespace api
       delete _pAPIWindow;
     }
 
-    // Camera
-
-    APICamera* CreateAPICamera()
-    {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-      APICamera* pCamera = new APICamera();
-
-      pCamera->m_oViewport = {};
-      pCamera->m_oViewport.TopLeftX = 0.f;
-      pCamera->m_oViewport.TopLeftY = 0.f;
-      pCamera->m_oViewport.Width = static_cast<float>(pWindow->m_uWidth);
-      pCamera->m_oViewport.Height = static_cast<float>(pWindow->m_uHeight);
-      pCamera->m_oViewport.MaxDepth = 1;
-      pCamera->m_oViewport.MinDepth = 0;
-
-      return pCamera;
-    }
-
-    void BeginCameraSubStateSetup(APICamera* _pCamera)
-    {      
-    }
-
-    void EndCameraSubstateSetup(APICamera* _pCamera)
-    {
-    }
-
-    void BindAPICamera(APICamera* _pCamera)
-    {
-      //APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-
-      //pWindow->m_pContext->RSSetViewports(1u, &_pCamera->m_oViewport);
-    }
-
-    void DestroyAPICamera(APICamera* _pCamera)
-    {
-      delete _pCamera;
-    }
-
     // Mesh
 
-    APIMesh* CreateAPIMesh(const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize)
+    APIMesh* CreateAPIMesh(const APIWindow* _pWindow, const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize)
     {
-
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
       APIMesh* pMesh = s_oMeshPool.PullElement();
 
@@ -417,7 +352,7 @@ namespace api
       D3D11_SUBRESOURCE_DATA oVBData = {};
       oVBData.pSysMem = _pVertexData;
 
-      DX11_CHECK(pWindow->m_pDevice->CreateBuffer(&oVBDesc, &oVBData, pMesh->m_pVertexBuffer.GetAddressOf()))
+      DX11_CHECK(_pWindow->m_pDevice->CreateBuffer(&oVBDesc, &oVBData, pMesh->m_pVertexBuffer.GetAddressOf()))
 
       // Index buffer
 
@@ -434,32 +369,32 @@ namespace api
       oIBData.SysMemPitch = 0;
       oIBData.SysMemSlicePitch = 0;
 
-      DX11_CHECK(pWindow->m_pDevice->CreateBuffer(&oIBDesc, &oIBData, pMesh->m_pIndexBuffer.GetAddressOf()))
+      DX11_CHECK(_pWindow->m_pDevice->CreateBuffer(&oIBDesc, &oIBData, pMesh->m_pIndexBuffer.GetAddressOf()))
 
       pMesh->m_uIndexCount = _uIndexDataSize / sizeof(uint16_t);
 
       // Model CBuffer
-      pMesh->m_pModelCBuffer = CreateAPIConstantBuffer(sizeof(MeshConstant));
+      pMesh->m_pModelCBuffer = CreateAPIConstantBuffer(_pWindow, sizeof(MeshConstant));
 
       ResourceBindInfo oBindInfo = {};
       oBindInfo.m_eLevel = ResourceFrequency::MATERIAL_INSTANCE;
       oBindInfo.m_uStageFlags = STAGE_VERTEX;
       oBindInfo.m_sName = "ModelBuffer";
 
-      SubStateSetupConstantBuffer(pMesh->m_pModelCBuffer, sizeof(MeshConstant), oBindInfo);
+      SubStateSetupConstantBuffer(_pWindow, pMesh->m_pModelCBuffer, sizeof(MeshConstant), oBindInfo);
 
       return pMesh;
     }
 
-    void DestroyAPIMesh(APIMesh* _pMesh)
+    void DestroyAPIMesh(const APIWindow* _pWindow, APIMesh* _pMesh)
     {
-      DestroyAPIConstanBuffer(_pMesh->m_pModelCBuffer);
+      DestroyAPIConstantBuffer(_pWindow, _pMesh->m_pModelCBuffer);
       s_oMeshPool.ReturnElement(_pMesh);
     }
 
     // Constant buffer
 
-    APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
+    APIConstantBuffer* CreateAPIConstantBuffer(const APIWindow* _pWindow, size_t _uSize)
     {
       APIConstantBuffer* pCBuffer = s_oConstantBufferPool.PullElement();
 
@@ -471,12 +406,12 @@ namespace api
       oDesc.ByteWidth = _uSize;
       oDesc.StructureByteStride = 0;
 
-      DX11_CHECK(s_oGlobalData.m_pUsingWindow->m_pDevice->CreateBuffer(&oDesc, NULL, pCBuffer->m_pCBuffer.GetAddressOf()));
+      DX11_CHECK(_pWindow->m_pDevice->CreateBuffer(&oDesc, NULL, pCBuffer->m_pCBuffer.GetAddressOf()));
       
       return pCBuffer;
     }
 
-    void UpdateAPIConstantBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize)
+    void UpdateAPIConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCbuffer, const void* _pData, size_t _uSize)
     {            
       /*D3D11_MAPPED_SUBRESOURCE oMsr;
       DX11_CHECK(pWindow->m_pContext->Map(_pCBuffer->m_pCBuffer.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &oMsr));
@@ -485,42 +420,37 @@ namespace api
 
       pWindow->m_pContext->Unmap(_pCBuffer->m_pCBuffer.Get(), 0u);*/
 
-      s_oGlobalData.m_pUsingWindow->m_pContext->UpdateSubresource(_pCBuffer->m_pCBuffer.Get(), 0u, nullptr, _pData, 0u, 0u);
+      _pWindow->m_pContext->UpdateSubresource(_pCbuffer->m_pCBuffer.Get(), 0u, nullptr, _pData, 0u, 0u);
 
     }
 
-    void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
+    void BindAPIConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCbuffer)
     {
-
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-
       if ((_pCbuffer->m_uStageFlags & STAGE_VERTEX) != 0u)
       {
-        pWindow->m_pContext->VSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
+        _pWindow->m_pContext->VSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
       if ((_pCbuffer->m_uStageFlags & STAGE_GEOM) != 0u)
       {
-        pWindow->m_pContext->GSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
+        _pWindow->m_pContext->GSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
       if ((_pCbuffer->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
-        pWindow->m_pContext->PSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
+        _pWindow->m_pContext->PSSetConstantBuffers(_pCbuffer->m_slot, 1u, _pCbuffer->m_pCBuffer.GetAddressOf());
       }
 
     }
 
-    void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer)
+    void DestroyAPIConstantBuffer(const APIWindow* /*_pWindow*/, APIConstantBuffer* _pCBuffer)
     {
       s_oConstantBufferPool.ReturnElement(_pCBuffer);
     }
 
     // Texture
 
-    APITexture* CreateAPITexture(const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap)
+    APITexture* CreateAPITexture(const APIWindow* _pWindow, const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap)
     {
-      APITexture* pTexture = s_oTexturePool.PullElement();
-
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
+      APITexture* pTexture = s_oTexturePool.PullElement();      
 
       uint32_t uPixelSize = GetImageFormatSize(_eFormat);
 
@@ -576,7 +506,7 @@ namespace api
             }
           }
 
-          DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _ppData ? &aData[0] : nullptr, pTexture->m_pTexture.GetAddressOf()));
+          DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _ppData ? &aData[0] : nullptr, pTexture->m_pTexture.GetAddressOf()));
         }
         else
         {
@@ -584,13 +514,13 @@ namespace api
           oData.pSysMem = _ppData ? *_ppData : nullptr;
           oData.SysMemPitch = uMemPitch;
 
-          DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _ppData ? &oData : nullptr, pTexture->m_pTexture.GetAddressOf()));
+          DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oTexDesc, _ppData ? &oData : nullptr, pTexture->m_pTexture.GetAddressOf()));
         }
       }
       else
       {
         //GFX_THROW_INFO(GetDevice()->CreateTexture2D(&desc, NULL, m_texture.GetAddressOf()));
-        DX11_CHECK(pWindow->m_pDevice->CreateTexture2D(&oTexDesc, nullptr, pTexture->m_pTexture.GetAddressOf()));
+        DX11_CHECK(_pWindow->m_pDevice->CreateTexture2D(&oTexDesc, nullptr, pTexture->m_pTexture.GetAddressOf()));
       }
 
       D3D11_SHADER_RESOURCE_VIEW_DESC oSrvDesc = {};
@@ -609,7 +539,7 @@ namespace api
         oSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;        
       }
 
-      DX11_CHECK(pWindow->m_pDevice->CreateShaderResourceView(pTexture->m_pTexture.Get(), &oSrvDesc, pTexture->m_pSRV.GetAddressOf()));
+      DX11_CHECK(_pWindow->m_pDevice->CreateShaderResourceView(pTexture->m_pTexture.Get(), &oSrvDesc, pTexture->m_pSRV.GetAddressOf()));
 
       if (_ppData != nullptr && pTexture->m_uMipLevels != 1)
       {
@@ -618,15 +548,15 @@ namespace api
           for (int i = 0; i < 6; i++)
           {
             UINT uSubResource = D3D11CalcSubresource(0, i, pTexture->m_uMipLevels);
-            pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), uSubResource, nullptr, _ppData[i], uMemPitch, 0u);
+            _pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), uSubResource, nullptr, _ppData[i], uMemPitch, 0u);
           }
         }
         else
         {
-          pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), 0u, nullptr, *_ppData, uMemPitch, 0u);
+          _pWindow->m_pContext->UpdateSubresource(pTexture->m_pTexture.Get(), 0u, nullptr, *_ppData, uMemPitch, 0u);
         }
 
-        pWindow->m_pContext->GenerateMips(pTexture->m_pSRV.Get());
+        _pWindow->m_pContext->GenerateMips(pTexture->m_pSRV.Get());
       }
 
       pTexture->m_eFormat = eDXGIFormat;
@@ -644,63 +574,59 @@ namespace api
       oSamplerDesc.MinLOD = 0;
       oSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;      
 
-      pWindow->m_pDevice->CreateSamplerState(&oSamplerDesc, pTexture->m_pSampler.GetAddressOf());
+      _pWindow->m_pDevice->CreateSamplerState(&oSamplerDesc, pTexture->m_pSampler.GetAddressOf());
 
       return pTexture;
     }
 
-    void GenerateMipMaps(APITexture* _pTexture)
+    void GenerateMipMaps(const APIWindow* _pWindow, APITexture* _pTexture)
     {
-      s_oGlobalData.m_pUsingWindow->m_pContext->GenerateMips(_pTexture->m_pSRV.Get());
+      _pWindow->m_pContext->GenerateMips(_pTexture->m_pSRV.Get());
     }
 
-    void BindAPITexture(APITexture* _pTexture)
+    void BindAPITexture(const APIWindow* _pWindow, APITexture* _pTexture)
     {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;      
-
       if ((_pTexture->m_uStageFlags & STAGE_VERTEX) != 0u)
       {
-        pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
-        pWindow->m_pContext->VSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
+        _pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+        _pWindow->m_pContext->VSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
       if ((_pTexture->m_uStageFlags & STAGE_GEOM) != 0u)
       {
-        pWindow->m_pContext->GSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
-        pWindow->m_pContext->GSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
+        _pWindow->m_pContext->GSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+        _pWindow->m_pContext->GSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
       if ((_pTexture->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
-        pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
-        pWindow->m_pContext->PSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
+        _pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, _pTexture->m_pSRV.GetAddressOf());
+        _pWindow->m_pContext->PSSetSamplers(_pTexture->m_uSlot, 1u, _pTexture->m_pSampler.GetAddressOf());
       }
     }
 
-    void UnbindAPITexture(APITexture* _pTexture)
+    void UnbindAPITexture(const APIWindow* _pWindow, APITexture* _pTexture)
     {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;      
-
       ID3D11ShaderResourceView* pNullSrv = nullptr;
 
       if ((_pTexture->m_uStageFlags & STAGE_VERTEX) != 0u)
       {
-        pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
+        _pWindow->m_pContext->VSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
       if ((_pTexture->m_uStageFlags & STAGE_GEOM) != 0u)
       {
-        pWindow->m_pContext->GSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
+        _pWindow->m_pContext->GSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
       if ((_pTexture->m_uStageFlags & STAGE_PIXEL) != 0u)
       {
-        pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
+        _pWindow->m_pContext->PSSetShaderResources(_pTexture->m_uSlot, 1u, &pNullSrv);
       }
     }
 
-    void ClearAPITexture(APITexture* /*_pTexture*/, TextureUsage /*_eUsage*/)
+    void ClearAPITexture(const APIWindow* /*_pWindow*/, APITexture* /*_pTexture*/, TextureUsage /*_eUsage*/)
     {
 
     }
 
-    void DestroyAPITexture(APITexture* _pTexture)
+    void DestroyAPITexture(const APIWindow* /*_pWindow*/, APITexture* _pTexture)
     {
       s_oTexturePool.ReturnElement(_pTexture);
     }
@@ -722,7 +648,7 @@ namespace api
       s_oGlobalData.m_oRenderTargetBuilder.m_eDepthStencilFormat = GetDXGIFormat(_eDepthStencilFormat);
       s_oGlobalData.m_oRenderTargetBuilder.m_uMsaaSamples = _uMsaaSamples;
       s_oGlobalData.m_oRenderTargetBuilder.m_bIsCubemap = _bIsCubemap;
-      s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
+      s_oGlobalData.m_oRenderTargetBuilder.m_pRenderTarget = _pRenderTarget;
     }
 
     void RenderTargetAddColorTexture(APITexture* _pTexture)
@@ -740,40 +666,38 @@ namespace api
       s_oGlobalData.m_oRenderTargetBuilder.AddResolveColorTexture(_pTexture);
     }
 
-    void EndRenderTargetSetup()
+    void EndRenderTargetSetup(const APIWindow* _pWindow)
     {
-      s_oGlobalData.m_oRenderTargetBuilder.Build(s_oGlobalData.m_pUsingRenderTarget);
+      s_oGlobalData.m_oRenderTargetBuilder.Build(_pWindow);
       s_oGlobalData.m_oRenderTargetBuilder.Clear();
     }
 
-    void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    void ClearAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
     {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-
       float aClearColor[] = { 0.f,0.f,0.f,1.f };
       unsigned int uClearFlags = D3D11_CLEAR_DEPTH;
 
       for (auto& pRtv : _pRenderTarget->m_lstRtv)
       {
-        pWindow->m_pContext->ClearRenderTargetView(pRtv.Get(), aClearColor);
+        _pWindow->m_pContext->ClearRenderTargetView(pRtv.Get(), aClearColor);
       }
 
       if (_pRenderTarget->m_pDsv.Get())
       {
-        pWindow->m_pContext->ClearDepthStencilView(_pRenderTarget->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
+        _pWindow->m_pContext->ClearDepthStencilView(_pRenderTarget->m_pDsv.Get(), uClearFlags, 1.0f, 0u);
       }
 
     }
 
-    void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    void BindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
     {   
       if (_pRenderTarget->m_lstRtv.size() > 0u)
       {
-        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
+        _pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), _pRenderTarget->m_lstRtv[0].GetAddressOf(), _pRenderTarget->m_pDsv.Get());
       }
       else
       {
-        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(0u, nullptr, _pRenderTarget->m_pDsv.Get());
+        _pWindow->m_pContext->OMSetRenderTargets(0u, nullptr, _pRenderTarget->m_pDsv.Get());
       }
 
       D3D11_VIEWPORT oViewport;
@@ -784,17 +708,10 @@ namespace api
       oViewport.TopLeftX = 0.0f;
       oViewport.TopLeftY = 0.0f;
 
-      s_oGlobalData.m_pUsingWindow->m_pContext->RSSetViewports(1, &oViewport);
-
-      s_oGlobalData.m_pBoundRenderTarget = _pRenderTarget;
+      _pWindow->m_pContext->RSSetViewports(1, &oViewport);
     }
 
-    void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)
-    {
-      s_oGlobalData.m_pUsingRenderTarget = _pRenderTarget;
-    }
-
-    void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    void UnbindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
     {
 
       //const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
@@ -803,34 +720,27 @@ namespace api
       if (_pRenderTarget->m_lstRtv.size() > 0u)
       {
         const std::vector<ID3D11RenderTargetView*> lstNullViews(_pRenderTarget->m_lstRtv.size(), nullptr);
-        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
+        _pWindow->m_pContext->OMSetRenderTargets(_pRenderTarget->m_lstRtv.size(), lstNullViews.data(), nullptr);
       }
       else
       {
-        s_oGlobalData.m_pUsingWindow->m_pContext->OMSetRenderTargets(0u, nullptr, nullptr);
+        _pWindow->m_pContext->OMSetRenderTargets(0u, nullptr, nullptr);
       }
 
-      s_oGlobalData.m_pBoundRenderTarget = nullptr;
-    }
-
-    bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget)
-    {
-      return s_oGlobalData.m_pBoundRenderTarget == _pRenderTarget;
+      _pWindow = nullptr;
     }
     
-    void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+    void DestroyAPIRenderTarget(const APIWindow* /*_pWindow*/, APIRenderTarget* _pRenderTarget)
     {
       s_oRenderTargetPool.ReturnElement(_pRenderTarget);
     }
 
     // Render state
 
-    APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples)
+    APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, APIRenderTarget* /*_pRenderTarget*/, uint32_t _uMsaaSamples)
     {
 
       APIRenderState* pRenderState = s_oRenderStatePool.PullElement();
-
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
       size_t uSlashPosVS = _oInfo.m_sVSFilename.find_last_of('/');      
       size_t uSlashPosPS = _oInfo.m_sPSFilename.find_last_of('/');
@@ -847,8 +757,8 @@ namespace api
       file::InFile oVsFile((sVSPath + sVSFilename).c_str());      
       file::InFile oPsFile((sPSPath + sPSFilename).c_str());
       
-      DX11_CHECK(pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));            
-      DX11_CHECK(pWindow->m_pDevice->CreatePixelShader(oPsFile.GetData(), oPsFile.GetSize(), nullptr, pRenderState->m_pPixelShader.ReleaseAndGetAddressOf()));      
+      DX11_CHECK(_pWindow->m_pDevice->CreateVertexShader(oVsFile.GetData(), oVsFile.GetSize(), nullptr, pRenderState->m_pVertexShader.ReleaseAndGetAddressOf()));            
+      DX11_CHECK(_pWindow->m_pDevice->CreatePixelShader(oPsFile.GetData(), oPsFile.GetSize(), nullptr, pRenderState->m_pPixelShader.ReleaseAndGetAddressOf()));      
 
       DX11_CHECK(D3DReflect(oVsFile.GetData(), oVsFile.GetSize(), IID_ID3D11ShaderReflection, (void**)pRenderState->m_pVertexReflection.ReleaseAndGetAddressOf()));
       DX11_CHECK(D3DReflect(oPsFile.GetData(), oPsFile.GetSize(), IID_ID3D11ShaderReflection, (void**)pRenderState->m_pPixelReflection.ReleaseAndGetAddressOf()));
@@ -864,7 +774,7 @@ namespace api
 
         file::InFile oGsFile(_oInfo.m_sGSFilename.empty() ? "" : (sGSPath + sGSFilename).c_str());
 
-        DX11_CHECK(pWindow->m_pDevice->CreateGeometryShader(oGsFile.GetData(), oGsFile.GetSize(), nullptr, pRenderState->m_pGeometryShader.ReleaseAndGetAddressOf()));
+        DX11_CHECK(_pWindow->m_pDevice->CreateGeometryShader(oGsFile.GetData(), oGsFile.GetSize(), nullptr, pRenderState->m_pGeometryShader.ReleaseAndGetAddressOf()));
 
         DX11_CHECK(D3DReflect(oGsFile.GetData(), oGsFile.GetSize(), IID_ID3D11ShaderReflection, (void**)pRenderState->m_pGeometryReflection.ReleaseAndGetAddressOf()));
       }
@@ -878,7 +788,7 @@ namespace api
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,	   0,	D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
       };
 
-      DX11_CHECK(pWindow->m_pDevice->CreateInputLayout(oInputDesc, 5u, oVsFile.GetData(), oVsFile.GetSize(), pRenderState->m_pInputLayout.ReleaseAndGetAddressOf()))
+      DX11_CHECK(_pWindow->m_pDevice->CreateInputLayout(oInputDesc, 5u, oVsFile.GetData(), oVsFile.GetSize(), pRenderState->m_pInputLayout.ReleaseAndGetAddressOf()))
 
       D3D11_RASTERIZER_DESC oRasterizerDesc = {};
       oRasterizerDesc.FillMode = D3D11_FILL_SOLID;
@@ -891,7 +801,7 @@ namespace api
       oRasterizerDesc.MultisampleEnable = _uMsaaSamples > 1u;
       oRasterizerDesc.AntialiasedLineEnable = true;      
 
-      DX11_CHECK(pWindow->m_pDevice->CreateRasterizerState(&oRasterizerDesc, pRenderState->m_pRasterizer.GetAddressOf()))
+      DX11_CHECK(_pWindow->m_pDevice->CreateRasterizerState(&oRasterizerDesc, pRenderState->m_pRasterizer.GetAddressOf()))
 
       //BlendState.RenderTarget[0].SrcBlend = (D3D11_BLEND)m_srcBlendFactor;
       //BlendState.RenderTarget[0].DestBlend = (D3D11_BLEND)m_dstBlendFactor;
@@ -913,7 +823,7 @@ namespace api
       oBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
       oBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;            
 
-      DX11_CHECK(pWindow->m_pDevice->CreateBlendState(&oBlendDesc, pRenderState->m_pBlendState.GetAddressOf()));
+      DX11_CHECK(_pWindow->m_pDevice->CreateBlendState(&oBlendDesc, pRenderState->m_pBlendState.GetAddressOf()));
 
       D3D11_DEPTH_STENCIL_DESC oDSDesc = {};
       oDSDesc.DepthEnable = _oInfo.m_bDepthWrite || _oInfo.m_bDepthRead;      
@@ -929,39 +839,75 @@ namespace api
       }
       
 
-      DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilState(&oDSDesc, pRenderState->m_pDSState.GetAddressOf()));
+      DX11_CHECK(_pWindow->m_pDevice->CreateDepthStencilState(&oDSDesc, pRenderState->m_pDSState.GetAddressOf()));
 
       return pRenderState;
     }
 
     void BeginRenderStateSetup(APIRenderState* _pAPIRenderState)
     {
-      s_oGlobalData.m_pUsingRenderState = _pAPIRenderState;
     }
 
-    void EndRenderStateSetup()
+    void RenderStateSetupConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo, const APIRenderState* _pRenderState)
+    {      
+      _pCBuffer->m_uStageFlags = _oBindInfo.m_uStageFlags;
+
+      _pCBuffer->m_slot = 0xFFFFFFFF;
+
+      if ((_oBindInfo.m_uStageFlags & STAGE_VERTEX) != 0u)
+      {
+        ID3D11ShaderReflection* pReflection = _pRenderState->m_pVertexReflection.Get();
+        _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
+      }
+      if ((_oBindInfo.m_uStageFlags & STAGE_GEOM) != 0u)
+      {
+        if (ID3D11ShaderReflection* pReflection = _pRenderState->m_pGeometryReflection.Get())
+        {
+          _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
+        }
+      }
+      if (_pCBuffer->m_slot == 0xFFFFFFFF && (_oBindInfo.m_uStageFlags & STAGE_PIXEL) != 0u)
+      {
+        ID3D11ShaderReflection* pReflection = _pRenderState->m_pPixelReflection.Get();
+        _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
+      }
+
+      if (_pCBuffer->m_slot != 0xFFFFFFFF)
+      {
+        return;
+      }
+    }
+
+    void RenderStateSetupTexture(const APIWindow* _pWindow, APITexture* _pTexture, const ResourceBindInfo& _oBindInfo, const APIRenderState* _pRenderState)
     {
-      s_oGlobalData.m_pUsingRenderState = nullptr;
+      _pTexture->m_uStageFlags = _oBindInfo.m_uStageFlags;
+
+      /*switch (_oBindInfo.m_eStage)
+      {
+      case STAGE_VERTEX:
+        s_oGlobalData.m_pUsingRenderState->m_pVertexReflection->
+        break;
+      case STAGE_PIXEL:
+        break;
+      }*/
     }
 
-    void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState)
+    void EndRenderStateSetup(const APIWindow* _pWindow)
     {
     }
 
-    void BindAPIRenderState(APIRenderState* _pAPIRenderState)
+    void BindAPIRenderState(const APIWindow* _pWindow, APIRenderState* _pAPIRenderState)
     {
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-
-      pWindow->m_pContext->VSSetShader(_pAPIRenderState->m_pVertexShader.Get(), nullptr, 0u);
-      pWindow->m_pContext->PSSetShader(_pAPIRenderState->m_pPixelShader.Get(), nullptr, 0u);      
-      pWindow->m_pContext->GSSetShader(_pAPIRenderState->m_pGeometryShader.Get(), nullptr, 0u);      
-      pWindow->m_pContext->IASetInputLayout(_pAPIRenderState->m_pInputLayout.Get());
-      pWindow->m_pContext->RSSetState(_pAPIRenderState->m_pRasterizer.Get());
-      pWindow->m_pContext->OMSetBlendState(_pAPIRenderState->m_pBlendState.Get(), nullptr, 0xffffffff);
-      pWindow->m_pContext->OMSetDepthStencilState(_pAPIRenderState->m_pDSState.Get(), 0);
+      _pWindow->m_pContext->VSSetShader(_pAPIRenderState->m_pVertexShader.Get(), nullptr, 0u);
+      _pWindow->m_pContext->PSSetShader(_pAPIRenderState->m_pPixelShader.Get(), nullptr, 0u);      
+      _pWindow->m_pContext->GSSetShader(_pAPIRenderState->m_pGeometryShader.Get(), nullptr, 0u);      
+      _pWindow->m_pContext->IASetInputLayout(_pAPIRenderState->m_pInputLayout.Get());
+      _pWindow->m_pContext->RSSetState(_pAPIRenderState->m_pRasterizer.Get());
+      _pWindow->m_pContext->OMSetBlendState(_pAPIRenderState->m_pBlendState.Get(), nullptr, 0xffffffff);
+      _pWindow->m_pContext->OMSetDepthStencilState(_pAPIRenderState->m_pDSState.Get(), 0);
     }
 
-    void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)
+    void DestroyAPIRenderState(const APIWindow* /*_pWindow*/, APIRenderState* _pAPIRenderState)
     {
       s_oRenderStatePool.ReturnElement(_pAPIRenderState);
     }
@@ -1221,125 +1167,67 @@ namespace api
 
     // Render substate
 
-    APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)
+    APIRenderSubState* CreateAPIRenderSubState(const APIWindow* /*_pWindow*/, ResourceFrequency /*_eFrequency*/)
     {
       return nullptr;
     }
 
-    void BeginSubStateSetup(APIRenderSubState* _pAPIRenderState)
+    void BeginSubStateSetup(const APIWindow* /*_pWindow*/, APIRenderSubState* /*_pAPIRenderSubState*/, ResourceFrequency /*_eFrequency*/)
     {
     }
 
-    void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo)
+    void SubStateSetupConstantBuffer(const APIWindow* /*_pWindow*/, APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo)
     {      
-
       _pCBuffer->m_uStageFlags = _oBindInfo.m_uStageFlags;
-
       
-      if (_oBindInfo.m_eLevel == ResourceFrequency::MATERIAL)
+      for (GlobalLayout::Resource& rGlobalCBuff : s_oGlobalData.m_oGlobalLayout.m_lstCBuffers)
       {
-        if (s_oGlobalData.m_pUsingRenderState == nullptr)
+        if (rGlobalCBuff.m_sName == _oBindInfo.m_sName
+          && rGlobalCBuff.m_uStageFlags == _oBindInfo.m_uStageFlags)
         {
-          THROW_GENERIC_EXCEPTION("[API] Tried to set up resource with frequency MATERIAL but BeginRenderStateSetup was not called");
-        }
-
-        _pCBuffer->m_slot = 0xFFFFFFFF;
-
-        if ((_oBindInfo.m_uStageFlags & STAGE_VERTEX) != 0u)
-        {
-          ID3D11ShaderReflection* pReflection = s_oGlobalData.m_pUsingRenderState->m_pVertexReflection.Get();
-          _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
-        }
-        if ((_oBindInfo.m_uStageFlags & STAGE_GEOM) != 0u)
-        {
-          if (ID3D11ShaderReflection* pReflection = s_oGlobalData.m_pUsingRenderState->m_pGeometryReflection.Get())
-          {
-            _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
-          }
-        }
-        if (_pCBuffer->m_slot == 0xFFFFFFFF && (_oBindInfo.m_uStageFlags & STAGE_PIXEL) != 0u)
-        {
-          ID3D11ShaderReflection* pReflection = s_oGlobalData.m_pUsingRenderState->m_pPixelReflection.Get();
-          _pCBuffer->m_slot = GetBindFromReflection(pReflection, _oBindInfo.m_sName);
-        }
-        
-        if (_pCBuffer->m_slot != 0xFFFFFFFF)
-        {
+          _pCBuffer->m_slot = rGlobalCBuff.m_uBinding;
           return;
-        }        
-        
-      }
-      else
-      {
-        for (GlobalLayout::Resource& rGlobalCBuff : s_oGlobalData.m_oGlobalLayout.m_lstCBuffers)
-        {
-          if (rGlobalCBuff.m_sName == _oBindInfo.m_sName
-            && rGlobalCBuff.m_uStageFlags == _oBindInfo.m_uStageFlags)
-          {
-            _pCBuffer->m_slot = rGlobalCBuff.m_uBinding;
-            return;
-          }
         }
-      }
+      }      
 
       THROW_GENERIC_EXCEPTION("[API] Cbuffer name not found")
     }
 
-    void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
+    void SubStateSetupTexture(const APIWindow* /*_pWindow*/, APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
     {      
       _pTexture->m_uStageFlags = _oBindInfo.m_uStageFlags;
 
-      if (_oBindInfo.m_eLevel == ResourceFrequency::MATERIAL)
+      for (GlobalLayout::Resource& rGlobalTexture : s_oGlobalData.m_oGlobalLayout.m_lstTextures)
       {
-        if (s_oGlobalData.m_pUsingRenderState == nullptr)
+        if (rGlobalTexture.m_sName == _oBindInfo.m_sName
+          && rGlobalTexture.m_uStageFlags == _oBindInfo.m_uStageFlags)
         {
-          THROW_GENERIC_EXCEPTION("[API] Tried to set up resource with frequency MATERIAL but BeginRenderStateSetup was not called");
+          _pTexture->m_uSlot = rGlobalTexture.m_uBinding;
+          return;
         }
-
-        /*switch (_oBindInfo.m_eStage)
-        {
-        case STAGE_VERTEX:
-          s_oGlobalData.m_pUsingRenderState->m_pVertexReflection->
-          break;
-        case STAGE_PIXEL:
-          break;
-        }*/
-
-      }
-      else
-      {
-        for (GlobalLayout::Resource& rGlobalTexture : s_oGlobalData.m_oGlobalLayout.m_lstTextures)
-        {
-          if (rGlobalTexture.m_sName == _oBindInfo.m_sName
-            && rGlobalTexture.m_uStageFlags == _oBindInfo.m_uStageFlags)
-          {
-            _pTexture->m_uSlot = rGlobalTexture.m_uBinding;
-            return;
-          }
-        }
-      }
+      }      
 
       THROW_GENERIC_EXCEPTION("[API] Texture name not found")
 
     }
 
-    void EndSubStateSetup(ResourceFrequency _eFrequency)
+    void EndSubStateSetup(const APIWindow* /*_pWindow*/)
     {
     }
 
-    void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency)
+    void BindAPIRenderSubState(const APIWindow* /*_pWindow*/, APIRenderState* /*_pRenderState*/, APIRenderSubState* /*_pAPIRenderSubState*/, ResourceFrequency /*_eFrequency*/)
     {
     }
 
-    void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState)
+    void DestroyRenderSubState(const APIWindow* /*_pWindow*/, APIRenderSubState* /*_pAPIRenderSubState*/)
     {
     }
 
     // Drawing
 
-    void WaitForNextImage(APIWindow* _pWindow)
+    void WaitForLastImage(const APIWindow* /*_pWindow*/)
     {
-      // We are not really using this feature
+      // We dont really need this feature, I think. DX11 should manage synchronization automatically
     }
 
     int BeginDraw(APIWindow* _pWindow)
@@ -1382,7 +1270,7 @@ namespace api
           _pWindow->m_pContext->PSSetShaderResources(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSRV.GetAddressOf());
           _pWindow->m_pContext->PSSetSamplers(rResource.m_uBinding, 1u, _pWindow->m_pDummyTexture->m_pSampler.GetAddressOf());
         }
-      }
+      }      
       
       return 0;
     }
@@ -1411,21 +1299,18 @@ namespace api
       }
     }
 
-    void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize)
+    void DrawMesh(const APIWindow* _pWindow, APIRenderState* _pRenderState, APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize)
     {
+      UpdateAPIConstantBuffer(_pWindow, _pMesh->m_pModelCBuffer, _pConstantData, _uConstantSize);
 
-      APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
-
-      UpdateAPIConstantBuffer(_pMesh->m_pModelCBuffer, _pConstantData, _uConstantSize);
-
-      BindAPIConstantBuffer(_pMesh->m_pModelCBuffer);
+      BindAPIConstantBuffer(_pWindow, _pMesh->m_pModelCBuffer);
 
       uint32_t uStride = sizeof(Vertex);
       uint32_t uOffset = 0u;
 
-      pWindow->m_pContext->IASetVertexBuffers(0u, 1u, _pMesh->m_pVertexBuffer.GetAddressOf(), &uStride, &uOffset);
-      pWindow->m_pContext->IASetIndexBuffer(_pMesh->m_pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
-      pWindow->m_pContext->DrawIndexed(_pMesh->m_uIndexCount, 0u, 0u);
+      _pWindow->m_pContext->IASetVertexBuffers(0u, 1u, _pMesh->m_pVertexBuffer.GetAddressOf(), &uStride, &uOffset);
+      _pWindow->m_pContext->IASetIndexBuffer(_pMesh->m_pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
+      _pWindow->m_pContext->DrawIndexed(_pMesh->m_uIndexCount, 0u, 0u);
 
     }
 
