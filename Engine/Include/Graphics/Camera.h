@@ -20,6 +20,8 @@ class Camera
 
   friend class Renderer;
 
+public:
+
   struct GlobalBufferData
   {
     glm::mat4 m_mViewProj;
@@ -27,40 +29,28 @@ class Camera
     glm::mat4 m_mViewInv;
     glm::mat4 m_mProj;
   };
-
-public:
   
   //Camera(Camera&& _oOther);
   ~Camera();  
 
   void Configure(const std::string& _sRenderPipelineId, bool _bOrtho = false, float _fAspect = -1.f);
 
-  void UpdateTransform(const Transform& _oParentTransform);
-
-  void SetSkybox(const Texture2D* _pTexture) { m_pSkyboxTex = _pTexture; }
-
-  void PreRenderSetup();
-
-  void Bind() const;  
+  void UpdateTransform(const Transform& _oParentTransform);  
 
   uint64_t GetKey() const;
 
-  const std::string& GetRenderPipelineId() const;
+  const std::string& GetRenderPipelineId() const { return m_sRenderPipelineId; }
 
   glm::mat4x4 GetProjMatrix();
+
+public:
 
   float m_fNear = 0.1f;
   float m_fFar = 100.f;  
 
-private:
-
-  api::APICamera* m_pAPICamera;
-
   api::APIRenderSubState* m_pSubState;
 
   owner_ptr<ConstantBuffer<GlobalBufferData>> m_pCBuffer;
-
-  const Texture2D* m_pSkyboxTex;
 
   std::string m_sRenderPipelineId;
 

@@ -6,6 +6,7 @@
 #include "Graphics/MaterialInstance.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Renderer.h"
+#include "Core/Engine.h"
 
 GeometryRenderStep::GeometryRenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps)
   : RenderStep(_sId, std::move(_lstInputs), _pRenderTarget)
@@ -20,7 +21,12 @@ void GeometryRenderStep::SetupInternal()
 
   if (m_bUseShadowMaps)
   {
-    Renderer::GetInstance()->SetupSubStateLightCBuffers(ResourceFrequency::RENDER_STEP);
+    ResourceBindInfo oBindInfo {};
+    oBindInfo.m_eLevel = ResourceFrequency::RENDER_STEP;
+    oBindInfo.m_uStageFlags = STAGE_PIXEL;
+    oBindInfo.m_sName = "LightBuffer";
+    api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, Renderer::GetInstance()->m_pLightCBuff->m_pAPICbuffer, Renderer::GetInstance()->m_pLightCBuff->GetSize(), oBindInfo);
+
   }
 }
 
@@ -73,9 +79,9 @@ void GeometryRenderStep::ExecuteInternal(const Camera* _pCamera, const Transform
 
     rJob.m_pMesh->UpdateTransform(*rJob.m_pMeshTransform);
 
-    if(rJob.m_pMaterial) rJob.m_pMaterial->Bind();
+    if(rJob.m_pMaterial) rJob.m_pMaterial->Bind(rJob.m_pPass);
 
-    rJob.m_pMesh->Draw();
+    api::DrawMesh(ENGINE_API_WINDOW, rJob.m_pPass->m_pAPIRenderState, rJob.m_pMesh->m_pAPIMesh, rJob.m_pMesh->m_uIndexCount, &rJob.m_pMesh->m_oConstant, sizeof(MeshConstant));
   }
 
   m_lstJobs.clear();

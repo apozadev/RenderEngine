@@ -305,13 +305,6 @@ uint32_t FindBinding(const APIWindow* _pWindow, const ResourceBindInfo& _oBindIn
   case ResourceFrequency::GLOBAL:
     uBinding = _pWindow->m_oGlobalLayoutBuilder.FindBinding(_oBindInfo.m_sName, GetVkShaderFlags(_oBindInfo.m_uStageFlags), _eType);
     break;
-  case ResourceFrequency::MATERIAL:
-    if (s_oGlobalData.m_pUsingRenderState == nullptr)
-    {
-      THROW_GENERIC_EXCEPTION("[API] Tried to set up resource with frequency MATERIAL but BeginRenderStateSetup was not called");
-    }
-    uBinding = s_oGlobalData.m_pUsingRenderState->m_oMaterialLayoutBuilder.FindBinding(_oBindInfo.m_sName, GetVkShaderFlags(_oBindInfo.m_uStageFlags), _eType);
-    break;
   case ResourceFrequency::RENDER_STEP:
     uBinding = _pWindow->m_oStepLayoutBuilder.FindBinding(_oBindInfo.m_sName, GetVkShaderFlags(_oBindInfo.m_uStageFlags), _eType);
     break;
@@ -404,7 +397,8 @@ void CreatePhysicalDevice()
   s_oGlobalData.m_eMaxMsaaSampleCount = GetMaxMSAASampleCount();
 }
 
-void CreatePipeline(const file::InFile& _oVSFile,
+void CreatePipeline(const APIWindow* _pWindow,
+  const file::InFile& _oVSFile,
   const file::InFile& _oPSFile,
   const file::InFile* _pGSFile,
   const RenderStateInfo& _oInfo,
@@ -412,8 +406,6 @@ void CreatePipeline(const file::InFile& _oVSFile,
   VkSampleCountFlagBits _uMsaaSamples,
   APIRenderState* _pRenderState_)
 {
-
-  APIWindow* pWindow = _pRenderState_->m_pOwnerWindow;
 
   // Create shader modules
 
@@ -428,7 +420,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
   oVSCreateInfo.pCode = reinterpret_cast<const uint32_t*>(_oVSFile.GetData());
 
   VkShaderModule hVSShaderModule;
-  VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oVSCreateInfo, NULL, &hVSShaderModule))
+  VK_CHECK(vkCreateShaderModule(_pWindow->m_hDevice, &oVSCreateInfo, NULL, &hVSShaderModule))
 
   aStages[0] = {};
   aStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -444,7 +436,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
   oPSCreateInfo.pCode = reinterpret_cast<const uint32_t*>(_oPSFile.GetData());
 
   VkShaderModule hPSShaderModule;
-  VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oPSCreateInfo, NULL, &hPSShaderModule))
+  VK_CHECK(vkCreateShaderModule(_pWindow->m_hDevice, &oPSCreateInfo, NULL, &hPSShaderModule))
 
   aStages[1] = {};
   aStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -463,7 +455,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
     oGSCreateInfo.codeSize = _pGSFile->GetSize();
     oGSCreateInfo.pCode = reinterpret_cast<const uint32_t*>(_pGSFile->GetData());
     
-    VK_CHECK(vkCreateShaderModule(pWindow->m_hDevice, &oGSCreateInfo, NULL, &hGSShaderModule))
+    VK_CHECK(vkCreateShaderModule(_pWindow->m_hDevice, &oGSCreateInfo, NULL, &hGSShaderModule))
 
     aStages[2] = {};
     aStages[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -619,10 +611,10 @@ void CreatePipeline(const file::InFile& _oVSFile,
 
   VkDescriptorSetLayout aSetLayouts[4] =
   {
-    pWindow->m_hGlobalDescSetLayout
-    , pWindow->m_hStepDescSetLayout
+    _pWindow->m_hGlobalDescSetLayout
+    , _pWindow->m_hStepDescSetLayout
     , _pRenderState_->m_hDescSetLayout
-    , pWindow->m_hMatInstanceDescSetLayout
+    , _pWindow->m_hMatInstanceDescSetLayout
   };
 
   // Push constants
@@ -639,7 +631,7 @@ void CreatePipeline(const file::InFile& _oVSFile,
   oPipelineLayoutCreateInfo.pushConstantRangeCount = 1u;
   oPipelineLayoutCreateInfo.pPushConstantRanges = &push_constant;
 
-  VK_CHECK(vkCreatePipelineLayout(pWindow->m_hDevice, &oPipelineLayoutCreateInfo, NULL, &_pRenderState_->m_hPipelineLayout))
+  VK_CHECK(vkCreatePipelineLayout(_pWindow->m_hDevice, &oPipelineLayoutCreateInfo, NULL, &_pRenderState_->m_hPipelineLayout))
 
   // Create Pipeline object
 
@@ -662,13 +654,13 @@ void CreatePipeline(const file::InFile& _oVSFile,
   oPipelineInfo.basePipelineIndex = -1; // Optional
   oPipelineInfo.pDynamicState = &oDynamicState;
 
-  VK_CHECK(vkCreateGraphicsPipelines(pWindow->m_hDevice, VK_NULL_HANDLE, 1u, &oPipelineInfo, NULL, &_pRenderState_->m_hGraphicsPipeline))
+  VK_CHECK(vkCreateGraphicsPipelines(_pWindow->m_hDevice, VK_NULL_HANDLE, 1u, &oPipelineInfo, NULL, &_pRenderState_->m_hGraphicsPipeline))
 
-  vkDestroyShaderModule(pWindow->m_hDevice, hVSShaderModule, NULL);  
-  vkDestroyShaderModule(pWindow->m_hDevice, hPSShaderModule, NULL);
+  vkDestroyShaderModule(_pWindow->m_hDevice, hVSShaderModule, NULL);  
+  vkDestroyShaderModule(_pWindow->m_hDevice, hPSShaderModule, NULL);
   if (hGSShaderModule != VK_NULL_HANDLE)
   {
-    vkDestroyShaderModule(pWindow->m_hDevice, hGSShaderModule, NULL);
+    vkDestroyShaderModule(_pWindow->m_hDevice, hGSShaderModule, NULL);
   }
 }
 
@@ -1019,7 +1011,7 @@ void CreateSwapchain(APIWindow* _pWindow)
   }
 }
 
-void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen, bool _bMultiview)
+void CreateRenderPass(const APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen, bool _bMultiview)
 {
 
   bool bHasMsaa = _uMsaaSampleCount > 1u;
@@ -1403,7 +1395,7 @@ uint32_t FindMemoryType(uint32_t _uTypeFilter, VkMemoryPropertyFlags _uPropertie
   THROW_GENERIC_EXCEPTION("Failed to find suitable memory type")
 }
 
-void CreateBuffer(APIWindow* _pWindow
+void CreateBuffer(const APIWindow* _pWindow
   , size_t _uSize
   , VkBufferUsageFlags _uUsage
   , VkMemoryPropertyFlags _uProperties
@@ -1435,7 +1427,7 @@ void CreateBuffer(APIWindow* _pWindow
   VK_CHECK(vkBindBufferMemory(hDevice, hBuffer_, hDeviceMemory_, 0))
 }
 
-void CreateImage(APIWindow* _pWindow
+void CreateImage(const APIWindow* _pWindow
   , uint32_t _uWidth
   , uint32_t _uHeight
   , VkFormat _eFormat
@@ -1481,7 +1473,7 @@ void CreateImage(APIWindow* _pWindow
     VK_CHECK(vkBindImageMemory(_pWindow->m_hDevice, hImage_, hMemory_, 0))
 }
 
-void CreateImageView(APIWindow* _pWindow
+void CreateImageView(const APIWindow* _pWindow
   , VkImage _hImage
   , VkFormat _eFormat
   , uint32_t _uMipLevels  
@@ -1509,7 +1501,7 @@ void CreateImageView(APIWindow* _pWindow
   VK_CHECK(vkCreateImageView(_pWindow->m_hDevice, &oCreateInfo, NULL, &hImageView_))
 }
 
-void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig)
+void CreateTextureSampler(const APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig)
 {
 
   VkPhysicalDeviceProperties oProperties{};
@@ -1538,13 +1530,13 @@ void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _
   VK_CHECK(vkCreateSampler(_pWindow->m_hDevice, &oSamplerInfo, NULL, &_pTexture->m_hSampler))
 }
 
-void DestroyBuffer(APIWindow* _pWindow, VkBuffer _hBuffer, VkDeviceMemory _hDeviceMemory_)
+void DestroyBuffer(const APIWindow* _pWindow, VkBuffer _hBuffer, VkDeviceMemory _hDeviceMemory_)
 {
   vkDestroyBuffer(_pWindow->m_hDevice, _hBuffer, NULL);
   vkFreeMemory(_pWindow->m_hDevice, _hDeviceMemory_, NULL);
 }
 
-void SetBufferData(APIWindow* _pWindow, const void* _pData, size_t _uSize, VkDeviceMemory& hDeviceMemory_)
+void SetBufferData(const APIWindow* _pWindow, const void* _pData, size_t _uSize, VkDeviceMemory& hDeviceMemory_)
 {
   VkDevice hDevice = _pWindow->m_hDevice;
   void* pDeviceData;
@@ -1553,7 +1545,7 @@ void SetBufferData(APIWindow* _pWindow, const void* _pData, size_t _uSize, VkDev
   vkUnmapMemory(hDevice, hDeviceMemory_);
 }
 
-VkCommandBuffer BeginTempCmdBuffer(APIWindow* _pWindow)
+VkCommandBuffer BeginTempCmdBuffer(const APIWindow* _pWindow)
 {
 
   VkCommandBufferAllocateInfo oAllocInfo{};
@@ -1576,7 +1568,7 @@ VkCommandBuffer BeginTempCmdBuffer(APIWindow* _pWindow)
     return hCommandBuffer;
 }
 
-void EndTempCmdBuffer(APIWindow* _pWindow, VkCommandBuffer _hCmdBuffer)
+void EndTempCmdBuffer(const APIWindow* _pWindow, VkCommandBuffer _hCmdBuffer)
 {
   VK_CHECK(vkEndCommandBuffer(_hCmdBuffer))
 
@@ -1862,6 +1854,56 @@ void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eS
   }  
 }
 
+void AddBufferToDescSetUpdater(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, size_t _uSize, uint32_t uBinding, PipelineStageFlags _uStageFlags)
+{
+  if (s_oGlobalData.m_bRenderBegan)
+  {
+    VkDescriptorBufferInfo oBufferInfo{};
+    oBufferInfo.buffer = _pCBuffer->m_pUniformBuffers[_pWindow->m_uCurrFrameIdx];
+    oBufferInfo.offset = 0;
+    oBufferInfo.range = _uSize;
+
+    s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, _pWindow->m_uCurrFrameIdx, _uStageFlags);
+  }
+  else
+  {   
+    for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
+    {
+      VkDescriptorBufferInfo oBufferInfo{};
+      oBufferInfo.buffer = _pCBuffer->m_pUniformBuffers[i];
+      oBufferInfo.offset = 0;
+      oBufferInfo.range = _uSize;
+
+      s_oGlobalData.m_oDescSetUpdater.AddBufferInfo(std::move(oBufferInfo), uBinding, i, _uStageFlags);
+    }
+  }
+}
+
+void AddImageToDescSetUpdater(const APIWindow* _pWindow, APITexture* _pTexture, uint32_t uBinding, PipelineStageFlags _uStageFlags)
+{  
+  if (s_oGlobalData.m_bRenderBegan)
+  {
+    VkDescriptorImageInfo oImageInfo{};
+    oImageInfo.sampler = _pTexture->m_hSampler;
+    oImageInfo.imageView = _pTexture->m_hImageView;
+    oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, _pWindow->m_uCurrFrameIdx, _uStageFlags);
+  }
+  else
+  {
+    for (int i = 0; i < _pWindow->m_uSwapchainImageCount; i++)
+    {
+      VkDescriptorImageInfo oImageInfo{};
+      oImageInfo.sampler = _pTexture->m_hSampler;
+      oImageInfo.imageView = _pTexture->m_hImageView;
+      oImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+      s_oGlobalData.m_oDescSetUpdater.AddImageInfo(std::move(oImageInfo), uBinding, i, _uStageFlags);
+    }
+  }
+}
+
 static void check_vk_result(VkResult err)
 {
   if (err == 0)
@@ -1871,7 +1913,7 @@ static void check_vk_result(VkResult err)
     abort();
 }
 
-void SetupImGui(APIWindow* _pWindow)
+void SetupImGui(const APIWindow* _pWindow)
 {
   ImGui_ImplGlfw_InitForVulkan(_pWindow->m_pGlfwWindow, true);
 

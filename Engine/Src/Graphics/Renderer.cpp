@@ -1,4 +1,5 @@
 #include "Graphics/Renderer.h"
+#include "Graphics/Renderer.h"
 
 #include "Core/Engine.h"
 #include "Graphics/API/GraphicsAPI.h"
@@ -88,7 +89,18 @@ void Renderer::InitializePostWindow()
   Camera oCamera = {};
   oCamera.Configure("", true);  
   oCamera.UpdateTransform(Transform::GetIdentity());
-  oCamera.PreRenderSetup();
+
+  // Setup camera substate
+  api::BeginSubStateSetup(ENGINE_API_WINDOW, oCamera.m_pSubState, ResourceFrequency::GLOBAL);
+
+  ResourceBindInfo oGlobalBufferBindInfo{};
+  oGlobalBufferBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+  oGlobalBufferBindInfo.m_uStageFlags = STAGE_VERTEX | STAGE_PIXEL;
+  oGlobalBufferBindInfo.m_sName = "GlobalBuffer";
+  api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, oCamera.m_pCBuffer->m_pAPICbuffer, oCamera.m_pCBuffer->GetSize(), oGlobalBufferBindInfo);
+
+  //Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);
+  api::EndSubStateSetup(ENGINE_API_WINDOW);
 
   Mesh oCubeMesh = {};
   SetupCubeMesh(&oCubeMesh);
@@ -176,7 +188,7 @@ void Renderer::InitializePostWindow()
 
   Engine::GetInstance()->GetWindow()->BeginDrawOffline();
 
-  oCubemapStep.Execute(&oCamera, &Transform::GetIdentity());
+  oCubemapStep.Execute(&oCamera, &Transform::GetIdentity(), true);
 
   m_pEnvMapSpec->Unbind();
 
@@ -185,15 +197,22 @@ void Renderer::InitializePostWindow()
   Engine::GetInstance()->GetWindow()->EndDraw();
 
   // Perform convolution on specular envMap to generate diffuse envmap
-
-  oCamera.SetSkybox(m_pEnvMapSpec->GetColorTextures()[0].get());
-  oCamera.PreRenderSetup();
+  
+  // Setup camera substate again
+  api::BeginSubStateSetup(ENGINE_API_WINDOW, oCamera.m_pSubState, ResourceFrequency::GLOBAL);
+  api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, oCamera.m_pCBuffer->m_pAPICbuffer, oCamera.m_pCBuffer->GetSize(), oGlobalBufferBindInfo);  
+  ResourceBindInfo oSkyboxBindInfo{};
+  oSkyboxBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+  oSkyboxBindInfo.m_uStageFlags = STAGE_PIXEL;
+  oSkyboxBindInfo.m_sName = "Skybox";
+  api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapSpec->GetColorTextures()[0].get()->m_pAPITexture, oSkyboxBindInfo);
+  api::EndSubStateSetup(ENGINE_API_WINDOW);
 
   Engine::GetInstance()->GetWindow()->WaitForLastImage();
 
   Engine::GetInstance()->GetWindow()->BeginDrawOffline();
 
-  oConvolutionStep.Execute(&oCamera, &Transform::GetIdentity());
+  oConvolutionStep.Execute(&oCamera, &Transform::GetIdentity(), true);
 
   m_pEnvMapDiff->Unbind();
 
@@ -299,21 +318,21 @@ RenderPipeline* Renderer::GetRenderPipeline(std::string _sPipelineId)
 
   return nullptr;
 }
+//
+//void Renderer::SetupSubStateLightCBuffers(ResourceFrequency _eFrequency)
+//{
+//  m_pLightCBuff->SetupRenderSubState("LightBuffer", STAGE_PIXEL, _eFrequency);
+//}
 
-void Renderer::SetupSubStateLightCBuffers(ResourceFrequency _eFrequency)
-{
-  m_pLightCBuff->SetupRenderSubState("LightBuffer", STAGE_PIXEL, _eFrequency);
-}
-
-void Renderer::SetupSubStateShadowMaps(ResourceFrequency _eFrequency)
-{
-  static const char aNames[4][11] = { "ShadowMap0", "ShadowMap1", "ShadowMap2", "ShadowMap3" };
-  for (unsigned int i = 0u; i < m_lstShadowViews.size(); i++)
-  {
-    const RenderTarget* pShadowMap = m_lstShadowViews[i].m_pShadowMap;
-    pShadowMap->GetDepthStencilTexture()->SetupRenderSubState(aNames[i], STAGE_PIXEL, _eFrequency);
-  }
-}
+//void Renderer::SetupSubStateShadowMaps(ResourceFrequency _eFrequency)
+//{
+//  static const char aNames[4][11] = { "ShadowMap0", "ShadowMap1", "ShadowMap2", "ShadowMap3" };
+//  for (unsigned int i = 0u; i < m_lstShadowViews.size(); i++)
+//  {
+//    const RenderTarget* pShadowMap = m_lstShadowViews[i].m_pShadowMap;
+//    pShadowMap->GetDepthStencilTexture()->SetupRenderSubState(aNames[i], STAGE_PIXEL, _eFrequency);
+//  }
+//}
 
 void Renderer::Draw()
 {    
@@ -328,14 +347,35 @@ void Renderer::Draw()
   {    
 
     for (const ShadowView& rShadowView : m_lstShadowViews)
-    {
-      rShadowView.m_pCamera->PreRenderSetup();
+    {      
+      api::BeginSubStateSetup(ENGINE_API_WINDOW, rShadowView.m_pCamera->m_pSubState, ResourceFrequency::GLOBAL);
+      ResourceBindInfo oBindInfo{};
+      oBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+      oBindInfo.m_uStageFlags = STAGE_VERTEX | STAGE_PIXEL;
+      oBindInfo.m_sName = "GlobalBuffer";
+      api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, rShadowView.m_pCamera->m_pCBuffer->m_pAPICbuffer, rShadowView.m_pCamera->m_pCBuffer->GetSize(), oBindInfo);      
+      ResourceBindInfo oSkyboxBindInfo{};
+      oSkyboxBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+      oSkyboxBindInfo.m_uStageFlags = STAGE_PIXEL;
+      oSkyboxBindInfo.m_sName = "Skybox";
+      api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapSpec->GetColorTextures()[0].get()->m_pAPITexture, oSkyboxBindInfo);
+      api::EndSubStateSetup(ENGINE_API_WINDOW);
     }
 
     for (CamView& rCamView : m_lstCamViews)
     {
-      rCamView.m_pCamera->SetSkybox(m_pEnvMapDiff->GetColorTextures()[0].get());
-      rCamView.m_pCamera->PreRenderSetup();
+      api::BeginSubStateSetup(ENGINE_API_WINDOW, rCamView.m_pCamera->m_pSubState, ResourceFrequency::GLOBAL);
+      ResourceBindInfo oBindInfo{};
+      oBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+      oBindInfo.m_uStageFlags = STAGE_VERTEX | STAGE_PIXEL;
+      oBindInfo.m_sName = "GlobalBuffer";
+      api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, rCamView.m_pCamera->m_pCBuffer->m_pAPICbuffer, rCamView.m_pCamera->m_pCBuffer->GetSize(), oBindInfo);
+      ResourceBindInfo oSkyboxBindInfo{};
+      oSkyboxBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+      oSkyboxBindInfo.m_uStageFlags = STAGE_PIXEL;
+      oSkyboxBindInfo.m_sName = "Skybox";
+      api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapDiff->GetColorTextures()[0].get()->m_pAPITexture, oSkyboxBindInfo);
+      api::EndSubStateSetup(ENGINE_API_WINDOW);
     }
 
     std::vector<owner_ptr<GeometryRenderStep>> lstShadowSteps(m_lstShadowViews.size());
@@ -355,13 +395,12 @@ void Renderer::Draw()
       
       pShadowStep->Setup();
 
-      pShadowStep->Execute(rShadowView.m_pCamera, rShadowView.m_pTransform);
+      pShadowStep->Execute(rShadowView.m_pCamera, rShadowView.m_pTransform, true);
 
       rShadowView.m_pShadowMap->Unbind();
 
       lstShadowSteps.push_back(std::move(pShadowStep));
     }
-
 
     m_pLightCBuff->Update();
 

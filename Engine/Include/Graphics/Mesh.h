@@ -30,11 +30,9 @@ public:
 
   void Initialize(const std::vector<Vertex>& _lstVertices, const std::vector<uint16_t>& _lstIndices);
 
-  void UpdateTransform(const Transform& _oParentTransform);  
+  void UpdateTransform(const Transform& _oParentTransform);   
 
-  void Draw() const;  
-
-private:
+public:
 
   api::APIMesh* m_pAPIMesh;
 

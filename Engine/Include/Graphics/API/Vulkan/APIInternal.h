@@ -16,7 +16,6 @@
 #include "Graphics/SamplerConfig.h"
 #include "Graphics/API/Vulkan/VulkanData.h"
 #include "Graphics/API/Vulkan/APIWindow.h"
-#include "Graphics/API/Vulkan/APICamera.h"
 #include "Graphics/API/Vulkan/APIMesh.h"
 #include "Graphics/API/Vulkan/APIConstantBuffer.h"
 #include "Graphics/API/Vulkan/APIRenderState.h"
@@ -62,7 +61,7 @@ namespace vk
 
   void CreatePhysicalDevice();
 
-  void CreatePipeline(const file::InFile& _oVSFile, const file::InFile& _oPSFile, const file::InFile* _pGSFile, const RenderStateInfo& _oInfo, VkRenderPass _hRenderPass, VkSampleCountFlagBits _uMsaaSamples, APIRenderState* _pRenderState_);
+  void CreatePipeline(const APIWindow* _pWindow, const file::InFile& _oVSFile, const file::InFile& _oPSFile, const file::InFile* _pGSFile, const RenderStateInfo& _oInfo, VkRenderPass _hRenderPass, VkSampleCountFlagBits _uMsaaSamples, APIRenderState* _pRenderState_);
 
   void CreateLogicalDevice(APIWindow* _pWindow);
 
@@ -76,7 +75,7 @@ namespace vk
 
   void CreateSwapchain(APIWindow* _pWindow);
 
-  void CreateRenderPass(APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen, bool _bMultiview = false);  
+  void CreateRenderPass(const APIWindow* _pWindow, uint32_t _uNumColorTextures, VkFormat _eColorFormat, bool _bHasDepthStencil, VkFormat _eDepthStencilFormat, uint32_t _uMsaaSampleCount, VkRenderPass& hRenderPass_, bool _bOffscreen, bool _bMultiview = false);  
 
   void CreateCommandBuffers(APIWindow* _pWindow);
 
@@ -92,21 +91,21 @@ namespace vk
 
   uint32_t FindMemoryType(uint32_t _uTypeFilter, VkMemoryPropertyFlags _uProperties);
 
-  void CreateBuffer(APIWindow* _pWindow, size_t _uSize, VkBufferUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkBuffer& hBuffer_, VkDeviceMemory& hDeviceMemory_);
+  void CreateBuffer(const APIWindow* _pWindow, size_t _uSize, VkBufferUsageFlags _uUsage, VkMemoryPropertyFlags _uProperties, VkBuffer& hBuffer_, VkDeviceMemory& hDeviceMemory_);
 
-  void CreateImage(APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkImageCreateFlags _uCreateFlags, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
+  void CreateImage(const APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkImageCreateFlags _uCreateFlags, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
 
-  void CreateImageView(APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageViewType _eViewType, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
+  void CreateImageView(const APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageViewType _eViewType, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
 
-  void CreateTextureSampler(APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig);
+  void CreateTextureSampler(const APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig);
 
-  void DestroyBuffer(APIWindow* _pWindow, VkBuffer _hBuffer, VkDeviceMemory _hDeviceMemory_);
+  void DestroyBuffer(const APIWindow* _pWindow, VkBuffer _hBuffer, VkDeviceMemory _hDeviceMemory_);
 
-  void SetBufferData(APIWindow* _pWindow, const void* _pData, size_t _uSize, VkDeviceMemory& hDeviceMemory_);
+  void SetBufferData(const APIWindow* _pWindow, const void* _pData, size_t _uSize, VkDeviceMemory& hDeviceMemory_);
 
-  VkCommandBuffer BeginTempCmdBuffer(APIWindow* _pWindow);
+  VkCommandBuffer BeginTempCmdBuffer(const APIWindow* _pWindow);
 
-  void EndTempCmdBuffer(APIWindow* _pWindow, VkCommandBuffer _hCmdBuffer);
+  void EndTempCmdBuffer(const APIWindow* _pWindow, VkCommandBuffer _hCmdBuffer);
 
   void CopyBuffer(VkCommandBuffer _hCmdBuffer, VkBuffer _hSrcBuffer, VkBuffer _hDstBuffer, VkDeviceSize _uSize);
 
@@ -122,7 +121,11 @@ namespace vk
 
   void GetDescSetReflection(const APIRenderState* _pRenderState, PipelineStage _eStage, SpvReflectDescriptorSet* aDescSets_[4], uint32_t& uDescSetCount_);
 
-  void SetupImGui(APIWindow* _pWindow);
+  void AddBufferToDescSetUpdater(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, size_t _uSize, uint32_t uBinding, PipelineStageFlags _uStageFlags);
+
+  void AddImageToDescSetUpdater(const APIWindow* _pWindow, APITexture* _pTexture, uint32_t uBinding, PipelineStageFlags _uStageFlags);
+
+  void SetupImGui(const APIWindow* _pWindow);
 
 } // namespace vk
 } // namespace api

@@ -71,7 +71,7 @@ add_library(${PROJECT_NAME}
 	"Include/Graphics/MaterialLibrary.h"
 	"Include/Components/CameraComponent.h" 
 	"Src/Components/CameraComponent.cpp" 
-	"Include/Graphics/API/Vulkan/APICamera.h"
+	
 	"Include/Graphics/Camera.h"
 	"Src/Graphics/Camera.cpp" 
 	"Include/Util/KeyboardUtil.h" 
@@ -203,7 +203,7 @@ add_library(${PROJECT_NAME}
 	"../imgui/backends/imgui_impl_dx11.h"
 	"../imgui/backends/imgui_impl_dx11.cpp"
     "../imgui/backends/imgui_impl_glfw.h"
-    "../imgui/backends/imgui_impl_glfw.cpp" ) 
+    "../imgui/backends/imgui_impl_glfw.cpp"  "Include/Graphics/CBufferDataTypes.h" "Include/Graphics/PipelineLayoutConfig.h") 
 
 target_include_directories(${PROJECT_NAME}
 	PUBLIC

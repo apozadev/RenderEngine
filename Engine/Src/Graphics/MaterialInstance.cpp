@@ -2,6 +2,7 @@
 #include "Graphics/Resource.h"
 #include "Graphics/ResourceBindInfo.h"
 #include "Core/Exception.h"
+#include "Core/Engine.h"
 
 #include "Reflection/ReflectionImplMacros.h"
 
@@ -23,13 +24,17 @@ void MaterialInstance::SetupSubState(const Material* _pMaterial)
   m_pMaterial = _pMaterial;
 
   m_uId = matinstance_internal::s_uNextId++;
-  m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
+  m_pSubState = api::CreateAPIRenderSubState(ENGINE_API_WINDOW, ResourceFrequency::MATERIAL_INSTANCE);
 
-  api::BeginSubStateSetup(m_pSubState);
+  api::BeginSubStateSetup(ENGINE_API_WINDOW, m_pSubState, ResourceFrequency::MATERIAL_INSTANCE);
 
   for (int i = 0; i < 4 && i < m_lstTextures.size(); i++)
-  {         
-    m_lstTextures[i]->SetupRenderSubState(s_aNames[i], STAGE_PIXEL, ResourceFrequency::MATERIAL_INSTANCE);
+  { 
+    ResourceBindInfo oBindInfo{};
+    oBindInfo.m_eLevel = ResourceFrequency::MATERIAL_INSTANCE;
+    oBindInfo.m_uStageFlags = STAGE_PIXEL;
+    oBindInfo.m_sName = s_aNames[i];
+    api::SubStateSetupTexture(ENGINE_API_WINDOW, m_lstTextures[i]->m_pAPITexture, oBindInfo);
   }
 
   /*for (const ConstantBufferBase* pCBuffer : m_lstCBuffers)
@@ -37,19 +42,19 @@ void MaterialInstance::SetupSubState(const Material* _pMaterial)
     pCBuffer->SetupRenderSubState(ResourceFrequency::MATERIAL_INSTANCE);
   }*/
 
-  api::EndSubStateSetup(ResourceFrequency::MATERIAL_INSTANCE);
+  api::EndSubStateSetup(ENGINE_API_WINDOW);
   
   m_bSetup = true;
 }
 
-void MaterialInstance::Bind() const
+void MaterialInstance::Bind(const Pass* _pPass) const
 {  
   if (!m_bSetup)
   {
     THROW_GENERIC_EXCEPTION("Material Instance was not set up")
   }  
 
-  api::BindAPIRenderSubState(m_pSubState, ResourceFrequency::MATERIAL_INSTANCE);
+  api::BindAPIRenderSubState(ENGINE_API_WINDOW, _pPass->m_pAPIRenderState, m_pSubState, ResourceFrequency::MATERIAL_INSTANCE);
 
   for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
   {

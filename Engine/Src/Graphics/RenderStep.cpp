@@ -20,21 +20,21 @@ RenderStep::RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstIn
   , m_lstInputs(std::move(_lstInputs))
   , m_pRenderTarget(_pRenderTarget)
 {
-  m_pAPIRenderSubState = api::CreateAPIRenderSubState(ResourceFrequency::RENDER_STEP);
+  m_pAPIRenderSubState = api::CreateAPIRenderSubState(ENGINE_API_WINDOW, ResourceFrequency::RENDER_STEP);
 }
 
 RenderStep::~RenderStep()
 {
-  api::DestroyRenderSubState(m_pAPIRenderSubState);
+  api::DestroyRenderSubState(ENGINE_API_WINDOW, m_pAPIRenderSubState);
 }
 
 void RenderStep::Setup() 
 {   
-  api::BeginSubStateSetup(m_pAPIRenderSubState);
+  api::BeginSubStateSetup(ENGINE_API_WINDOW, m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);
 
   SetupInternal();
 
-  api::EndSubStateSetup(ResourceFrequency::RENDER_STEP);
+  api::EndSubStateSetup(ENGINE_API_WINDOW);
 }
 
 void RenderStep::SetupInternal()
@@ -49,11 +49,15 @@ void RenderStep::SetupInternal()
 
   for (int i = 0; i < m_lstInputs.size(); i++)
   {    
-    m_lstInputs[i]->SetupRenderSubState(s_aNames[i], STAGE_PIXEL, ResourceFrequency::RENDER_STEP);
+    ResourceBindInfo oBindInfo{};
+    oBindInfo.m_eLevel = ResourceFrequency::RENDER_STEP;
+    oBindInfo.m_uStageFlags = STAGE_PIXEL;
+    oBindInfo.m_sName = s_aNames[i];
+    api::SubStateSetupTexture(ENGINE_API_WINDOW, m_lstInputs[i]->m_pAPITexture, oBindInfo);
   }
 }
 
-void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransform)
+void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransform, bool _bDoBindRT)
 {
 
   Prepare(_pCamera, _pViewTransform);
@@ -64,9 +68,11 @@ void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransfor
   {
     pPass->Bind();
 
-    _pCamera->Bind();
+    api::BindAPIRenderSubState(ENGINE_API_WINDOW, pPass->m_pAPIRenderState, _pCamera->m_pSubState, ResourceFrequency::GLOBAL);
 
-    Bind();
+    _pCamera->m_pCBuffer->Bind();
+
+    Bind(_bDoBindRT, pPass);
 
     ExecuteInternal(_pCamera, _pViewTransform);
 
@@ -79,21 +85,17 @@ const RenderTarget* RenderStep::GetRenderTarget() const
   return m_pRenderTarget;
 }
 
-void RenderStep::Bind() const
+void RenderStep::Bind(bool _bDoBindRT, const Pass* _pPass) const
 {
-
-  if (m_pRenderTarget)
+  if (_bDoBindRT)
   {
-    if (!m_pRenderTarget->IsBound())
+    if (m_pRenderTarget)
     {
       m_pRenderTarget->Bind();
     }
-  }
-  else
-  {
-    if (!Engine::GetInstance()->GetWindow()->IsDefaultRenderTargetBound())
-    {
-      Engine::GetInstance()->GetWindow()->BindDefaultRenderTarget();
+    else
+    {      
+      Engine::GetInstance()->GetWindow()->BindDefaultRenderTarget();      
     }
   }
 
@@ -102,7 +104,7 @@ void RenderStep::Bind() const
     _pInput->Bind();
   }  
 
-  api::BindAPIRenderSubState(m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);
+  api::BindAPIRenderSubState(ENGINE_API_WINDOW, _pPass->m_pAPIRenderState, m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);
 }
 
 void RenderStep::Unbind() const

@@ -21,8 +21,6 @@ namespace vk
     uint32_t m_uWidth;
     uint32_t m_uHeight;
     VkImageLayout m_aCurrLayouts[TEXTURE2D_MAX_MIP_LEVELS];
-
-    APIWindow* m_pOwnerWindow;
   };
 
 }

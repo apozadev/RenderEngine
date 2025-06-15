@@ -22,8 +22,6 @@ public:
 
   void Unbind() const;
 
-  bool IsBound() const;
-
   void Clear() const;
 
   const std::vector<owner_ptr<Texture2D>>& RenderTarget::GetColorTextures() const;
@@ -34,9 +32,11 @@ public:
 
   void Resize();
 
-private:
+public:
 
   api::APIRenderTarget* m_pAPIRenderTarget;
+
+private:
 
   std::vector<owner_ptr<Texture2D>> m_lstColorTextures;
 

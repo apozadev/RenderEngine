@@ -11,6 +11,8 @@ namespace api
 namespace vk
 {
 
+  struct APIWindow;
+
   class DescriptorSetLayoutBuilder
   {
 
@@ -32,7 +34,7 @@ namespace vk
 
     void Clear() { m_lstDescriptors.clear();}
 
-    const std::vector<VkDescriptorSetLayoutBinding>& GetDescriptors() { return m_lstDescriptors; }
+    const std::vector<VkDescriptorSetLayoutBinding>& GetDescriptors() const { return m_lstDescriptors; }
 
   private:
 
@@ -86,18 +88,25 @@ namespace vk
 
   public:
 
+    void SetLayoutBuilder(const DescriptorSetLayoutBuilder* _pLayoutBuilder) { m_pLayoutBuilder = _pLayoutBuilder; }
+    void SetDescriptorSets(VkDescriptorSet* _pDescSets) { m_pDescSets = _pDescSets; }
     void AddBufferInfo(VkDescriptorBufferInfo&& _oBufferInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStageFlags _uStageFlags);
     void AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uint32_t _uBinding, uint32_t _uSetIdx, PipelineStageFlags _uStageFlags);
 
-    void Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, DescriptorSetLayoutBuilder* _pLayoutBuilder);
+    void Update(const APIWindow*_pWindow);
 
     void Clear() 
     { 
       m_lstSetBufferInfos.clear(); 
-      m_lstSetImageInfos.clear();            
+      m_lstSetImageInfos.clear(); 
+      m_pLayoutBuilder = nullptr;
     }
 
   private:
+
+    const DescriptorSetLayoutBuilder* m_pLayoutBuilder;
+
+    VkDescriptorSet* m_pDescSets;
 
     std::vector<SetBoundBufferInfoList> m_lstSetBufferInfos;
     std::vector<SetBoundImgInfoList> m_lstSetImageInfos;

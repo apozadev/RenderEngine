@@ -32,14 +32,11 @@ public:
 
   bool ShouldClose() const;
 
-  void SetUsing() const;  
-
   int GetWidth() const;
   int GetHeight() const;
 
   void BindDefaultRenderTarget() const;
   void UnbindDefaultRenderTarget() const;
-  bool IsDefaultRenderTargetBound() const;
 
   uint32_t GetMsaaSamples() const;
 
@@ -51,11 +48,13 @@ private:
 
   friend void OnWindowResize(GLFWwindow* _pGflwWindow, int /*width*/, int /*height*/);
 
-private:  
-
-  GLFWwindow* m_pGlfwWindow;
+public:
 
   api::APIWindow* m_pAPIWindow;
+
+private:  
+
+  GLFWwindow* m_pGlfwWindow;  
 
   uint8_t m_uId;
 

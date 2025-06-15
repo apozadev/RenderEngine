@@ -12,8 +12,6 @@ namespace api
 namespace vk
 {
 
-struct APIWindow;
-
 struct APIRenderState
 {
 public:
@@ -23,8 +21,6 @@ public:
   VkDescriptorSet* m_pDescSets;
 
   VkDescriptorSetLayout m_hDescSetLayout;  
-
-  APIWindow* m_pOwnerWindow;
   
   DescriptorSetLayoutBuilder m_oMaterialLayoutBuilder;  
 

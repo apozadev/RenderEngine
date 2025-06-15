@@ -30,7 +30,7 @@ public:
 
   void SetupSubState(const Material* _pMaterial);
 
-  void Bind() const;    
+  void Bind(const Pass* _pPass) const;
 
 private:  
 

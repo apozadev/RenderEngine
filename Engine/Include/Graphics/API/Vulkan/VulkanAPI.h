@@ -37,9 +37,7 @@ namespace vk
 
 	// Window
 
-	APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow, uint32_t _uMsaaSamples);	
-
-	void SetUsingAPIWindow(APIWindow* _pWindow);	
+	APIWindow* CreateAPIWindow(GLFWwindow* _pGlfwWindow, uint32_t _uMsaaSamples);		
 
 	void OnWindowResize(APIWindow* _pWindow);
 
@@ -55,47 +53,37 @@ namespace vk
 	
 	void UnbindDefaultRenderTarget(APIWindow* _pWindow);
 
-	bool IsDefaultRenderTargetBound(APIWindow* _pWindow);
-
 	void DestroyAPIWindow(APIWindow* _pAPIWindow);
-
-	// Camera
-
-	APICamera* CreateAPICamera();
-
-	void BindAPICamera(APICamera* _pCamera);
-
-	void DestroyAPICamera(APICamera* _pCamera);
 
 	// Mesh
 
-	APIMesh* CreateAPIMesh(const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize);
+	APIMesh* CreateAPIMesh(const APIWindow* _pWindow, const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize);
 
-	void DestroyAPIMesh(APIMesh* _pMesh);
+	void DestroyAPIMesh(const APIWindow* _pWindow, APIMesh* _pMesh);
 
 	// Constant buffer
 	
-	APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize);
+	APIConstantBuffer* CreateAPIConstantBuffer(const APIWindow* _pWindow, size_t _uSize);
 
-	void UpdateAPIConstanBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize);
+	void UpdateAPIConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize);
 
-	void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer);
+	void BindAPIConstantBuffer(const APIWindow*_pWindow, APIConstantBuffer* _pCbuffer);
 
-	void DestroyAPIConstanBuffer(APIConstantBuffer* _pCBuffer);
+	void DestroyAPIConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer);
 
 	// Texture
 
-	APITexture* CreateAPITexture(const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap);
+	APITexture* CreateAPITexture(const APIWindow* _pWindow, const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap);
 
-	void GenerateMipMaps(APITexture* _pTexture);
+	void GenerateMipMaps(const APIWindow* _pWindow, APITexture* _pTexture);
 
-	void BindAPITexture(APITexture* _pTexture);
+	void BindAPITexture(const APIWindow* _pWindow, APITexture* _pTexture);
 
-	void UnbindAPITexture(APITexture* _pTexture);
+	void UnbindAPITexture(const APIWindow* _pWindow, APITexture* _pTexture);
 
-	void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage);
+	void ClearAPITexture(const APIWindow* _pWindow, APITexture* _pTexture, TextureUsage _eUsage);
 
-	void DestroyAPITexture(APITexture* _pTexture);
+	void DestroyAPITexture(const APIWindow* _pWindow, APITexture* _pTexture);
 
 	// RenderTarget
 
@@ -109,33 +97,31 @@ namespace vk
 
 	void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
 
-	void EndRenderTargetSetup();
+	void EndRenderTargetSetup(const APIWindow* _pWindow);
 
-	void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+	void ClearAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget);
 
-	void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+	void BindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget);
 
-	void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
+	void UnbindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget);
 
-	void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget);
-
-	bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget);
-
-	void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget);	
+	void DestroyAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget);
 
 	// Render state
 
-	APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples);
+	APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples);
 
 	void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
 
-	void EndRenderStateSetup();
+	void RenderStateSetupTexture(const APIWindow* _pWindow, APITexture* _pTexture, const ResourceBindInfo& _oBindInfo, const APIRenderState* _pRenderState);
 
-	void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState);
+	void RenderStateSetupConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo, const APIRenderState* _pRenderState);
 
-	void BindAPIRenderState(APIRenderState* _pAPIRenderState);	
+	void EndRenderStateSetup(const APIWindow* _pWindow);
 
-	void DestroyAPIRenderState(APIRenderState* _pAPIRenderState);
+	void BindAPIRenderState(const APIWindow* _pWindow, APIRenderState* _pAPIRenderState);
+
+	void DestroyAPIRenderState(const APIWindow* _pWindow, APIRenderState* _pAPIRenderState);
 
 	// Shader Reflection
 
@@ -159,29 +145,29 @@ namespace vk
 
 	// Render substate
 
-	APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency);
+	APIRenderSubState* CreateAPIRenderSubState(const APIWindow* _pWindow, ResourceFrequency _eFrequency);
 
-	void BeginSubStateSetup(APIRenderSubState* _pAPIRenderState);
+	void BeginSubStateSetup(const APIWindow* _pWindow, APIRenderSubState* _pAPIRenderState, ResourceFrequency _eFrequency);
 
-	void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo);
+	void SubStateSetupConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, size_t _uSize, const ResourceBindInfo& _oBindInfo);
 
-	void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);	
+	void SubStateSetupTexture(const APIWindow* _pWindow, APITexture* _pTexture, const ResourceBindInfo& _oBindInfo);	
 
-	void EndSubStateSetup(ResourceFrequency _eFrequency);
+	void EndSubStateSetup(const APIWindow* _pWindow);
 
-	void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency);
+	void BindAPIRenderSubState(const APIWindow* _pWindow, APIRenderState* _pRenderState, APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency);
 
-	void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState);
+	void DestroyRenderSubState(const APIWindow* _pWindow, APIRenderSubState* _pAPIRenderSubState);
 
 	// Drawing
 
-	void WaitForLastImage(APIWindow* _pWindow);
+	void WaitForLastImage(const APIWindow* _pWindow);
 
 	int BeginDraw(APIWindow* _pWindow);
 
 	void BeginDrawOffline(APIWindow* _pWindow);
 
-	void DrawMesh(APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize);
+	void DrawMesh(const APIWindow* _pWindow, APIRenderState* _pRenderState, APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize);
 
 	void EndDraw(APIWindow* _pWindow);
 

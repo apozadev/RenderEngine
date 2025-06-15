@@ -103,16 +103,19 @@ private:
 
   void ReflectCBuffers(PipelineStage _eStage);
 
+public:
+
+  api::APIRenderState* m_pAPIRenderState;
+
+  //api::APIRenderState* m_pShadowAPIRenderState;
+
 private:
 
   RenderStateInfo m_oInfo;
 
   uint16_t m_uId;
 
-  uint16_t m_uLayer;
-
-  api::APIRenderState* m_pAPIRenderState;
-  api::APIRenderState* m_pShadowAPIRenderState; 
+  uint16_t m_uLayer;  
 
   //std::vector<owner_ptr<Texture2D>> m_lstTextures;
 

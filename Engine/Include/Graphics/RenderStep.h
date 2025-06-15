@@ -27,7 +27,7 @@ public:
   virtual void SubmitJob(Job&& _rJob) {};
   virtual void SubmitJobs(const std::vector<Job>& _rJob) {};
 
-  void Execute(const Camera* _pCamera, const Transform* _pViewTransform);  
+  void Execute(const Camera* _pCamera, const Transform* _pViewTransform, bool _bDoBindRT);
 
   const RenderTarget* GetRenderTarget() const;  
 
@@ -37,7 +37,7 @@ protected:
 
   virtual void Prepare(const Camera* _pCamera, const Transform* _pViewTransform) {};
 
-  void Bind() const;
+  void Bind(bool _bDoBindRT, const Pass* _pPass) const;
 
   void Unbind() const;
 

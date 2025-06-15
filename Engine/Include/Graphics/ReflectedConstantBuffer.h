@@ -21,19 +21,12 @@ public:
 
   void Configure(std::string _sName, PipelineStage _eStage, std::vector<Variable>&& _lstVariables, float* _pCache);
 
-  void SetupRenderSubState() const
-  {
-    ConstantBufferBase::SetupRenderSubState(m_uSize, m_sName, m_eStage, ResourceFrequency::MATERIAL);
-  }
-
   void Update() const
   {
     ConstantBufferBase::Update(m_pData, m_uSize);
   }
 
-  const std::string& GetName() { return m_sName; }
-
-  size_t GetSize() const { return m_uSize; }
+  const std::string& GetName() { return m_sName; }  
 
   const std::vector<Variable>& GetVariables() { return m_lstVariables; }
 
@@ -110,12 +103,11 @@ public:
     return false;
   }
 
-protected:
+  size_t GetSize() const override { return m_uSize; }
 
-  void SetupRenderSubState(const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const override
-  {
-    ConstantBufferBase::SetupRenderSubState(m_uSize, _sName, _uStageFlags, _eFrequency);
-  }
+  const std::string& GetName() const { return m_sName; }
+
+  PipelineStage GetPipelineStage() const { return m_eStage; }
 
 private:
 

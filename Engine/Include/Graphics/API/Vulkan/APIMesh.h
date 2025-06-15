@@ -10,13 +10,10 @@ namespace api
 namespace vk
 {
 
-  struct APIWindow;
-
   struct APIMesh
   {
   public:
 
-    APIWindow* m_pOwnerWindow;    
     VkBuffer m_hVertexBuffer;    
     VkDeviceMemory m_hVertexBufferMemory;    
     VkBuffer m_hIndexBuffer;

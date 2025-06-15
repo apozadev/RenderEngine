@@ -34,11 +34,6 @@ namespace api
     return API::CreateAPIWindow(_pGlfwWindow, _uMsaaSamples);
   }
 
-  void SetUsingAPIWindow(APIWindow* _pWindow)
-  {
-    API::SetUsingAPIWindow(_pWindow);
-  }
-
   void OnWindowResize(APIWindow* _pWindow)
   {
     API::OnWindowResize(_pWindow);
@@ -74,97 +69,75 @@ namespace api
     API::UnbindDefaultRenderTarget(_pWindow);
   }
 
-  bool IsDefaultRenderTargetBound(APIWindow* _pWindow)
-  {
-    return API::IsDefaultRenderTargetBound(_pWindow);
-  }
-
   void DestroyAPIWindow(APIWindow* _pWindow)
   {
     API::DestroyAPIWindow(_pWindow);
   }
 
-  // Camera
-
-  APICamera* CreateAPICamera()
-  {
-    return API::CreateAPICamera();
-  }
-
-  void BindAPICamera(APICamera* _pCamera)
-  {
-    API::BindAPICamera(_pCamera);
-  }
-
-  void DestroyAPICamera(APICamera* _pCamera)
-  {
-    API::DestroyAPICamera(_pCamera);
-  }
-
   // Mesh
 
-  APIMesh* CreateAPIMesh(const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize)
+  APIMesh* CreateAPIMesh(const APIWindow* _pWindow, const void* _pVertexData, size_t _uVertexDataSize, const void* _pIndexData, size_t _uIndexDataSize)
   {
-    return API::CreateAPIMesh(_pVertexData, _uVertexDataSize, _pIndexData, _uIndexDataSize);
+    return API::CreateAPIMesh(_pWindow, _pVertexData, _uVertexDataSize, _pIndexData, _uIndexDataSize);
   }
 
-  void DestroyAPIMesh(APIMesh* _pMesh)
+  void DestroyAPIMesh(const APIWindow* _pWindow, APIMesh* _pMesh)
   {
-    API::DestroyAPIMesh(_pMesh);
+    API::DestroyAPIMesh(_pWindow, _pMesh);
   }
 
   // ConstantBuffer
 
-  APIConstantBuffer* CreateAPIConstantBuffer(size_t _uSize)
+  APIConstantBuffer* CreateAPIConstantBuffer(const APIWindow* _pWindow, size_t _uSize)
   {
-    return API::CreateAPIConstantBuffer(_uSize);
+    return API::CreateAPIConstantBuffer(_pWindow, _uSize);
   }
 
-  void UpdateAPIConstantBuffer(APIConstantBuffer* _pCbuffer, const void* _pData, size_t _uSize)
+  void UpdateAPIConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCbuffer, const void* _pData, size_t _uSize)
   {
-    API::UpdateAPIConstanBuffer(_pCbuffer, _pData, _uSize);
+    API::UpdateAPIConstantBuffer(_pWindow, _pCbuffer, _pData, _uSize);
   }
 
-  void BindAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
+  void BindAPIConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCbuffer)
   {
-    API::BindAPIConstantBuffer(_pCbuffer);
+    API::BindAPIConstantBuffer(_pWindow, _pCbuffer);
   }
 
-  void DestroyAPIConstantBuffer(APIConstantBuffer* _pCbuffer)
+  void DestroyAPIConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCbuffer)
   {
-    API::DestroyAPIConstanBuffer(_pCbuffer);
+    API::DestroyAPIConstantBuffer(_pWindow, _pCbuffer);
   }
 
   // Texture
 
-  APITexture* CreateAPITexture(const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap)
+  APITexture* CreateAPITexture(const APIWindow* _pWindow, const void* const* _ppData, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, uint32_t _uMipLevels, uint32_t _uMsaaSamples, uint32_t _uUsage, const SamplerConfig& _rSamplerConfig, bool _bIsCubemap)
   {
-    return API::CreateAPITexture(_ppData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage, _rSamplerConfig, _bIsCubemap);
+    return API::CreateAPITexture(_pWindow, _ppData, _uWidth, _uHeight, _eFormat, _uMipLevels, _uMsaaSamples, _uUsage, _rSamplerConfig, _bIsCubemap);
   }
 
-  void GenerateMipMaps(APITexture* _pTexture)
+  void GenerateMipMaps(const APIWindow* _pWindow, APITexture* _pTexture)
   {
-    API::GenerateMipMaps(_pTexture);
+    API::GenerateMipMaps(_pWindow, _pTexture);
   }
 
-  void BindAPITexture(APITexture* _pTexture)
+  void BindAPITexture(const APIWindow* _pWindow, APITexture* _pTexture)
   {
-    API::BindAPITexture(_pTexture);
+    API::BindAPITexture(_pWindow, _pTexture);
   }
 
-  void UnbindAPITexture(APITexture* _pTexture)
+  void UnbindAPITexture(const APIWindow* _pWindow, APITexture* _pTexture)
   {
-    API::UnbindAPITexture(_pTexture);
+    API::UnbindAPITexture(_pWindow, _pTexture);
   }
 
-  void ClearAPITexture(APITexture* _pTexture, TextureUsage _eUsage)
+  void ClearAPITexture(const APIWindow* _pWindow, APITexture* _pTexture, TextureUsage _eUsage)
   {
-    API::ClearAPITexture(_pTexture, _eUsage);
+    API::ClearAPITexture(_pWindow, _pTexture, _eUsage);
   }
   
-  void DestroyAPITexture(APITexture* _pTexture)
+  void DestroyAPITexture(const APIWindow* _pWindow, APITexture* _pTexture)
   {
-    API::DestroyAPITexture(_pTexture);
+    API::DestroyAPITexture(_pWindow, _pTexture);
   }
 
   // RenderTarget
@@ -174,9 +147,9 @@ namespace api
     return API::CreateAPIRenderTarget();
   }
 
-  void BindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  void BindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
   {
-    API::BindAPIRenderTarget(_pRenderTarget);
+    API::BindAPIRenderTarget(_pWindow, _pRenderTarget);
   }
 
   void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples, bool _bIsCubemap)
@@ -199,42 +172,32 @@ namespace api
     API::RenderTargetAddColorResolveTexture(_pTexture);
   }
 
-  void EndRenderTargetSetup()
+  void EndRenderTargetSetup(const APIWindow* _pWindow)
   {
-    API::EndRenderTargetSetup();
+    API::EndRenderTargetSetup(_pWindow);
   }
 
-  void ClearAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  void ClearAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
   {
-    API::ClearAPIRenderTarget(_pRenderTarget);
+    API::ClearAPIRenderTarget(_pWindow, _pRenderTarget);
   }
 
-  void SetUsingAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  void UnbindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
   {
-    API::SetUsingAPIRenderTarget(_pRenderTarget);
+    API::UnbindAPIRenderTarget(_pWindow, _pRenderTarget);
   }
 
-  void UnbindAPIRenderTarget(APIRenderTarget* _pRenderTarget)
+  void DestroyAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
   {
-    API::UnbindAPIRenderTarget(_pRenderTarget);
-  }
-
-  bool IsAPIRenderTargetBound(APIRenderTarget* _pRenderTarget)
-  {
-    return API::IsAPIRenderTargetBound(_pRenderTarget);
-  }
-
-  void DestroyAPIRenderTarget(APIRenderTarget* _pRenderTarget)
-  {
-    API::DestroyAPIRenderTarget(_pRenderTarget);
+    API::DestroyAPIRenderTarget(_pWindow, _pRenderTarget);
   }
 
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState(const RenderStateInfo& _oInfo, uint32_t _uMsaaSamples)
+  APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples)
   {
-    return API::CreateAPIRenderState(_oInfo, _uMsaaSamples);
+    return API::CreateAPIRenderState(_pWindow, _oInfo, _pRenderTarget, _uMsaaSamples);
   }
 
   void BeginRenderStateSetup(APIRenderState* _pAPIRenderState)
@@ -242,24 +205,29 @@ namespace api
     API::BeginRenderStateSetup(_pAPIRenderState);
   }
 
-  void EndRenderStateSetup()
+  void RenderStateSetupConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo, const APIRenderState* _pRenderState)
   {
-    API::EndRenderStateSetup();
+    API::RenderStateSetupConstantBuffer(_pWindow, _pCBuffer, size, _oBindInfo, _pRenderState);
   }
 
-  void SetUsingAPIRenderState(APIRenderState* _pAPIRenderState)
+  void RenderStateSetupTexture(const APIWindow* _pWindow, APITexture* _pTexture, const ResourceBindInfo& _oBindInfo, const APIRenderState* _pRenderState)
   {
-    API::SetUsingAPIRenderState(_pAPIRenderState);
+    API::RenderStateSetupTexture(_pWindow, _pTexture, _oBindInfo, _pRenderState);
   }
 
-  void BindAPIRenderState(APIRenderState* _pAPIRenderState)
+  void EndRenderStateSetup(const APIWindow* _pWindow)
   {
-    API::BindAPIRenderState(_pAPIRenderState);
+    API::EndRenderStateSetup(_pWindow);
   }
 
-  void DestroyAPIRenderState(APIRenderState* _pAPIRenderState)
+  void BindAPIRenderState(const APIWindow* _pWindow, APIRenderState* _pAPIRenderState)
   {
-    API::DestroyAPIRenderState(_pAPIRenderState);
+    API::BindAPIRenderState(_pWindow, _pAPIRenderState);
+  }
+
+  void DestroyAPIRenderState(const APIWindow* _pWindow, APIRenderState* _pAPIRenderState)
+  {
+    API::DestroyAPIRenderState(_pWindow, _pAPIRenderState);
   }
 
   // Shader Reflection
@@ -312,44 +280,44 @@ namespace api
 
   // Render sub state
 
-  APIRenderSubState* CreateAPIRenderSubState(ResourceFrequency _eFrequency)
+  APIRenderSubState* CreateAPIRenderSubState(const APIWindow* _pWindow, ResourceFrequency _eFrequency)
   {
-    return API::CreateAPIRenderSubState(_eFrequency);
+    return API::CreateAPIRenderSubState(_pWindow, _eFrequency);
   }
 
-  void BeginSubStateSetup(APIRenderSubState* _pAPIRenderSubState)
+  void BeginSubStateSetup(const APIWindow* _pWindow, APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency)
   {
-    API::BeginSubStateSetup(_pAPIRenderSubState);
+    API::BeginSubStateSetup(_pWindow, _pAPIRenderSubState, _eFrequency);
   }
 
-  void SubStateSetupConstantBuffer(APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo)
+  void SubStateSetupConstantBuffer(const APIWindow* _pWindow, APIConstantBuffer* _pCBuffer, size_t size, const ResourceBindInfo& _oBindInfo)
   {
-    API::SubStateSetupConstantBuffer(_pCBuffer, size, _oBindInfo);
+    API::SubStateSetupConstantBuffer(_pWindow, _pCBuffer, size, _oBindInfo);
   }
 
-  void SubStateSetupTexture(APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
+  void SubStateSetupTexture(const APIWindow* _pWindow, APITexture* _pTexture, const ResourceBindInfo& _oBindInfo)
   {
-    API::SubStateSetupTexture(_pTexture, _oBindInfo);
+    API::SubStateSetupTexture(_pWindow, _pTexture, _oBindInfo);
   }
 
-  void EndSubStateSetup(ResourceFrequency _eFrequency)
+  void EndSubStateSetup(const APIWindow* _pWindow)
   {
-    API::EndSubStateSetup(_eFrequency);
+    API::EndSubStateSetup(_pWindow);
   }
 
-  void BindAPIRenderSubState(APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency)
+  void BindAPIRenderSubState(const APIWindow* _pWindow, APIRenderState* _pRenderState, APIRenderSubState* _pAPIRenderSubState, ResourceFrequency _eFrequency)
   {
-    API::BindAPIRenderSubState(_pAPIRenderSubState, _eFrequency);
+    API::BindAPIRenderSubState(_pWindow, _pRenderState, _pAPIRenderSubState, _eFrequency);
   }
 
-  void DestroyRenderSubState(APIRenderSubState* _pAPIRenderSubState)
+  void DestroyRenderSubState(const APIWindow* _pWindow, APIRenderSubState* _pAPIRenderSubState)
   {
-    API::DestroyRenderSubState(_pAPIRenderSubState);
+    API::DestroyRenderSubState(_pWindow, _pAPIRenderSubState);
   }
 
   // Drawing
 
-  void WaitForLastImage(APIWindow* _pWindow)
+  void WaitForLastImage(const APIWindow* _pWindow)
   {
     API::WaitForLastImage(_pWindow);
   }
@@ -364,9 +332,9 @@ namespace api
     return API::BeginDrawOffline(_pWindow);
   }
 
-  void DrawMesh(APIMesh* _pMesh, uint32_t _uVertexCount, const void* _pConstantData, uint32_t _uConstantSize)
+  void DrawMesh(const APIWindow* _pWindow, APIRenderState* _pRenderState, APIMesh* _pMesh, uint32_t _uIndexCount, const void* _pConstantData, uint32_t _uConstantSize)
   {
-    API::DrawMesh(_pMesh, _uVertexCount, _pConstantData, _uConstantSize);
+    API::DrawMesh(_pWindow, _pRenderState, _pMesh, _uIndexCount, _pConstantData, _uConstantSize);
   }
 
   void EndDraw(APIWindow* _pWindow)

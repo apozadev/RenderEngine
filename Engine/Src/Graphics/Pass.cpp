@@ -100,18 +100,17 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
   }
   else
   {
-    api::SetUsingAPIRenderTarget(nullptr);
-    uMsaaSamples = Engine::GetInstance()->GetWindow()->GetMsaaSamples();
+    uMsaaSamples = api::GetWindowMSAASamples(ENGINE_API_WINDOW);
   }
 
   if (m_pAPIRenderState != nullptr)
   {
-    api::DestroyAPIRenderState(m_pAPIRenderState);
+    api::DestroyAPIRenderState(ENGINE_API_WINDOW, m_pAPIRenderState);
   }
 
   m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
 
-  m_pAPIRenderState = api::CreateAPIRenderState(m_oInfo, uMsaaSamples);
+  m_pAPIRenderState = api::CreateAPIRenderState(ENGINE_API_WINDOW, m_oInfo, _pRenderTarget ? _pRenderTarget->m_pAPIRenderTarget : nullptr, uMsaaSamples);
 
   // Reflect constant buffers  
   ReflectCBuffers(STAGE_VERTEX);
@@ -177,7 +176,7 @@ void Pass::ReflectCBuffers(PipelineStage _eStage)
 
 Pass::~Pass()
 {  
-  api::DestroyAPIRenderState(m_pAPIRenderState);
+  api::DestroyAPIRenderState(ENGINE_API_WINDOW, m_pAPIRenderState);
 }
 
 void Pass::Setup() const
@@ -192,16 +191,20 @@ void Pass::Setup() const
 
   for (const owner_ptr<ReflectedConstantBuffer>& pCBuffer : m_lstCBuffers)
   {
-    pCBuffer->SetupRenderSubState();
+    ResourceBindInfo oBindInfo{};
+    oBindInfo.m_eLevel = ResourceFrequency::MATERIAL;
+    oBindInfo.m_uStageFlags = pCBuffer->GetPipelineStage();
+    oBindInfo.m_sName = pCBuffer->GetName();
+    api::RenderStateSetupConstantBuffer(ENGINE_API_WINDOW, pCBuffer->m_pAPICbuffer, pCBuffer->GetSize(), oBindInfo, m_pAPIRenderState);
   }
 
-  api::EndRenderStateSetup();
+  api::EndRenderStateSetup(ENGINE_API_WINDOW);
 }
 
 void Pass::Bind() const
 {
 
-  api::BindAPIRenderState(m_pAPIRenderState);
+  api::BindAPIRenderState(ENGINE_API_WINDOW, m_pAPIRenderState);
 
   /*for (const owner_ptr<Texture2D>& pTexture : m_lstTextures)
   {
@@ -217,7 +220,6 @@ void Pass::Bind() const
 
 void Pass::SetUsing() const
 {
-  api::SetUsingAPIRenderState(m_pAPIRenderState);
 }
 
 bool Pass::GetFloat(const char* _sName, float* pOutValue_) const 

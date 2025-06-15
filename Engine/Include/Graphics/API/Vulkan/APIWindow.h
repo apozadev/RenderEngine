@@ -67,8 +67,6 @@ namespace vk
 
     APITexture* m_pDummyTexture;
 
-    bool m_bDefaultRenderTargetBound = false;
-
     bool m_bResized = false;
 
     VkSampleCountFlagBits m_eMsaaSamples;

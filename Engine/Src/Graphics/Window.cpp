@@ -86,11 +86,6 @@ void Window::PollEvents() const
   glfwPollEvents();
 }
 
-void Window::SetUsing() const
-{
-  api::SetUsingAPIWindow(m_pAPIWindow);
-}
-
 void Window::SwapBuffers() const 
 {
   //glfwSwapBuffers(m_pGlfwWindow);
@@ -114,11 +109,6 @@ void Window::BindDefaultRenderTarget() const
 void Window::UnbindDefaultRenderTarget() const
 {
   api::UnbindDefaultRenderTarget(m_pAPIWindow);
-}
-
-bool Window::IsDefaultRenderTargetBound() const
-{
-  return api::IsDefaultRenderTargetBound(m_pAPIWindow);
 }
 
 uint32_t Window::GetMsaaSamples() const

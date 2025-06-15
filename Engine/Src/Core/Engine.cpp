@@ -25,8 +25,6 @@ int Engine::Initialize(int _iWidth, int _iHeight, int _iMsaaSamples, const char*
 
   m_pWindow = std::make_unique<Window>(_iWidth, _iHeight, _iMsaaSamples, _sTitle);
 
-  m_pWindow->SetUsing();
-
   Renderer::GetInstance()->InitializePostWindow();
 
   m_pfPostUpdateCallback = nullptr;

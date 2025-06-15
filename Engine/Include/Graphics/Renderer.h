@@ -78,19 +78,21 @@ public:
 
   RenderPipeline* GetRenderPipeline(std::string _sPipelineId);
 
-  void SetupSubStateLightCBuffers(ResourceFrequency _eFrequency);
+  //void SetupSubStateLightCBuffers(ResourceFrequency _eFrequency);
 
-  void SetupSubStateShadowMaps(ResourceFrequency _eFrequency);  
+  //void SetupSubStateShadowMaps(ResourceFrequency _eFrequency);  
   
   void Draw();  
+
+public:
+
+  owner_ptr<ConstantBuffer<LightData>> m_pLightCBuff;
 
 private:  
 
   std::vector<CamView> m_lstCamViews;  
 
-  std::vector<RenderPipeline> m_lstRenderPipelines;  
-
-  owner_ptr<ConstantBuffer<LightData>> m_pLightCBuff;  
+  std::vector<RenderPipeline> m_lstRenderPipelines;    
 
   std::vector<ShadowView> m_lstShadowViews;  
 

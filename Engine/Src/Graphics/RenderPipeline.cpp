@@ -59,25 +59,30 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
   const RenderTarget* pLastRT = nullptr;
   bool bLastRtIsDefault = false;
 
+  bool bDoBindRT = true;
+
   for (unsigned int i = 0u; i < m_lstRenderSteps.size(); i++)
   {    
 
-    owner_ptr<RenderStep>& pStep = m_lstRenderSteps[i];
+    owner_ptr<RenderStep>& pStep = m_lstRenderSteps[i];    
 
     // Unbind last RT if necessary
     if (pLastRT != pStep->GetRenderTarget() && pLastRT != nullptr)
     {
       pLastRT->Unbind();
+      bDoBindRT = true;
     }
     else if (bLastRtIsDefault && pStep->GetRenderTarget() != nullptr)
     {
       Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
-    }
+      bDoBindRT = true;
+    }     
     
-    pStep->Execute(_pCamera, _pViewTransform);    
+    pStep->Execute(_pCamera, _pViewTransform, bDoBindRT);
 
     pLastRT = pStep->GetRenderTarget();
     bLastRtIsDefault = pLastRT == nullptr;    
+    bDoBindRT = false;
   }
 
   // Unbind last RT

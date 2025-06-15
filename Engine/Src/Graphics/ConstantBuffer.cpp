@@ -1,31 +1,24 @@
 #include "Graphics/ConstantBuffer.h"
 #include "Graphics/ResourceBindInfo.h"
+#include "Core/Engine.h"
+#include "Graphics/API/GraphicsAPI.h"
 
 void ConstantBufferBase::Configure(size_t _uSize)
 {  
-  m_pAPICbuffer = api::CreateAPIConstantBuffer(_uSize);  
+  m_pAPICbuffer = api::CreateAPIConstantBuffer(ENGINE_API_WINDOW, _uSize);
 }
 
 ConstantBufferBase::~ConstantBufferBase()
 {
-  api::DestroyAPIConstantBuffer(m_pAPICbuffer);
+  api::DestroyAPIConstantBuffer(ENGINE_API_WINDOW, m_pAPICbuffer);
 }
 
 void ConstantBufferBase::Update(const void* _pData, size_t _uSize) const
 {
-  api::UpdateAPIConstantBuffer(m_pAPICbuffer, _pData, _uSize);  
-}
-
-void ConstantBufferBase::SetupRenderSubState(size_t _uSize, const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const
-{  
-  ResourceBindInfo oBindInfo{};
-  oBindInfo.m_eLevel = _eFrequency;
-  oBindInfo.m_uStageFlags = _uStageFlags;
-  oBindInfo.m_sName = _sName;
-  api::SubStateSetupConstantBuffer(m_pAPICbuffer, _uSize, oBindInfo);
+  api::UpdateAPIConstantBuffer(ENGINE_API_WINDOW, m_pAPICbuffer, _pData, _uSize);
 }
 
 void ConstantBufferBase::Bind() const
 {  
-  api::BindAPIConstantBuffer(m_pAPICbuffer);
+  api::BindAPIConstantBuffer(ENGINE_API_WINDOW, m_pAPICbuffer);
 }

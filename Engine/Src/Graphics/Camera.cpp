@@ -22,12 +22,10 @@ void Camera::Configure(const std::string&  _sRenderPipelineId, bool _bOrtho, flo
 
   m_fAspect = _fAspect;
 
-  m_pAPICamera = api::CreateAPICamera();
-
   m_pCBuffer = Factory::Create<ConstantBuffer<GlobalBufferData>>();
   m_pCBuffer->Configure();
 
-  m_pSubState = api::CreateAPIRenderSubState(ResourceFrequency::GLOBAL);  
+  m_pSubState = api::CreateAPIRenderSubState(ENGINE_API_WINDOW, ResourceFrequency::GLOBAL);
 
   m_sRenderPipelineId = _sRenderPipelineId;
 }
@@ -42,8 +40,7 @@ Camera::Camera(Camera&& _oOther)
 }*/
 
 Camera::~Camera()
-{
-  api::DestroyAPICamera(m_pAPICamera);
+{  
 }
 
 void Camera::UpdateTransform(const Transform& _oParentTransform)
@@ -60,37 +57,9 @@ void Camera::UpdateTransform(const Transform& _oParentTransform)
   m_pCBuffer->Update();
 }
 
-void Camera::PreRenderSetup()
-{
-  api::BeginSubStateSetup(m_pSubState);
-  m_pCBuffer->SetupRenderSubState("GlobalBuffer", STAGE_VERTEX | STAGE_PIXEL, ResourceFrequency::GLOBAL);
-  Renderer::GetInstance()->SetupSubStateShadowMaps(ResourceFrequency::GLOBAL);  
-  if (m_pSkyboxTex != nullptr)
-  {
-    m_pSkyboxTex->SetupRenderSubState("Skybox", STAGE_PIXEL, ResourceFrequency::GLOBAL);
-  }
-  api::EndSubStateSetup(ResourceFrequency::GLOBAL);
-}
-
-void Camera::Bind() const
-{  
-  api::BindAPICamera(m_pAPICamera);
-  api::BindAPIRenderSubState(m_pSubState, ResourceFrequency::GLOBAL);
-  if (m_pSkyboxTex != nullptr)
-  {
-    m_pSkyboxTex->Bind();
-  }
-  m_pCBuffer->Bind();  
-}
-
 uint64_t Camera::GetKey() const
 {
   return 0u;
-}
-
-const std::string& Camera::GetRenderPipelineId() const
-{
-  return m_sRenderPipelineId;
 }
 
 glm::mat4x4 Camera::GetProjMatrix()

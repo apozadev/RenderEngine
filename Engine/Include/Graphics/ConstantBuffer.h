@@ -12,9 +12,9 @@ public:
   
   virtual ~ConstantBufferBase();  
 
-  virtual void SetupRenderSubState(const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const = 0;
-
   void Bind() const;
+
+  virtual size_t GetSize() const = 0;
 
 protected:  
 
@@ -22,9 +22,7 @@ protected:
 
   void Update(const void* _pData, size_t _uSize) const;
 
-  void SetupRenderSubState(size_t _uSize, const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const;
-
-private:
+public:
 
   api::APIConstantBuffer* m_pAPICbuffer;
 };
@@ -37,11 +35,6 @@ public:
   void Configure()
   {
     ConstantBufferBase::Configure(sizeof(T));
-  }
-
-  void SetupRenderSubState(const std::string& _sName, PipelineStageFlags _uStageFlags, ResourceFrequency _eFrequency) const override
-  {
-    ConstantBufferBase::SetupRenderSubState(sizeof(T), _sName, _uStageFlags, _eFrequency);
   }
 
   void Update() const
@@ -58,6 +51,8 @@ public:
   {
     m_oData = *_pData;
   }    
+
+  size_t GetSize() const override { return sizeof(T); }
 
 protected:
 

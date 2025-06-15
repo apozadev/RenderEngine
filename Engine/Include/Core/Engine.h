@@ -8,6 +8,8 @@
 #include "Core/Scene.h"
 #include "Graphics/Window.h"
 
+#define ENGINE_API_WINDOW Engine::GetInstance()->GetWindow()->m_pAPIWindow
+
 class Mesh;
 
 class Engine : public Singleton<Engine>

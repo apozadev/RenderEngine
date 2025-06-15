@@ -3,6 +3,7 @@
 #include "Graphics/TextureUsage.h"
 #include "Graphics/SamplerConfig.h"
 #include "Memory/Factory.h"
+#include "Core/Engine.h"
 
 void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _uWidth, unsigned int _uHeight, ImageFormat _eFormat, bool _bHasDepthStencil, unsigned int _uMipLevels, unsigned int _uMsaaSamples, bool _bIsCubemap)
 {  
@@ -84,37 +85,31 @@ void RenderTarget::Configure(unsigned int _uNumColorAttachments, unsigned int _u
     m_pDepthStencilTexture->SetupAsRenderTargetDepthStencil();
   }
 
-  api::EndRenderTargetSetup();
+  api::EndRenderTargetSetup(ENGINE_API_WINDOW);
 }
 
 RenderTarget::~RenderTarget()
 {
-  api::DestroyAPIRenderTarget(m_pAPIRenderTarget);  
+  api::DestroyAPIRenderTarget(ENGINE_API_WINDOW, m_pAPIRenderTarget);
 }
 
 void RenderTarget::SetUsing() const
 {
-  api::SetUsingAPIRenderTarget(m_pAPIRenderTarget);
 }
 
 void RenderTarget::Bind() const
 {
-  api::BindAPIRenderTarget(m_pAPIRenderTarget);
+  api::BindAPIRenderTarget(ENGINE_API_WINDOW, m_pAPIRenderTarget);
 }
 
 void RenderTarget::Unbind() const
 {
-  api::UnbindAPIRenderTarget(m_pAPIRenderTarget);
-}
-
-bool RenderTarget::IsBound() const
-{
-  return api::IsAPIRenderTargetBound(m_pAPIRenderTarget);
+  api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, m_pAPIRenderTarget);
 }
 
 void RenderTarget::Clear() const
 {
-  api::ClearAPIRenderTarget(m_pAPIRenderTarget);
+  api::ClearAPIRenderTarget(ENGINE_API_WINDOW, m_pAPIRenderTarget);
 
   for (const owner_ptr<Texture2D>& pTexture : m_lstColorTextures)
   {

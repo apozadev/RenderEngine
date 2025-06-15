@@ -7,7 +7,6 @@ namespace api
 namespace vk
 {
 
-  struct APIWindow;
   struct APITexture;
 
   struct APIRenderTarget
@@ -24,8 +23,6 @@ namespace vk
     APITexture* m_aColorTextures[4];
     APITexture* m_aResolveTextures[4];
     APITexture* m_pDepthTexture;
-
-    APIWindow* m_pOwnerWindow;    
   };
 
 }

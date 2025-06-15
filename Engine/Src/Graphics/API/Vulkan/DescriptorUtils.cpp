@@ -8,6 +8,7 @@
 #include "Graphics/API/Vulkan/APITexture.h"
 #include "Graphics/API/Vulkan/APIRenderState.h"
 #include "Graphics/API/Vulkan/APIInternal.h"
+#include "Graphics/API/Vulkan/APIWindow.h"
 
 #include <array>
 
@@ -166,8 +167,8 @@ void DescriptorSetUpdater::AddImageInfo(VkDescriptorImageInfo&& _oImageInfo, uin
   m_lstSetImageInfos.push_back(std::move(oInfoList));
 }
 
-void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets, uint32_t _uCount, DescriptorSetLayoutBuilder* _pLayoutBuilder)
-{  
+void DescriptorSetUpdater::Update(const APIWindow* _pWindow)
+{    
 
   std::vector<VkWriteDescriptorSet> lstWriteDescSets;
   
@@ -179,19 +180,19 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.descriptorCount = lstSetBufferInfo.m_lstBufferInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     oBinding.stageFlags = GetVkShaderFlags(lstSetBufferInfo.m_uStageFlags);
-    if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
+    if (m_pLayoutBuilder != nullptr && !m_pLayoutBuilder->Contains(oBinding))
     {
       continue;
     }
 
-    if (lstSetBufferInfo.m_uSetIdx > _uCount)
+    if (lstSetBufferInfo.m_uSetIdx > _pWindow->m_uSwapchainImageCount)
     {
       THROW_GENERIC_EXCEPTION("WTF?")
     }
 
     VkWriteDescriptorSet oUboWriteDescSet{};
     oUboWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    oUboWriteDescSet.dstSet = _pDescSets[lstSetBufferInfo.m_uSetIdx];
+    oUboWriteDescSet.dstSet = m_pDescSets[lstSetBufferInfo.m_uSetIdx];
     oUboWriteDescSet.dstBinding = lstSetBufferInfo.m_uBinding;
     oUboWriteDescSet.dstArrayElement = 0;
     oUboWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -212,19 +213,19 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
     oBinding.descriptorCount = lstSetImageInfo.m_lstImgInfos.size();
     oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     oBinding.stageFlags = GetVkShaderFlags(lstSetImageInfo.m_uStageFlags);
-    if (_pLayoutBuilder != nullptr && !_pLayoutBuilder->Contains(oBinding))
+    if (m_pLayoutBuilder != nullptr && !m_pLayoutBuilder->Contains(oBinding))
     {
       continue;
     }
 
-    if (lstSetImageInfo.m_uSetIdx > _uCount)
+    if (lstSetImageInfo.m_uSetIdx > _pWindow->m_uSwapchainImageCount)
     {
       THROW_GENERIC_EXCEPTION("WTF?")
     }
 
     VkWriteDescriptorSet oImageWriteDescSet{};
     oImageWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    oImageWriteDescSet.dstSet = _pDescSets[lstSetImageInfo.m_uSetIdx];
+    oImageWriteDescSet.dstSet = m_pDescSets[lstSetImageInfo.m_uSetIdx];
     oImageWriteDescSet.dstBinding = lstSetImageInfo.m_uBinding;
     oImageWriteDescSet.dstArrayElement = 0;
     oImageWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -238,11 +239,11 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
   // Check for missing image descriptors
 
   std::vector<VkDescriptorImageInfo> lstDummyImageInfos;
-  lstDummyImageInfos.reserve(_pLayoutBuilder->GetDescriptors().size() * _uCount);
+  lstDummyImageInfos.reserve(m_pLayoutBuilder->GetDescriptors().size() * _pWindow->m_uSwapchainImageCount);
 
-  if (s_oGlobalData.m_pUsingWindow != nullptr)
+  if (_pWindow != nullptr)
   {
-    for (const VkDescriptorSetLayoutBinding& rBinding : _pLayoutBuilder->GetDescriptors())
+    for (const VkDescriptorSetLayoutBinding& rBinding : m_pLayoutBuilder->GetDescriptors())
     {
       if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == rBinding.descriptorType)
       {
@@ -261,18 +262,18 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
         // Add dummy texture if necessary (once per swapchain image)
         if (!bFound)
         {
-          for (uint32_t i = 0u; i < _uCount; i++)
+          for (uint32_t i = 0u; i < _pWindow->m_uSwapchainImageCount; i++)
           {
-            if (!s_oGlobalData.m_bRenderBegan || i == s_oGlobalData.m_pUsingWindow->m_uCurrFrameIdx)
+            if (!s_oGlobalData.m_bRenderBegan || i == _pWindow->m_uCurrFrameIdx)
             {
               auto& oInfo = lstDummyImageInfos.emplace_back();
-              oInfo.imageView = s_oGlobalData.m_pUsingWindow->m_pDummyTexture->m_hImageView;
+              oInfo.imageView = _pWindow->m_pDummyTexture->m_hImageView;
               oInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-              oInfo.sampler = s_oGlobalData.m_pUsingWindow->m_pDummyTexture->m_hSampler;
+              oInfo.sampler = _pWindow->m_pDummyTexture->m_hSampler;
 
               VkWriteDescriptorSet oImageWriteDescSet{};
               oImageWriteDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-              oImageWriteDescSet.dstSet = _pDescSets[i];
+              oImageWriteDescSet.dstSet = m_pDescSets[i];
               oImageWriteDescSet.dstBinding = rBinding.binding;
               oImageWriteDescSet.dstArrayElement = 0;
               oImageWriteDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -290,7 +291,7 @@ void DescriptorSetUpdater::Update(VkDevice _hDevice, VkDescriptorSet* _pDescSets
 
   if (!lstWriteDescSets.empty())
   {
-    vkUpdateDescriptorSets(_hDevice, lstWriteDescSets.size(), lstWriteDescSets.data(), 0, nullptr);
+    vkUpdateDescriptorSets(_pWindow->m_hDevice, lstWriteDescSets.size(), lstWriteDescSets.data(), 0, nullptr);
   }
 }
 

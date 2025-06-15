@@ -13,9 +13,16 @@ namespace vk
 
   struct APITexture;  
 
+  struct APIWindow;
+
   class RenderTargetBuilder
   {
   public:
+
+    void SetRenderTarget(APIRenderTarget* _pRenderTarget)
+    {
+      m_pRenderTarget = _pRenderTarget;
+    }
 
     void AddColorTexture(APITexture* _pTexture)
     {
@@ -32,7 +39,7 @@ namespace vk
       m_lstColorResolveTextures.push_back(_pTexture);
     }
 
-    void Build(APIRenderTarget* pRenderTarget_);
+    void Build(const APIWindow* _pWindow);
 
     void Clear()
     {
@@ -53,6 +60,7 @@ namespace vk
 
   private:    
 
+    APIRenderTarget* m_pRenderTarget;
     std::vector<APITexture*> m_lstColorTextures;
     std::vector<APITexture*> m_lstColorResolveTextures;
     APITexture* m_pDepthStencilTexture = nullptr;

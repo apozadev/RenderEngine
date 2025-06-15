@@ -476,7 +476,7 @@ namespace api
       return pCBuffer;
     }
 
-    void UpdateAPIConstanBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize)
+    void UpdateAPIConstantBuffer(APIConstantBuffer* _pCBuffer, const void* _pData, size_t _uSize)
     {            
       /*D3D11_MAPPED_SUBRESOURCE oMsr;
       DX11_CHECK(pWindow->m_pContext->Map(_pCBuffer->m_pCBuffer.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &oMsr));
@@ -1416,7 +1416,7 @@ namespace api
 
       APIWindow* pWindow = s_oGlobalData.m_pUsingWindow;
 
-      UpdateAPIConstanBuffer(_pMesh->m_pModelCBuffer, _pConstantData, _uConstantSize);
+      UpdateAPIConstantBuffer(_pMesh->m_pModelCBuffer, _pConstantData, _uConstantSize);
 
       BindAPIConstantBuffer(_pMesh->m_pModelCBuffer);
 
