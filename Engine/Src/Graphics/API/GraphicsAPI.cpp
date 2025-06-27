@@ -157,14 +157,14 @@ namespace api
     API::BeginRenderTargetSetup(_pRenderTarget, _uWidth, _uHeight, _eFormat, _eDepthStencilFormat, _uMsaaSamples, _bIsCubemap);
   }
 
-  void RenderTargetAddColorTexture(APITexture* _pTexture)
+  void RenderTargetAddColorTexture(APITexture* _pTexture, uint32_t _uMipLevel)
   {
-    API::RenderTargetAddColorTexture(_pTexture);
+    API::RenderTargetAddColorTexture(_pTexture, _uMipLevel);
   }
 
-  void RenderTargetSetDepthStencilTexture(APITexture* _pTexture)
+  void RenderTargetSetDepthStencilTexture(APITexture* _pTexture, uint32_t _uMipLevel)
   {
-    API::RenderTargetSetDepthStencilTexture(_pTexture);
+    API::RenderTargetSetDepthStencilTexture(_pTexture, _uMipLevel);
   }
 
   void RenderTargetAddColorResolveTexture(APITexture* _pTexture)
@@ -195,7 +195,7 @@ namespace api
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples)
+  APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, const APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples)
   {
     return API::CreateAPIRenderState(_pWindow, _oInfo, _pRenderTarget, _uMsaaSamples);
   }

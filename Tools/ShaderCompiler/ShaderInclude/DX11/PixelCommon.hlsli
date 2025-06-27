@@ -57,7 +57,10 @@ Texture2D ShadowMap1 : register(t9);
 Texture2D ShadowMap2 : register(t10);
 Texture2D ShadowMap3 : register(t11);
 
-TextureCube Skybox : register(t12);
+TextureCube SpecEnvMap : register(t12);
+TextureCube DiffEnvMap : register(t13);
+
+Texture2D BrdfLutTex : register(t14);
 
 sampler Input0_Sampler : register(s0);
 sampler Input1_Sampler : register(s1);
@@ -74,7 +77,10 @@ sampler ShadowMap1_Sampler : register(s9);
 sampler ShadowMap2_Sampler : register(s10);
 sampler ShadowMap3_Sampler : register(s11);
 
-sampler Skybox_Sampler : register(s12);
+sampler SpecEnvMap_Sampler : register(s12);
+sampler DiffEnvMap_Sampler : register(s13);
+
+sampler BrdfLutTex_Sampler : register(s14);
 
 #define viewProj	viewproj
 

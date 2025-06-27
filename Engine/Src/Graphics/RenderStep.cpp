@@ -15,7 +15,7 @@
 #include "Graphics/API/GraphicsAPI.h"
 
 
-RenderStep::RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget)
+RenderStep::RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, api::APIRenderTarget* _pRenderTarget)
   : m_sId(_sId)
   , m_lstInputs(std::move(_lstInputs))
   , m_pRenderTarget(_pRenderTarget)
@@ -80,18 +80,13 @@ void RenderStep::Execute(const Camera* _pCamera, const Transform* _pViewTransfor
   }
 }
 
-const RenderTarget* RenderStep::GetRenderTarget() const
-{
-  return m_pRenderTarget;
-}
-
 void RenderStep::Bind(bool _bDoBindRT, const Pass* _pPass) const
 {
   if (_bDoBindRT)
   {
     if (m_pRenderTarget)
     {
-      m_pRenderTarget->Bind();
+      api::BindAPIRenderTarget(ENGINE_API_WINDOW, m_pRenderTarget);
     }
     else
     {      

@@ -8,7 +8,7 @@
 #include "Graphics/Renderer.h"
 #include "Core/Engine.h"
 
-GeometryRenderStep::GeometryRenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps)
+GeometryRenderStep::GeometryRenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, api::APIRenderTarget* _pRenderTarget, bool _bOrderTranslucent, bool _bUseShadowMaps)
   : RenderStep(_sId, std::move(_lstInputs), _pRenderTarget)
   , m_bOrderTranslucent(_bOrderTranslucent)
   ,m_bUseShadowMaps(_bUseShadowMaps)

@@ -25,7 +25,7 @@ for (float phi = 0.f; phi < _2PI; phi += angleDelta)
         // tangent space to world
         vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal;
 
-        irradiance += sampleTex(Skybox, sampleVec).rgb * weight;
+        irradiance += sampleTex(SpecEnvMap, sampleVec).rgb * weight;
 
         weightSum += weight;
     }

@@ -142,7 +142,9 @@ namespace api
       lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap1", 9u, STAGE_PIXEL });      
       lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap2", 10u, STAGE_PIXEL });      
       lstTextures.push_back(GlobalLayout::Resource{ "ShadowMap3", 11u, STAGE_PIXEL });      
-      lstTextures.push_back(GlobalLayout::Resource{ "Skybox", 12u, STAGE_PIXEL });      
+      lstTextures.push_back(GlobalLayout::Resource{ "SpecEnvMap", 12u, STAGE_PIXEL });
+      lstTextures.push_back(GlobalLayout::Resource{ "DiffEnvMap", 13u, STAGE_PIXEL });            
+      lstTextures.push_back(GlobalLayout::Resource{ "BrdfLutTex", 14u, STAGE_PIXEL });            
 
       IMGUI_CHECKVERSION();
       ImGui::CreateContext();
@@ -651,14 +653,14 @@ namespace api
       s_oGlobalData.m_oRenderTargetBuilder.m_pRenderTarget = _pRenderTarget;
     }
 
-    void RenderTargetAddColorTexture(APITexture* _pTexture)
+    void RenderTargetAddColorTexture(APITexture* _pTexture, uint32_t _uMipLevel)
     {            
-      s_oGlobalData.m_oRenderTargetBuilder.AddColorTexture(_pTexture);
+      s_oGlobalData.m_oRenderTargetBuilder.AddColorTexture(_pTexture, _uMipLevel);
     }
 
-    void RenderTargetSetDepthStencilTexture(APITexture* _pTexture)
+    void RenderTargetSetDepthStencilTexture(APITexture* _pTexture, uint32_t _uMipLevel)
     {            
-      s_oGlobalData.m_oRenderTargetBuilder.SetDepthTexture(_pTexture);
+      s_oGlobalData.m_oRenderTargetBuilder.SetDepthTexture(_pTexture, _uMipLevel);
     }
 
     void RenderTargetAddColorResolveTexture(APITexture* _pTexture)
@@ -737,7 +739,7 @@ namespace api
 
     // Render state
 
-    APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, APIRenderTarget* /*_pRenderTarget*/, uint32_t _uMsaaSamples)
+    APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, const APIRenderTarget* /*_pRenderTarget*/, uint32_t _uMsaaSamples)
     {
 
       APIRenderState* pRenderState = s_oRenderStatePool.PullElement();

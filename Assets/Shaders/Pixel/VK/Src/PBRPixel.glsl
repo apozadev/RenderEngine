@@ -53,7 +53,10 @@ Texture(ShadowMap1, 0, 2)
 Texture(ShadowMap2, 0, 3)
 Texture(ShadowMap3, 0, 4)
 
-CubeTexture(Skybox, 0, 5)
+CubeTexture(SpecEnvMap, 0, 5)
+CubeTexture(DiffEnvMap, 0, 6)
+
+Texture(BrdfLutTex, 0, 7)
 
 Texture(Input0, 1, 0)
 Texture(Input1, 1, 1)
@@ -257,54 +260,60 @@ vec3 _F(PBRinput _input)
 }
 
 vec3 _FRoughness(PBRinput _input)
-{
-  vec3 F0 = _input.albedo.xyz * lerp(_input.reflectivity, 1.0, _input.metalness);
-  vec3 invRoughness = vec3(1, 1, 1) - vec3(_input.roughness, _input.roughness, _input.roughness);
+{  
+  vec3 F0 = lerp(vec3(_input.reflectivity, _input.reflectivity, _input.reflectivity), _input.albedo.rgb, _input.metalness);
   float LdotH = max(dot(_input.viewDir.xyz, _input.halfVector.xyz), 0);
-  return F0 + (max(invRoughness, F0) - F0) * pow(1 - LdotH, 5.0);
+  return F0 + (1.0 - F0) * pow(1.0 - LdotH, 5.0);
 }
 
 // PBR lighting
 vec3 PBR(PBRinput _input)
 {    
+  // Lambert diffuse (note: use albedo * (1 - metalness) later)
+  vec3 diffuse = _input.albedo.rgb / _PI;
 
-  // Lambert diffuse
-  vec3 fd = _input.albedo.xyz / _PI;
+  // Fresnel term
+  vec3 F = _F(_input);
+
+  // Geometry (visibility) term
+  float G = _G(_input);
+
+  // Normal distribution function
+  float D = _D(_input);
+
+  // Cook-Torrance denominator
+  float NdotV = max(dot(_input.normal, _input.viewDir), 0.0);
+  float NdotL = max(dot(_input.normal, _input.lightDir), 0.0);
+  float fsDenom = max(4.0 * NdotV * NdotL, 0.001);
 
   // Cook-Torrance specular
-  float fsDenom = (4 * max(dot(_input.viewDir.xyz, _input.normal.xyz), 0) * max(dot(_input.lightDir.xyz, _input.normal.xyz), 0));
-  vec3 fresnell = _F(_input);
-  vec3 fs = _D(_input) * _G(_input) * fresnell / max(fsDenom, 0.0001);
+  vec3 specular = (D * G * F) / fsDenom;
 
-  // Incoming light
-  vec3 li = _input.lightColor.xyz;
+  // Diffuse contribution is zero for metals
+  vec3 kd = (1.0 - F) * (1.0 - _input.metalness);
+  vec3 brdf = kd * diffuse + specular;
 
-  // BRDF
-  //vec3 kd = lerp(vec3(1, 1, 1) - fresnell, vec3(0, 0, 0), _input.metalness);
-  vec3 kd = vec3(1, 1, 1) - fresnell;
-  vec3 fr = max(kd * fd + fs, vec3(0, 0, 0));
+  // Incoming light intensity and cosine law
+  vec3 Li = _input.lightColor.rgb;
 
-  // Cosine Law
-  float lDotN = max(dot(_input.lightDir.xyz, _input.normal.xyz), 0);
-
-  return fr * li * lDotN;
-  
+  // Final reflected radiance
+  return brdf * Li * NdotL;
 }
 
 vec3 PBRDiffuseIrradiance(PBRinput _input)
 {
-  vec3 kS = _FRoughness(_input);
-  vec3 kd = vec3(1, 1, 1) - kS;
-  return kd * _input.lightColor.xyz * _input.albedo.xyz;
+  vec3 F0 = lerp(vec3(_input.reflectivity, _input.reflectivity, _input.reflectivity), _input.albedo.rgb, _input.metalness);
+  vec3 kd = (1.0 - F0) * (1.0 - _input.metalness);
+  return kd * _input.lightColor.rgb * _input.albedo.rgb;
 }
 
 vec3 PBRSpecularIBL(PBRinput _input)
 {
   vec3 kS = _FRoughness(_input);
   float NdotV = max(0, dot(_input.normal.xyz, _input.viewDir.xyz));
-  //float2 envBRDF = BrdfLutTex.Sample(brdfSampler, float2(NdotV, _input.roughness)).xy;
-  return (kS /** envBRDF.x + envBRDF.y*/) * _input.lightColor.xyz;
-}
+  vec2 envBRDF = sampleTex(BrdfLutTex, vec2(NdotV, _input.roughness)).xy;
+  return (kS * envBRDF.x + envBRDF.y) * _input.lightColor.xyz;
+} 
 
 PIXEL_MAIN_BEGIN
 
@@ -321,19 +330,21 @@ PIXEL_MAIN_BEGIN
 
   vec4 vAlbedo = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
 
+  vec3 vAtt = sampleTex(Texture2, vec2(inUv.x, inUv.y)).rgb;
+
   PBRinput pbrIn;
   pbrIn.normal = vec4(vWN, 0);
   pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
   pbrIn.albedo = vAlbedo;
-  pbrIn.metalness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).b;
-  pbrIn.roughness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).g;  
+  pbrIn.metalness = vAtt.b;
+  pbrIn.roughness = vAtt.g;  
   pbrIn.reflectivity = 0.04;
 
   vec3 color = vec3(0,0,0);
 
   for (uint i = 0; i < DirLightCount; i++)
   {
-    vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
+    //vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
 
     pbrIn.lightDir = DirLightDir(i);
     pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0.0);
@@ -341,8 +352,22 @@ PIXEL_MAIN_BEGIN
 
     color += PBR(pbrIn); 
   }
-    
-  outColor = vec4(color, 1); 
+
+  pbrIn.lightDir = pbrIn.normal;
+  pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0);
+  pbrIn.lightColor = sampleTex(DiffEnvMap, -vec3(pbrIn.lightDir.x, pbrIn.lightDir.y, pbrIn.lightDir.z));
+
+  vec3 diff = PBRDiffuseIrradiance(pbrIn);
+
+  
+  float lod = 5.f * pbrIn.roughness;
+  pbrIn.lightDir = reflect(pbrIn.viewDir, pbrIn.normal);
+  pbrIn.halfVector = normalize((pbrIn.viewDir + pbrIn.lightDir) * 0.5);
+  pbrIn.lightColor = sampleTexLevel(SpecEnvMap, -vec3(pbrIn.lightDir.x, pbrIn.lightDir.y, pbrIn.lightDir.z), lod);
+
+  vec3 spec = PBRSpecularIBL(pbrIn);
+      
+  outColor = vec4(color + diff + spec, 1); 
  
 PIXEL_MAIN_END
  

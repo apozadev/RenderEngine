@@ -6,7 +6,6 @@
 #include "Graphics/API/GraphicsAPI.h"
 
 class Window;
-class RenderTarget;
 class Texture2D;
 class Transform;
 class Camera;
@@ -16,7 +15,7 @@ class RenderStep
 {
 public:
 
-  RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, const RenderTarget* _pRenderTarget);
+  RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, api::APIRenderTarget* _pRenderTarget);
 
   virtual ~RenderStep();
 
@@ -27,9 +26,7 @@ public:
   virtual void SubmitJob(Job&& _rJob) {};
   virtual void SubmitJobs(const std::vector<Job>& _rJob) {};
 
-  void Execute(const Camera* _pCamera, const Transform* _pViewTransform, bool _bDoBindRT);
-
-  const RenderTarget* GetRenderTarget() const;  
+  void Execute(const Camera* _pCamera, const Transform* _pViewTransform, bool _bDoBindRT);  
 
 protected:
 
@@ -44,14 +41,16 @@ protected:
   virtual const Pass* GetFirstPass() const = 0;
 
   virtual void ExecuteInternal(const Camera* _pCamera, const Transform* _pViewTransform) = 0;
+
+public:
+
+  api::APIRenderTarget* m_pRenderTarget;
   
 private:  
 
   std::string m_sId;
 
-  std::vector<Texture2D*> m_lstInputs;
-
-  const RenderTarget* m_pRenderTarget;
+  std::vector<Texture2D*> m_lstInputs;  
 
   api::APIRenderSubState* m_pAPIRenderSubState;
 

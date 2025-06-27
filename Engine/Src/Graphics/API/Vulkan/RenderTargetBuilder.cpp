@@ -30,8 +30,8 @@ namespace vk
       CreateImageView(_pWindow,
         pTexture->m_hImage,
         pTexture->m_eFormat,
-        1u,
-        pTexture->m_uLayers,
+        m_lstColorMipLevels[i], 1u,
+        0u, pTexture->m_uLayers,
         pTexture->m_uLayers > 1u ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
         VK_IMAGE_ASPECT_COLOR_BIT,
         m_pRenderTarget->m_pImageViews[uAttachmentIdx++]);
@@ -45,8 +45,8 @@ namespace vk
       CreateImageView(_pWindow,
         pTexture->m_hImage,
         pTexture->m_eFormat,
-        1u,
-        pTexture->m_uLayers,
+        0u, 1u,
+        0u, pTexture->m_uLayers,
         pTexture->m_uLayers > 1u ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
         VK_IMAGE_ASPECT_COLOR_BIT,
         m_pRenderTarget->m_pImageViews[uAttachmentIdx++]);
@@ -59,8 +59,8 @@ namespace vk
       CreateImageView(_pWindow,
         m_pDepthStencilTexture->m_hImage,
         m_pDepthStencilTexture->m_eFormat,
-        1u,
-        m_pDepthStencilTexture->m_uLayers,
+        m_uDepthMipLevel, 1u,
+        0u, m_pDepthStencilTexture->m_uLayers,
         m_pDepthStencilTexture->m_uLayers > 1u ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D,
         VK_IMAGE_ASPECT_DEPTH_BIT,
         m_pRenderTarget->m_pImageViews[uAttachmentIdx++]);
@@ -81,6 +81,7 @@ namespace vk
 
     m_pRenderTarget->m_uWidth = m_uWidth;
     m_pRenderTarget->m_uHeight = m_uHeight;
+    m_pRenderTarget->m_uMsaaSamples = m_uMsaaSamples;
   }
 
 }

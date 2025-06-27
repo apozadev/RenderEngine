@@ -30,8 +30,22 @@ PIXEL_MAIN_BEGIN
     color += PBR(pbrIn); 
 
   }
+
+  pbrIn.lightDir = pbrIn.normal;
+  pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0);
+  pbrIn.lightColor = sampleTex(DiffEnvMap, vec3(pbrIn.lightDir.x, -pbrIn.lightDir.y, pbrIn.lightDir.z));
+
+  vec3 diff = PBRDiffuseIrradiance(pbrIn);
+
+  float lod = 10.f * pbrIn.roughness;
+  pbrIn.lightDir = reflect(pbrIn.viewDir, pbrIn.normal);
+  pbrIn.halfVector = normalize((pbrIn.viewDir + pbrIn.lightDir) * 0.5);
+  pbrIn.lightColor = sampleTexLevel(SpecEnvMap, vec3(pbrIn.lightDir.x, -pbrIn.lightDir.y, pbrIn.lightDir.z), lod);
+
+  vec3 spec = PBRSpecularIBL(pbrIn);
     
-  outColor = vec4(color, 1); 
+  outColor = vec4(color + diff + spec, 1); 
+  //outColor = pbrIn.lightColor; 
  
 PIXEL_MAIN_END
  

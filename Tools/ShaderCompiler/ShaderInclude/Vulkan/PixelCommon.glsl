@@ -32,7 +32,10 @@ Texture(ShadowMap1, 0, 2)
 Texture(ShadowMap2, 0, 3)
 Texture(ShadowMap3, 0, 4)
 
-CubeTexture(Skybox, 0, 5)
+CubeTexture(SpecEnvMap, 0, 5)
+CubeTexture(DiffEnvMap, 0, 6)
+
+Texture(BrdfLutTex, 0, 7)
 
 Texture(Input0, 1, 0)
 Texture(Input1, 1, 1)

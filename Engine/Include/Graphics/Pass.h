@@ -27,7 +27,7 @@ public:
 
   ~Pass();
 
-  void Configure(const RenderStateInfo& _rRenderStateInfo, const RenderTarget* _pRenderTarget, uint32_t _uLayer);
+  void Configure(const RenderStateInfo& _rRenderStateInfo, const api::APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples, uint32_t _uLayer);
 
   void Configure(const std::string& _sVSFilename
     , const std::string& _sPSFilename
@@ -37,7 +37,8 @@ public:
     , BlendFactor _eDstBlendFactor
     , bool _bDepthWrite
     , bool _bDepthRead
-    , const RenderTarget* _pRenderTarget
+    , const api::APIRenderTarget* _pRenderTarget
+    , uint32_t _uMsaaSamples
     , uint16_t _uLayer);
 
   void Configure(const std::string& _sVSFilename
@@ -99,7 +100,7 @@ public:
 
 private:  
 
-  void Configure(const RenderTarget* _pRenderTarget);
+  void Configure(const api::APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples);
 
   void ReflectCBuffers(PipelineStage _eStage);
 

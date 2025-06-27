@@ -94,9 +94,9 @@ namespace api
 
 		void BeginRenderTargetSetup(APIRenderTarget* _pRenderTarget, uint32_t _uWidth, uint32_t _uHeight, ImageFormat _eFormat, ImageFormat _eDepthStencilFormat, uint32_t _uMsaaSamples, bool _bIsCubemap);
 
-		void RenderTargetAddColorTexture(APITexture* _pTexture);
+		void RenderTargetAddColorTexture(APITexture* _pTexture, uint32_t _uMipLevel);
 
-		void RenderTargetSetDepthStencilTexture(APITexture* _pTexture);
+		void RenderTargetSetDepthStencilTexture(APITexture* _pTexture, uint32_t _uMipLevel);
 
 		void RenderTargetAddColorResolveTexture(APITexture* _pTexture);
 
@@ -112,7 +112,7 @@ namespace api
 
 		// Render state
 
-		APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples);
+		APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, const APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples);
 
 		void BeginRenderStateSetup(APIRenderState* _pAPIRenderState);
 

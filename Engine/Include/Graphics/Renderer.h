@@ -98,6 +98,9 @@ private:
 
   std::vector<Job> m_lstShadowJobs;    
 
-  owner_ptr<RenderTarget> m_pEnvMapDiff;
-  owner_ptr<RenderTarget> m_pEnvMapSpec;
+  //owner_ptr<RenderTarget> m_pEnvMapDiff;
+  //owner_ptr<RenderTarget> m_pEnvMapSpec;
+  owner_ptr<Texture2D> m_pEnvMapDiff;
+  owner_ptr<Texture2D> m_pEnvMapSpec;
+  owner_ptr<Texture2D> m_pBrdfLutTexture;
 };

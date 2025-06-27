@@ -26,6 +26,8 @@ public:
 
 	RenderStep* GetRenderStep(const std::string& _sId);
 
+	const std::vector<owner_ptr<RenderTarget>>& GetRenderTargets() { return m_lstRenderTargets; }
+
 	void OnWindowResize();
 
 	void Setup();

@@ -64,12 +64,12 @@ Texture2D::~Texture2D()
 
 void Texture2D::SetupAsRenderTargetColor() const
 {
-  api::RenderTargetAddColorTexture(m_pAPITexture);
+  api::RenderTargetAddColorTexture(m_pAPITexture, 0u);
 }
 
 void Texture2D::SetupAsRenderTargetDepthStencil() const
 {
-  api::RenderTargetSetDepthStencilTexture(m_pAPITexture);
+  api::RenderTargetSetDepthStencilTexture(m_pAPITexture, 0u);
 }
 
 void Texture2D::SetupAsRenderTargetColorResolve() const

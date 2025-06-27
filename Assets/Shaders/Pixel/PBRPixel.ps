@@ -14,19 +14,21 @@ PIXEL_MAIN_BEGIN
 
   vec4 vAlbedo = sampleTex(Texture0, vec2(inUv.x, inUv.y));  
 
+  vec3 vAtt = sampleTex(Texture2, vec2(inUv.x, inUv.y)).rgb;
+
   PBRinput pbrIn;
   pbrIn.normal = vec4(vWN, 0);
   pbrIn.viewDir = vec4(normalize(CameraPos - inWorldPos), 0);  
   pbrIn.albedo = vAlbedo;
-  pbrIn.metalness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).b;
-  pbrIn.roughness = sampleTex(Texture0, vec2(inUv.x, inUv.y)).g;  
+  pbrIn.metalness = vAtt.b;
+  pbrIn.roughness = vAtt.g;  
   pbrIn.reflectivity = 0.04;
 
   vec3 color = vec3(0,0,0);
 
   for (uint i = 0; i < DirLightCount; i++)
   {
-    vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
+    //vec4 vLightViewProjPos = mul(DirLightViewProj(i), vec4(inWorldPos, 1));
 
     pbrIn.lightDir = DirLightDir(i);
     pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0.0);
@@ -34,8 +36,22 @@ PIXEL_MAIN_BEGIN
 
     color += PBR(pbrIn); 
   }
-    
-  outColor = vec4(color, 1); 
+
+  pbrIn.lightDir = pbrIn.normal;
+  pbrIn.halfVector = vec4(normalize(pbrIn.viewDir.xyz + pbrIn.lightDir.xyz), 0);
+  pbrIn.lightColor = sampleTex(DiffEnvMap, -vec3(pbrIn.lightDir.x, pbrIn.lightDir.y, pbrIn.lightDir.z));
+
+  vec3 diff = PBRDiffuseIrradiance(pbrIn);
+
+  
+  float lod = 5.f * pbrIn.roughness;
+  pbrIn.lightDir = reflect(pbrIn.viewDir, pbrIn.normal);
+  pbrIn.halfVector = normalize((pbrIn.viewDir + pbrIn.lightDir) * 0.5);
+  pbrIn.lightColor = sampleTexLevel(SpecEnvMap, -vec3(pbrIn.lightDir.x, pbrIn.lightDir.y, pbrIn.lightDir.z), lod);
+
+  vec3 spec = PBRSpecularIBL(pbrIn);
+      
+  outColor = vec4(color + diff + spec, 1); 
  
 PIXEL_MAIN_END
  

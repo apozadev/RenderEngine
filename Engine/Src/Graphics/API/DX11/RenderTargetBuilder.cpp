@@ -19,13 +19,11 @@ namespace dx11
     {
       oRtvDesc.ViewDimension = m_uMsaaSamples > 1u ? D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY : D3D11_RTV_DIMENSION_TEXTURE2DARRAY;      
       oRtvDesc.Texture2DArray.ArraySize = uLayers;
-      oRtvDesc.Texture2DArray.FirstArraySlice = 0;
-      oRtvDesc.Texture2DArray.MipSlice = 0;
+      oRtvDesc.Texture2DArray.FirstArraySlice = 0;      
     }
     else
     {
-      oRtvDesc.ViewDimension = m_uMsaaSamples > 1u ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;
-      oRtvDesc.Texture2D.MipSlice = 0;
+      oRtvDesc.ViewDimension = m_uMsaaSamples > 1u ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;      
     }    
 
     m_pRenderTarget->m_lstRtv.resize(m_lstColorTextures.size());
@@ -33,6 +31,15 @@ namespace dx11
 
     for (int i = 0; i < m_lstColorTextures.size(); i++)
     {
+      if (m_bIsCubemap)
+      {
+        oRtvDesc.Texture2DArray.MipSlice = m_lstColorMipLevels[i];
+      }
+      else
+      {
+        oRtvDesc.Texture2D.MipSlice = m_lstColorMipLevels[i];
+      }
+
       APITexture* pTexture = m_lstColorTextures[i];
       DX11_CHECK(pWindow->m_pDevice->CreateRenderTargetView(pTexture->m_pTexture.Get(), &oRtvDesc, m_pRenderTarget->m_lstRtv[i].GetAddressOf()))
     }
@@ -52,12 +59,12 @@ namespace dx11
         descDSV.ViewDimension = m_uMsaaSamples > 1u ? D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY : D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
         oRtvDesc.Texture2DArray.ArraySize = uLayers;
         oRtvDesc.Texture2DArray.FirstArraySlice = 0;
-        oRtvDesc.Texture2DArray.MipSlice = 0;
+        oRtvDesc.Texture2DArray.MipSlice = m_uDepthMipLevel;
       }
       else
       {
         descDSV.ViewDimension = m_uMsaaSamples > 1u ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;
-        descDSV.Texture2D.MipSlice = 0u;
+        descDSV.Texture2D.MipSlice = m_uDepthMipLevel;
       }      
 
       DX11_CHECK(pWindow->m_pDevice->CreateDepthStencilView(m_pDepthStencilTexture->m_pTexture.Get(), &descDSV, m_pRenderTarget->m_pDsv.ReleaseAndGetAddressOf()));
@@ -72,6 +79,7 @@ namespace dx11
     m_lstColorTextures.clear();
     m_lstColorResolveTextures.clear();
     m_pDepthStencilTexture = nullptr;
+    m_lstColorMipLevels.clear();    
     m_pRenderTarget = nullptr;
     m_bIsCubemap = false;
   }

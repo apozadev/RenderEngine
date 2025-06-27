@@ -17,8 +17,9 @@ DirLightComponent::DirLightComponent()
     , BlendOp::BLEND_OP_MIN
     , BlendFactor::BLEND_DEST_ALPHA
     , BlendFactor::BLEND_ZERO
-    , true, true    
-    , m_pShadowMap.get()
+    , true, true
+    , m_pShadowMap->m_pAPIRenderTarget
+    , m_pShadowMap->GetMsaaSamples()
     , 0);
   m_pShadowPass->Setup();
 

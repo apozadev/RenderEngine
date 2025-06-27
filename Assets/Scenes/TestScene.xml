@@ -1,14 +1,14 @@
 <SceneDesc>
 	<Entities>
-		<EntityDesc_Ptr PtrId="1317325720" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="1951045136" Type="EntityDesc">
 			<vPos>
-				<x>-1.824155</x>
-				<y>3.546593</y>
-				<z>7.858599</z>
+				<x>-0.898223</x>
+				<y>1.526289</y>
+				<z>3.413566</z>
 			</vPos>
 			<vRot>
-				<x>-0.479984</x>
-				<y>-0.211176</y>
+				<x>-0.225584</x>
+				<y>-0.004776</y>
 				<z>0.000000</z>
 			</vRot>
 			<vScl>
@@ -17,14 +17,14 @@
 				<z>1.000000</z>
 			</vScl>
 			<Components>
-				<CameraComponentDesc_Ptr PtrId="1317325864" Type="CameraComponentDesc">
+				<CameraComponentDesc_Ptr PtrId="1951045280" Type="CameraComponentDesc">
 					<m_fFov>0.000000</m_fFov>
 					<m_fNear>0.000000</m_fNear>
 					<m_fFar>0.000000</m_fFar>
 				</CameraComponentDesc_Ptr>
 			</Components>
 		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1317325896" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="1951045312" Type="EntityDesc">
 			<vPos>
 				<x>0.000000</x>
 				<y>0.000000</y>
@@ -41,13 +41,13 @@
 				<z>1.000000</z>
 			</vScl>
 			<Components>
-				<ModelComponentDesc_Ptr PtrId="1317326040" Type="ModelComponentDesc">
+				<ModelComponentDesc_Ptr PtrId="1951045456" Type="ModelComponentDesc">
 					<m_sModelFilename>Assets/Models/DamagedHelmet/DamagedHelmet.glb</m_sModelFilename>
 					<m_sMaterialFilename>Assets/Materials/TestMaterial.xml</m_sMaterialFilename>
 				</ModelComponentDesc_Ptr>
 			</Components>
 		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1317326136" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="1951045552" Type="EntityDesc">
 			<vPos>
 				<x>3.000000</x>
 				<y>0.000000</y>
@@ -64,13 +64,13 @@
 				<z>0.010000</z>
 			</vScl>
 			<Components>
-				<ModelComponentDesc_Ptr PtrId="1317326280" Type="ModelComponentDesc">
+				<ModelComponentDesc_Ptr PtrId="1951045696" Type="ModelComponentDesc">
 					<m_sModelFilename>Assets/Models/sphere.fbx</m_sModelFilename>
 					<m_sMaterialFilename>Assets/Materials/PBRSolidMat.xml</m_sMaterialFilename>
 				</ModelComponentDesc_Ptr>
 			</Components>
 		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1317326376" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="1951045792" Type="EntityDesc">
 			<vPos>
 				<x>0.000000</x>
 				<y>1.000000</y>
@@ -87,13 +87,13 @@
 				<z>100.000000</z>
 			</vScl>
 			<Components>
-				<ModelComponentDesc_Ptr PtrId="1317326520" Type="ModelComponentDesc">
+				<ModelComponentDesc_Ptr PtrId="1951045936" Type="ModelComponentDesc">
 					<m_sModelFilename>cube</m_sModelFilename>
 					<m_sMaterialFilename>Assets/Materials/SkyboxMaterial.xml</m_sMaterialFilename>
 				</ModelComponentDesc_Ptr>
 			</Components>
 		</EntityDesc_Ptr>
-		<EntityDesc_Ptr PtrId="1317326616" Type="EntityDesc">
+		<EntityDesc_Ptr PtrId="1951046032" Type="EntityDesc">
 			<vPos>
 				<x>0.000000</x>
 				<y>2.000000</y>
@@ -110,11 +110,11 @@
 				<z>1.000000</z>
 			</vScl>
 			<Components>
-				<DirLightComponentDesc_Ptr PtrId="1317326760" Type="DirLightComponentDesc">
+				<DirLightComponentDesc_Ptr PtrId="1951046176" Type="DirLightComponentDesc">
 					<m_vColor>
-						<x>5.000000</x>
-						<y>5.000000</y>
-						<z>5.000000</z>
+						<x>10.000000</x>
+						<y>10.000000</y>
+						<z>10.000000</z>
 					</m_vColor>
 				</DirLightComponentDesc_Ptr>
 			</Components>

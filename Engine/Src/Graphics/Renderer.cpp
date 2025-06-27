@@ -66,6 +66,17 @@ void Renderer::InitializePostWindow()
 
   m_pEnvMapDiff->ConfigureAsCubemap(&aImages[0], aImages[0].m_iWidth, aImages[0].m_iHeight, aImages[0].m_eFormat, oSampler, 1u, 1u);*/
 
+  // Brdf LUT
+
+  SamplerConfig oBrdfSampler = {};
+  oBrdfSampler.m_eAddressMode = TextureAddressMode::CLAMP;
+  oBrdfSampler.m_eMagFilterMode = TextureFilterMode::LINEAR;
+  oBrdfSampler.m_eMinFilterMode = TextureFilterMode::LINEAR;  
+
+  const Image& oBrdfLutImage = ImageManager::GetInstance()->LoadImage("Assets/Images/lut/ibl_brdf_lut.png", false);
+  m_pBrdfLutTexture = Factory::Create<Texture2D>();
+  m_pBrdfLutTexture->Configure(oBrdfLutImage, oBrdfSampler, 1u);
+
   // Radiance map
 
   SamplerConfig oHDRISamplerConfig = {};
@@ -74,17 +85,27 @@ void Renderer::InitializePostWindow()
   oHDRISamplerConfig.m_eMinFilterMode = TextureFilterMode::POINT;
   oHDRISamplerConfig.m_eMipmapFilterMode = TextureFilterMode::POINT;
 
-  const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/pine_attic_4k.hdr", false);
-  //const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/graveyard_pathways_4k.hdr", false);
+  //const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/pine_attic_4k.hdr", false);
+  const Image& oImage = ImageManager::GetInstance()->LoadImage("Assets/Images/hdri/studio_small_09_2k.hdr", false);
 
   owner_ptr<Texture2D> pHDRI = Factory::Create<Texture2D>();
   pHDRI->Configure(oImage, oHDRISamplerConfig, 1, 1);
 
-  m_pEnvMapSpec = Factory::Create<RenderTarget>();
-  m_pEnvMapSpec->Configure(1u, 512, 512, oImage.m_eFormat, false, 0, 1, true);
+  m_pEnvMapSpec = Factory::Create<Texture2D>();
+  m_pEnvMapSpec->ConfigureAsCubemap(nullptr, 512, 512, oImage.m_eFormat, oBrdfSampler, 5u, 1u, TextureUsage::COLOR_TARGET | TextureUsage::SHADER_RESOURCE);
 
-  m_pEnvMapDiff = Factory::Create<RenderTarget>();
-  m_pEnvMapDiff->Configure(1u, 128, 128, oImage.m_eFormat, false, 1, 1, true);
+  m_pEnvMapDiff = Factory::Create<Texture2D>();
+  m_pEnvMapDiff->ConfigureAsCubemap(nullptr, 128, 128, oImage.m_eFormat, oBrdfSampler, 1u, 1u, TextureUsage::COLOR_TARGET | TextureUsage::SHADER_RESOURCE);
+
+  api::APIRenderTarget* pSpecEnvMapRt = api::CreateAPIRenderTarget();
+  api::BeginRenderTargetSetup(pSpecEnvMapRt, 512, 512, oImage.m_eFormat, ImageFormat::R32, 1u, true);
+  api::RenderTargetAddColorTexture(m_pEnvMapSpec->m_pAPITexture, 0u);
+  api::EndRenderTargetSetup(ENGINE_API_WINDOW);
+
+  api::APIRenderTarget* pDiffEnvMapRt = api::CreateAPIRenderTarget();
+  api::BeginRenderTargetSetup(pDiffEnvMapRt, 128, 128, oImage.m_eFormat, ImageFormat::R32, 1u, true);
+  api::RenderTargetAddColorTexture(m_pEnvMapDiff->m_pAPITexture, 0u);
+  api::EndRenderTargetSetup(ENGINE_API_WINDOW);
 
   Camera oCamera = {};
   oCamera.Configure("", true);  
@@ -115,7 +136,7 @@ void Renderer::InitializePostWindow()
   oInfo.m_eCullMode = CullMode::BACK;  
 
   Pass oCubemapPass = {};
-  oCubemapPass.Configure(oInfo, m_pEnvMapSpec.get(), 0u);
+  oCubemapPass.Configure(oInfo, pSpecEnvMapRt, 1u, 0u);
   oCubemapPass.Setup(); 
 
   oInfo = {};
@@ -128,7 +149,7 @@ void Renderer::InitializePostWindow()
   oInfo.m_eCullMode = CullMode::BACK;
 
   Pass oConvolutionPass = {};
-  oConvolutionPass.Configure(oInfo, m_pEnvMapSpec.get(), 0u);
+  oConvolutionPass.Configure(oInfo, pDiffEnvMapRt, 1u, 0u);
   oConvolutionPass.Setup();
 
   MaterialInstance oCubemapMatInstance = {};
@@ -156,7 +177,7 @@ void Renderer::InitializePostWindow()
   oCubemapPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);
   oConvolutionPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);  
   
-  GeometryRenderStep oCubemapStep("", std::vector<Texture2D*>(), m_pEnvMapSpec.get(), false, false);
+  GeometryRenderStep oCubemapStep("", std::vector<Texture2D*>(), pSpecEnvMapRt, false, false);
 
   {
     Job oJob = {};
@@ -170,7 +191,7 @@ void Renderer::InitializePostWindow()
 
   oCubemapStep.Setup();  
 
-  GeometryRenderStep oConvolutionStep("", { m_pEnvMapSpec->GetColorTextures()[0].get() }, m_pEnvMapDiff.get(), false, false);
+  GeometryRenderStep oConvolutionStep("", { m_pEnvMapSpec.get() }, pDiffEnvMapRt, false, false);
 
   {
     Job oJob = {};
@@ -190,9 +211,9 @@ void Renderer::InitializePostWindow()
 
   oCubemapStep.Execute(&oCamera, &Transform::GetIdentity(), true);
 
-  m_pEnvMapSpec->Unbind();
+  api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pSpecEnvMapRt);
 
-  m_pEnvMapSpec->GetColorTextures()[0]->GenerateMipMaps();
+  m_pEnvMapSpec->GenerateMipMaps();
 
   Engine::GetInstance()->GetWindow()->EndDraw();
 
@@ -204,8 +225,8 @@ void Renderer::InitializePostWindow()
   ResourceBindInfo oSkyboxBindInfo{};
   oSkyboxBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
   oSkyboxBindInfo.m_uStageFlags = STAGE_PIXEL;
-  oSkyboxBindInfo.m_sName = "Skybox";
-  api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapSpec->GetColorTextures()[0].get()->m_pAPITexture, oSkyboxBindInfo);
+  oSkyboxBindInfo.m_sName = "SpecEnvMap";
+  api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapSpec->m_pAPITexture, oSkyboxBindInfo);
   api::EndSubStateSetup(ENGINE_API_WINDOW);
 
   Engine::GetInstance()->GetWindow()->WaitForLastImage();
@@ -214,11 +235,16 @@ void Renderer::InitializePostWindow()
 
   oConvolutionStep.Execute(&oCamera, &Transform::GetIdentity(), true);
 
-  m_pEnvMapDiff->Unbind();
+  api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pDiffEnvMapRt);
 
   Engine::GetInstance()->GetWindow()->EndDraw();  
 
   m_pLightCBuff->GetData()->m_uNumLights = 0u;
+
+  api::WaitForLastImage(ENGINE_API_WINDOW);
+
+  api::DestroyAPIRenderTarget(ENGINE_API_WINDOW, pSpecEnvMapRt);
+  api::DestroyAPIRenderTarget(ENGINE_API_WINDOW, pDiffEnvMapRt);
 }
 
 void Renderer::ShutDownPreWindow()
@@ -354,11 +380,12 @@ void Renderer::Draw()
       oBindInfo.m_uStageFlags = STAGE_VERTEX | STAGE_PIXEL;
       oBindInfo.m_sName = "GlobalBuffer";
       api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, rShadowView.m_pCamera->m_pCBuffer->m_pAPICbuffer, rShadowView.m_pCamera->m_pCBuffer->GetSize(), oBindInfo);      
-      ResourceBindInfo oSkyboxBindInfo{};
+      /*ResourceBindInfo oSkyboxBindInfo{};
       oSkyboxBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
       oSkyboxBindInfo.m_uStageFlags = STAGE_PIXEL;
-      oSkyboxBindInfo.m_sName = "Skybox";
+      oSkyboxBindInfo.m_sName = "SpecEnvMap";
       api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapSpec->GetColorTextures()[0].get()->m_pAPITexture, oSkyboxBindInfo);
+      */
       api::EndSubStateSetup(ENGINE_API_WINDOW);
     }
 
@@ -370,11 +397,21 @@ void Renderer::Draw()
       oBindInfo.m_uStageFlags = STAGE_VERTEX | STAGE_PIXEL;
       oBindInfo.m_sName = "GlobalBuffer";
       api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, rCamView.m_pCamera->m_pCBuffer->m_pAPICbuffer, rCamView.m_pCamera->m_pCBuffer->GetSize(), oBindInfo);
-      ResourceBindInfo oSkyboxBindInfo{};
-      oSkyboxBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
-      oSkyboxBindInfo.m_uStageFlags = STAGE_PIXEL;
-      oSkyboxBindInfo.m_sName = "Skybox";
-      api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapDiff->GetColorTextures()[0].get()->m_pAPITexture, oSkyboxBindInfo);
+      ResourceBindInfo oSpecEnvBindInfo{};
+      oSpecEnvBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+      oSpecEnvBindInfo.m_uStageFlags = STAGE_PIXEL;
+      oSpecEnvBindInfo.m_sName = "DiffEnvMap";
+      api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapDiff->m_pAPITexture, oSpecEnvBindInfo);
+      ResourceBindInfo oDiffEnvBindInfo{};
+      oDiffEnvBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+      oDiffEnvBindInfo.m_uStageFlags = STAGE_PIXEL;
+      oDiffEnvBindInfo.m_sName = "SpecEnvMap";
+      api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapSpec->m_pAPITexture, oDiffEnvBindInfo);
+      ResourceBindInfo oLutBindInfo{};
+      oLutBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
+      oLutBindInfo.m_uStageFlags = STAGE_PIXEL;
+      oLutBindInfo.m_sName = "BrdfLutTex";
+      api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pBrdfLutTexture.get()->m_pAPITexture, oLutBindInfo);
       api::EndSubStateSetup(ENGINE_API_WINDOW);
     }
 
@@ -384,7 +421,7 @@ void Renderer::Draw()
     {
       rShadowView.m_pShadowMap->Clear();
 
-      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>("", std::vector<Texture2D*>(), rShadowView.m_pShadowMap, false, false);
+      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>("", std::vector<Texture2D*>(), rShadowView.m_pShadowMap->m_pAPIRenderTarget, false, false);
 
       for (Job& rJob : m_lstShadowJobs)
       {
@@ -406,13 +443,15 @@ void Renderer::Draw()
 
     m_pLightCBuff->Bind();
 
+    m_pEnvMapSpec->Bind();
+
+    m_pEnvMapDiff->Bind();
+
     for (const ShadowView& rShadowView : m_lstShadowViews)
     {      
       rShadowView.m_pShadowMap->GetDepthStencilTexture()->Bind();
     }
     
-    m_pEnvMapDiff->GetColorTextures()[0]->Bind();
-
     for (CamView& rCamView : m_lstCamViews)
     {
 

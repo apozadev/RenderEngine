@@ -95,7 +95,7 @@ namespace vk
 
   void CreateImage(const APIWindow* _pWindow, uint32_t _uWidth, uint32_t _uHeight, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkSampleCountFlagBits _eMsaaSampleCount, VkImageTiling _eTiling, VkImageUsageFlags _uUsage, VkImageCreateFlags _uCreateFlags, VkMemoryPropertyFlags _uProperties, VkImage& hImage_, VkDeviceMemory& hMemory_);
 
-  void CreateImageView(const APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uMipLevels, uint32_t _uLayers, VkImageViewType _eViewType, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
+  void CreateImageView(const APIWindow* _pWindow, VkImage _hImage, VkFormat _eFormat, uint32_t _uBaseMip, uint32_t _uMipLevels, uint32_t _uBaseLayer, uint32_t _uLayers, VkImageViewType _eViewType, VkImageAspectFlags _uAspectFlags, VkImageView& hImageView_);
 
   void CreateTextureSampler(const APIWindow* _pWindow, APITexture* _pTexture, uint32_t _uMipLevels, const SamplerConfig& _rSamplerConfig);
 

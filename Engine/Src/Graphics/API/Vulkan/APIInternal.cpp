@@ -837,7 +837,7 @@ void CreateColorBuffer(APIWindow* _pWindow)
     , _pWindow->m_hColorImage
     , _pWindow->m_hColorImageMemory);
 
-  CreateImageView(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, 1u, 1u, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, _pWindow->m_hColorImageView);
+  CreateImageView(_pWindow, _pWindow->m_hColorImage, _pWindow->m_eSwapchainFormat, 0u, 1u, 0u, 1u, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, _pWindow->m_hColorImageView);
 }
 
 void CreateDepthBuffer(APIWindow* _pWindow)
@@ -860,7 +860,7 @@ void CreateDepthBuffer(APIWindow* _pWindow)
     _pWindow->m_hDepthImage,
     _pWindow->m_hDepthImageMemory);
 
-  CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 1u, 1u, VK_IMAGE_VIEW_TYPE_2D, uAspectFlags, _pWindow->m_hDepthImageView);
+  CreateImageView(_pWindow, _pWindow->m_hDepthImage, eFormat, 0u, 1u, 0u, 1u, VK_IMAGE_VIEW_TYPE_2D, uAspectFlags, _pWindow->m_hDepthImageView);
 
   VkCommandBuffer hCmdBuffer = BeginTempCmdBuffer(_pWindow);
   TransitionImageLayout(hCmdBuffer, _pWindow->m_hDepthImage, eFormat, 0u, 1u, 0u, 1u, uAspectFlags, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
@@ -1264,7 +1264,31 @@ void CreateGlobalDescriptorLayout(APIWindow* _pWindow)
       oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
       oBinding.pImmutableSamplers = NULL;
 
-      _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("Skybox", std::move(oBinding));
+      _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("SpecEnvMap", std::move(oBinding));
+    }
+
+    {
+      VkDescriptorSetLayoutBinding oBinding{};
+      oBinding.binding = 6u;
+      oBinding.descriptorCount = 1u;
+      oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+      oBinding.pImmutableSamplers = NULL;
+
+      _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("DiffEnvMap", std::move(oBinding));
+    }
+
+    {
+      {
+        VkDescriptorSetLayoutBinding oBinding{};
+        oBinding.binding = 7u;
+        oBinding.descriptorCount = 1u;
+        oBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        oBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        oBinding.pImmutableSamplers = NULL;
+
+        _pWindow->m_oGlobalLayoutBuilder.AddLayoutBinding("BrdfLutTex", std::move(oBinding));
+      }
     }
 
     _pWindow->m_hGlobalDescSetLayout = _pWindow->m_oGlobalLayoutBuilder.Build(_pWindow->m_hDevice);
@@ -1476,7 +1500,9 @@ void CreateImage(const APIWindow* _pWindow
 void CreateImageView(const APIWindow* _pWindow
   , VkImage _hImage
   , VkFormat _eFormat
+  , uint32_t _uBaseMip
   , uint32_t _uMipLevels  
+  , uint32_t _uBaseLayer
   , uint32_t _uLayers
   , VkImageViewType _eViewType
   , VkImageAspectFlags _uAspectFlags
@@ -1490,9 +1516,9 @@ void CreateImageView(const APIWindow* _pWindow
   oCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
   oCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
   oCreateInfo.subresourceRange.aspectMask = _uAspectFlags;
-  oCreateInfo.subresourceRange.baseMipLevel = 0u;
+  oCreateInfo.subresourceRange.baseMipLevel = _uBaseMip;
   oCreateInfo.subresourceRange.levelCount = _uMipLevels;
-  oCreateInfo.subresourceRange.baseArrayLayer = 0u;
+  oCreateInfo.subresourceRange.baseArrayLayer = _uBaseLayer;
   oCreateInfo.subresourceRange.layerCount = _uLayers;
   oCreateInfo.image = _hImage;
   oCreateInfo.viewType = _eViewType;

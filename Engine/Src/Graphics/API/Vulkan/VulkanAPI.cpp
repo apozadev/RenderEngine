@@ -659,8 +659,8 @@ namespace vk
     CreateImageView(_pWindow
       , pTexture->m_hImage
       , pTexture->m_eFormat
-      , _uMipLevels
-      , uLayers
+      , 0u, _uMipLevels
+      , 0u, uLayers
       , _bIsCubemap ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D
       , uAspectFlags
       , pTexture->m_hImageView);
@@ -812,14 +812,14 @@ namespace vk
     s_oGlobalData.m_oRenderTargetBuilder.m_uHeight = _uHeight;
   }
 
-  void RenderTargetAddColorTexture(APITexture* _pTexture)
+  void RenderTargetAddColorTexture(APITexture* _pTexture, uint32_t _uMipLevel)
   {
-    s_oGlobalData.m_oRenderTargetBuilder.AddColorTexture(_pTexture);
+    s_oGlobalData.m_oRenderTargetBuilder.AddColorTexture(_pTexture, _uMipLevel);
   }
 
-  void RenderTargetSetDepthStencilTexture(APITexture* _pTexture)
+  void RenderTargetSetDepthStencilTexture(APITexture* _pTexture, uint32_t _uMipLevel)
   {
-    s_oGlobalData.m_oRenderTargetBuilder.SetDepthTexture(_pTexture);
+    s_oGlobalData.m_oRenderTargetBuilder.SetDepthTexture(_pTexture, _uMipLevel);
   }
 
   void RenderTargetAddColorResolveTexture(APITexture* _pTexture)
@@ -928,7 +928,7 @@ namespace vk
 
   // Render state
 
-  APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples)
+  APIRenderState* CreateAPIRenderState(const APIWindow* _pWindow, const RenderStateInfo& _oInfo, const APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples)
   {
 
     VkRenderPass hRenderPass = VK_NULL_HANDLE;

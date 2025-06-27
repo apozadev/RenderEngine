@@ -56,7 +56,7 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
     pRenderTarget->Clear();
   }
 
-  const RenderTarget* pLastRT = nullptr;
+  api::APIRenderTarget* pLastRT = nullptr;
   bool bLastRtIsDefault = false;
 
   bool bDoBindRT = true;
@@ -67,20 +67,20 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
     owner_ptr<RenderStep>& pStep = m_lstRenderSteps[i];    
 
     // Unbind last RT if necessary
-    if (pLastRT != pStep->GetRenderTarget() && pLastRT != nullptr)
+    if (pLastRT != pStep->m_pRenderTarget && pLastRT != nullptr)
     {
-      pLastRT->Unbind();
+      api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pLastRT);
       bDoBindRT = true;
     }
-    else if (bLastRtIsDefault && pStep->GetRenderTarget() != nullptr)
+    else if (bLastRtIsDefault && pStep->m_pRenderTarget != nullptr)
     {
-      Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
+      api::UnbindDefaultRenderTarget(ENGINE_API_WINDOW);
       bDoBindRT = true;
     }     
     
     pStep->Execute(_pCamera, _pViewTransform, bDoBindRT);
 
-    pLastRT = pStep->GetRenderTarget();
+    pLastRT = pStep->m_pRenderTarget;
     bLastRtIsDefault = pLastRT == nullptr;    
     bDoBindRT = false;
   }
@@ -88,7 +88,7 @@ void RenderPipeline::Execute(const Camera* _pCamera, const Transform* _pViewTran
   // Unbind last RT
   if (pLastRT != nullptr)
   {
-    pLastRT->Unbind();
+    api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pLastRT);
   }
   else if (bLastRtIsDefault)
   {
@@ -150,7 +150,7 @@ void RenderPipeline::GenerateFromConfig()
       }
     }     
 
-    owner_ptr<GeometryRenderStep> pRenderStep = Factory::Create<GeometryRenderStep>(rStepConfig.m_sId, std::move(lstInputs), pTarget, rStepConfig.m_bOrderTranslucent);
+    owner_ptr<GeometryRenderStep> pRenderStep = Factory::Create<GeometryRenderStep>(rStepConfig.m_sId, std::move(lstInputs), pTarget ? pTarget->m_pAPIRenderTarget : nullptr, rStepConfig.m_bOrderTranslucent);
     m_lstRenderSteps.push_back(pRenderStep.cast_release<RenderStep>()); 
   }
 }

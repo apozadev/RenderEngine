@@ -18,13 +18,13 @@ namespace pass_internal
   static uint16_t s_uNextId = 0u;
 }
 
-void Pass::Configure(const RenderStateInfo& _rRenderStateInfo, const RenderTarget* _pRenderTarget, uint32_t _uLayer)
+void Pass::Configure(const RenderStateInfo& _rRenderStateInfo, const api::APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples, uint32_t _uLayer)
 {
   m_uLayer = _uLayer;
 
   m_oInfo = _rRenderStateInfo;
 
-  Configure(_pRenderTarget);
+  Configure(_pRenderTarget, _uMsaaSamples);
 }
 
 void Pass::Configure(const std::string& _sVSFilename
@@ -35,7 +35,8 @@ void Pass::Configure(const std::string& _sVSFilename
   , BlendFactor _eDstBlendFactor
   , bool _bDepthWrite
   , bool _bDepthRead
-  , const RenderTarget* _pRenderTarget
+  , const api::APIRenderTarget* _pRenderTarget
+  , uint32_t _uMsaaSamples
   , uint16_t _uLayer)
 {
   m_uId = pass_internal::s_uNextId++;
@@ -52,7 +53,7 @@ void Pass::Configure(const std::string& _sVSFilename
   m_oInfo.m_bDepthWrite = _bDepthWrite;
   m_oInfo.m_bDepthRead = _bDepthRead;
 
-  Configure(_pRenderTarget);
+  Configure(_pRenderTarget, _uMsaaSamples);
   
 }
 
@@ -74,34 +75,44 @@ void Pass::Configure(const std::string& _sVSFilename
 
   RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(_sPipelineId);
   RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(m_sStepId) : nullptr;
-  const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;
+  const api::APIRenderTarget* pTarget = pStep ? pStep->m_pRenderTarget : nullptr;
 
-  Configure(_sVSFilename, _sPSFilename, _bBlendEnabled, _eBlendOp, _eSrcBlendFactor, _eDstBlendFactor, _bDepthWrite, _bDepthRead, pTarget, _uLayer);
+  unsigned int uMsaaSamples = api::GetWindowMSAASamples(ENGINE_API_WINDOW);
+
+  for (const owner_ptr<RenderTarget>& rt : pPipeline->GetRenderTargets())
+  {
+    if (rt->m_pAPIRenderTarget == pTarget)
+    {
+      uMsaaSamples = rt->GetMsaaSamples();
+      break;
+    }
+  }
+
+  Configure(_sVSFilename, _sPSFilename, _bBlendEnabled, _eBlendOp, _eSrcBlendFactor, _eDstBlendFactor, _bDepthWrite, _bDepthRead, pTarget, uMsaaSamples, _uLayer);
 }
 
 void Pass::Configure()
 {
   RenderPipeline* pPipeline = Renderer::GetInstance()->GetRenderPipeline(m_sPipelineId);
   RenderStep* pStep = pPipeline ? pPipeline->GetRenderStep(m_sStepId) : nullptr;
-  const RenderTarget* pTarget = pStep ? pStep->GetRenderTarget() : nullptr;
+  const api::APIRenderTarget* pTarget = pStep ? pStep->m_pRenderTarget : nullptr;
 
-  Configure(pTarget);
+  unsigned int uMsaaSamples = api::GetWindowMSAASamples(ENGINE_API_WINDOW);
+
+  for (const owner_ptr<RenderTarget>& rt : pPipeline->GetRenderTargets())
+  {
+    if (rt->m_pAPIRenderTarget == pTarget)
+    {
+      uMsaaSamples = rt->GetMsaaSamples();
+      break;
+    }
+  }
+
+  Configure(pTarget, uMsaaSamples);
 }
 
-void Pass::Configure(const RenderTarget* _pRenderTarget)
+void Pass::Configure(const api::APIRenderTarget* _pRenderTarget, uint32_t _uMsaaSamples)
 {
-  uint32_t uMsaaSamples = 1u;
-
-  // If pTarget is null, we are drawing to the backbuffer
-  if (_pRenderTarget)
-  {
-    _pRenderTarget->SetUsing();
-    uMsaaSamples = _pRenderTarget->GetMsaaSamples();
-  }
-  else
-  {
-    uMsaaSamples = api::GetWindowMSAASamples(ENGINE_API_WINDOW);
-  }
 
   if (m_pAPIRenderState != nullptr)
   {
@@ -110,7 +121,7 @@ void Pass::Configure(const RenderTarget* _pRenderTarget)
 
   m_oInfo.m_uMeshConstantSize = sizeof(MeshConstant);
 
-  m_pAPIRenderState = api::CreateAPIRenderState(ENGINE_API_WINDOW, m_oInfo, _pRenderTarget ? _pRenderTarget->m_pAPIRenderTarget : nullptr, uMsaaSamples);
+  m_pAPIRenderState = api::CreateAPIRenderState(ENGINE_API_WINDOW, m_oInfo, _pRenderTarget, _uMsaaSamples);
 
   // Reflect constant buffers  
   ReflectCBuffers(STAGE_VERTEX);
