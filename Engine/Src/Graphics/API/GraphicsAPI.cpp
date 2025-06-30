@@ -134,6 +134,11 @@ namespace api
   {
     API::ClearAPITexture(_pWindow, _pTexture, _eUsage);
   }
+
+  void BlitAPITexture(const APIWindow* _pWindow, APITexture* _pSrcTexture, const TextureSubResource& _rSrcSubResource, APITexture* _pDstTexture, const TextureSubResource& _rDstSubResource)
+  {
+    API::BlitAPITexture(_pWindow, _pSrcTexture, _rSrcSubResource, _pDstTexture, _rDstSubResource);
+  }
   
   void DestroyAPITexture(const APIWindow* _pWindow, APITexture* _pTexture)
   {

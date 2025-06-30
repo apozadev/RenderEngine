@@ -6,7 +6,6 @@
 #include "Graphics/API/GraphicsAPI.h"
 
 class Window;
-class Texture2D;
 class Transform;
 class Camera;
 class Pass;
@@ -15,7 +14,7 @@ class RenderStep
 {
 public:
 
-  RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, api::APIRenderTarget* _pRenderTarget);
+  RenderStep(const std::string& _sId, std::vector<api::APITexture*>&& _lstInputs, api::APIRenderTarget* _pRenderTarget);
 
   virtual ~RenderStep();
 
@@ -50,7 +49,7 @@ private:
 
   std::string m_sId;
 
-  std::vector<Texture2D*> m_lstInputs;  
+  std::vector<api::APITexture*> m_lstInputs;  
 
   api::APIRenderSubState* m_pAPIRenderSubState;
 

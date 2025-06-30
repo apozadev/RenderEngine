@@ -91,17 +91,18 @@ void Renderer::InitializePostWindow()
   owner_ptr<Texture2D> pHDRI = Factory::Create<Texture2D>();
   pHDRI->Configure(oImage, oHDRISamplerConfig, 1, 1);
 
+  api::APITexture* pAuxCubeTex = api::CreateAPITexture(ENGINE_API_WINDOW, nullptr, 512, 512, oImage.m_eFormat, 0u, 1u, TextureUsage::COLOR_TARGET | TextureUsage::SHADER_RESOURCE | TextureUsage::TRANSFER_SRC, oBrdfSampler, true);
+  api::APIRenderTarget* pAuxCubeRt = api::CreateAPIRenderTarget();
+  api::BeginRenderTargetSetup(pAuxCubeRt, 512, 512, oImage.m_eFormat, ImageFormat::R32, 1, true);
+  api::RenderTargetAddColorTexture(pAuxCubeTex, 0);
+  api::EndRenderTargetSetup(ENGINE_API_WINDOW);
+
   m_pEnvMapSpec = Factory::Create<Texture2D>();
-  m_pEnvMapSpec->ConfigureAsCubemap(nullptr, 512, 512, oImage.m_eFormat, oBrdfSampler, 5u, 1u, TextureUsage::COLOR_TARGET | TextureUsage::SHADER_RESOURCE);
+  m_pEnvMapSpec->ConfigureAsCubemap(nullptr, 512, 512, oImage.m_eFormat, oBrdfSampler, 5u, 1u, TextureUsage::COLOR_TARGET | TextureUsage::SHADER_RESOURCE | TextureUsage::TRANSFER_DST);
 
   m_pEnvMapDiff = Factory::Create<Texture2D>();
   m_pEnvMapDiff->ConfigureAsCubemap(nullptr, 128, 128, oImage.m_eFormat, oBrdfSampler, 1u, 1u, TextureUsage::COLOR_TARGET | TextureUsage::SHADER_RESOURCE);
-
-  api::APIRenderTarget* pSpecEnvMapRt = api::CreateAPIRenderTarget();
-  api::BeginRenderTargetSetup(pSpecEnvMapRt, 512, 512, oImage.m_eFormat, ImageFormat::R32, 1u, true);
-  api::RenderTargetAddColorTexture(m_pEnvMapSpec->m_pAPITexture, 0u);
-  api::EndRenderTargetSetup(ENGINE_API_WINDOW);
-
+  
   api::APIRenderTarget* pDiffEnvMapRt = api::CreateAPIRenderTarget();
   api::BeginRenderTargetSetup(pDiffEnvMapRt, 128, 128, oImage.m_eFormat, ImageFormat::R32, 1u, true);
   api::RenderTargetAddColorTexture(m_pEnvMapDiff->m_pAPITexture, 0u);
@@ -136,7 +137,7 @@ void Renderer::InitializePostWindow()
   oInfo.m_eCullMode = CullMode::BACK;  
 
   Pass oCubemapPass = {};
-  oCubemapPass.Configure(oInfo, pSpecEnvMapRt, 1u, 0u);
+  oCubemapPass.Configure(oInfo, pAuxCubeRt, 1u, 0u);
   oCubemapPass.Setup(); 
 
   oInfo = {};
@@ -148,18 +149,35 @@ void Renderer::InitializePostWindow()
   oInfo.m_bDepthWrite = false;
   oInfo.m_eCullMode = CullMode::BACK;
 
-  Pass oConvolutionPass = {};
-  oConvolutionPass.Configure(oInfo, pDiffEnvMapRt, 1u, 0u);
-  oConvolutionPass.Setup();
+  Pass oDiffConvoPass = {};
+  oDiffConvoPass.Configure(oInfo, pDiffEnvMapRt, 1u, 0u);
+  oDiffConvoPass.Setup();
+
+  oInfo = {};
+  oInfo.m_sVSFilename = "Assets/Shaders/Vertex/EnvMapVertex.vs";
+  oInfo.m_sGSFilename = "Assets/Shaders/Geometry/EnvMapGeometry.gs";
+  oInfo.m_sPSFilename = "Assets/Shaders/Pixel/SpecularPrefilterPixel.ps";
+  oInfo.m_bBlendEnabled = false;
+  oInfo.m_bDepthRead = false;
+  oInfo.m_bDepthWrite = false;
+  oInfo.m_eCullMode = CullMode::BACK;
+
+  Pass oSpecFilterPass = {};
+  oSpecFilterPass.Configure(oInfo, pDiffEnvMapRt, 1u, 0u);
+  oSpecFilterPass.Setup();
 
   MaterialInstance oCubemapMatInstance = {};
   oCubemapMatInstance.AddTexture(std::move(pHDRI));
   oCubemapMatInstance.Configure();
   oCubemapMatInstance.SetupSubState(nullptr);
 
-  MaterialInstance oConvoMatInstance = {};  
-  oConvoMatInstance.Configure();
-  oConvoMatInstance.SetupSubState(nullptr);
+  MaterialInstance oDiffConvoMatInstance = {};  
+  oDiffConvoMatInstance.Configure();
+  oDiffConvoMatInstance.SetupSubState(nullptr);
+
+  MaterialInstance oSpecFilterMatInstance = {};
+  oSpecFilterMatInstance.Configure();
+  oSpecFilterMatInstance.SetupSubState(nullptr);
 
   constexpr float _PI2 = glm::half_pi<float>();
   constexpr float _PI = glm::pi<float>();
@@ -175,9 +193,10 @@ void Renderer::InitializePostWindow()
   aViewProjs[5] = proj * glm::inverse(glm::rotate(glm::mat4(1.0f),  _PI,  glm::vec3(0, 1, 0)));
 
   oCubemapPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);
-  oConvolutionPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);  
+  oDiffConvoPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);  
+  oSpecFilterPass.SetMat4("aViewProjs", &aViewProjs[0][0][0]);  
   
-  GeometryRenderStep oCubemapStep("", std::vector<Texture2D*>(), pSpecEnvMapRt, false, false);
+  GeometryRenderStep oCubemapStep("", std::vector<api::APITexture*>(), pAuxCubeRt, false, false);
 
   {
     Job oJob = {};
@@ -191,19 +210,19 @@ void Renderer::InitializePostWindow()
 
   oCubemapStep.Setup();  
 
-  GeometryRenderStep oConvolutionStep("", { m_pEnvMapSpec.get() }, pDiffEnvMapRt, false, false);
+  GeometryRenderStep oDiffConvoStep("", { }, pDiffEnvMapRt, false, false);
 
   {
     Job oJob = {};
-    oJob.m_pMaterial = &oConvoMatInstance;
+    oJob.m_pMaterial = &oDiffConvoMatInstance;
     oJob.m_pMesh = &oCubeMesh;
     oJob.m_pMeshTransform = &Transform::GetIdentity();
-    oJob.m_pPass = &oConvolutionPass;
+    oJob.m_pPass = &oDiffConvoPass;
 
-    oConvolutionStep.SubmitJob(std::move(oJob));
+    oDiffConvoStep.SubmitJob(std::move(oJob));
   }
 
-  oConvolutionStep.Setup();
+  oDiffConvoStep.Setup();  
 
   // Draw specular envmap from 2D HDRI
 
@@ -211,29 +230,80 @@ void Renderer::InitializePostWindow()
 
   oCubemapStep.Execute(&oCamera, &Transform::GetIdentity(), true);
 
-  api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pSpecEnvMapRt);
+  api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pAuxCubeRt);
 
-  m_pEnvMapSpec->GenerateMipMaps();
+  TextureSubResource oBlitSubRes = {};
+  oBlitSubRes.m_uBaseMip = 0u;
+  oBlitSubRes.m_uMipLevels = 1u;
+  oBlitSubRes.m_uBaseLayer = 0u;
+  oBlitSubRes.m_uLayers = 6u;
+
+  //api::BlitAPITexture(ENGINE_API_WINDOW, pAuxCubeTex, oBlitSubRes, m_pEnvMapSpec->m_pAPITexture, oBlitSubRes);  
+
+  api::GenerateMipMaps(ENGINE_API_WINDOW, pAuxCubeTex);
 
   Engine::GetInstance()->GetWindow()->EndDraw();
 
-  // Perform convolution on specular envMap to generate diffuse envmap
-  
   // Setup camera substate again
   api::BeginSubStateSetup(ENGINE_API_WINDOW, oCamera.m_pSubState, ResourceFrequency::GLOBAL);
-  api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, oCamera.m_pCBuffer->m_pAPICbuffer, oCamera.m_pCBuffer->GetSize(), oGlobalBufferBindInfo);  
+  api::SubStateSetupConstantBuffer(ENGINE_API_WINDOW, oCamera.m_pCBuffer->m_pAPICbuffer, oCamera.m_pCBuffer->GetSize(), oGlobalBufferBindInfo);
   ResourceBindInfo oSkyboxBindInfo{};
   oSkyboxBindInfo.m_eLevel = ResourceFrequency::GLOBAL;
   oSkyboxBindInfo.m_uStageFlags = STAGE_PIXEL;
   oSkyboxBindInfo.m_sName = "SpecEnvMap";
-  api::SubStateSetupTexture(ENGINE_API_WINDOW, m_pEnvMapSpec->m_pAPITexture, oSkyboxBindInfo);
+  api::SubStateSetupTexture(ENGINE_API_WINDOW, pAuxCubeTex, oSkyboxBindInfo);
   api::EndSubStateSetup(ENGINE_API_WINDOW);
 
+  // Draw each mip level of the specular prefiltered envmap
+  for (uint32_t i = 0u; i < 5u; i++)
+  {
+
+    uint32_t uMipWidth = m_pEnvMapSpec->GetWidth() >> i;
+    uint32_t uMipHeight = m_pEnvMapSpec->GetHeight() >> i;
+
+    api::APIRenderTarget* pSpecEnvMapRt = api::CreateAPIRenderTarget();
+    api::BeginRenderTargetSetup(pSpecEnvMapRt, uMipWidth, uMipHeight, oImage.m_eFormat, ImageFormat::R32, 1u, true);
+    api::RenderTargetAddColorTexture(m_pEnvMapSpec->m_pAPITexture, i);
+    api::EndRenderTargetSetup(ENGINE_API_WINDOW);
+
+    oSpecFilterPass.SetFloat("fRoughness", static_cast<float>(i) / 5.f);
+
+    GeometryRenderStep oSpecPrefilterStep("", {}, pSpecEnvMapRt, false, false);
+    {
+      Job oJob = {};
+      oJob.m_pMaterial = &oSpecFilterMatInstance;
+      oJob.m_pMesh = &oCubeMesh;
+      oJob.m_pMeshTransform = &Transform::GetIdentity();
+      oJob.m_pPass = &oSpecFilterPass;
+
+      oSpecPrefilterStep.SubmitJob(std::move(oJob));
+    }
+    oSpecPrefilterStep.Setup();
+
+    api::BeginDrawOffline(ENGINE_API_WINDOW);   
+
+    api::BindAPITexture(ENGINE_API_WINDOW, pAuxCubeTex);
+
+    oSpecPrefilterStep.Execute(&oCamera, &Transform::GetIdentity(), true);
+
+    api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pSpecEnvMapRt);
+
+    api::EndDraw(ENGINE_API_WINDOW);
+
+    api::WaitForLastImage(ENGINE_API_WINDOW);
+
+    api::DestroyAPIRenderTarget(ENGINE_API_WINDOW, pSpecEnvMapRt);
+  }
+
+  // Perform convolution on specular envMap to generate diffuse envmap
+   
   Engine::GetInstance()->GetWindow()->WaitForLastImage();
 
   Engine::GetInstance()->GetWindow()->BeginDrawOffline();
 
-  oConvolutionStep.Execute(&oCamera, &Transform::GetIdentity(), true);
+  api::BindAPITexture(ENGINE_API_WINDOW, pAuxCubeTex);
+
+  oDiffConvoStep.Execute(&oCamera, &Transform::GetIdentity(), true);
 
   api::UnbindAPIRenderTarget(ENGINE_API_WINDOW, pDiffEnvMapRt);
 
@@ -243,7 +313,8 @@ void Renderer::InitializePostWindow()
 
   api::WaitForLastImage(ENGINE_API_WINDOW);
 
-  api::DestroyAPIRenderTarget(ENGINE_API_WINDOW, pSpecEnvMapRt);
+  api::DestroyAPITexture(ENGINE_API_WINDOW, pAuxCubeTex);
+  api::DestroyAPIRenderTarget(ENGINE_API_WINDOW, pAuxCubeRt);  
   api::DestroyAPIRenderTarget(ENGINE_API_WINDOW, pDiffEnvMapRt);
 }
 
@@ -421,7 +492,7 @@ void Renderer::Draw()
     {
       rShadowView.m_pShadowMap->Clear();
 
-      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>("", std::vector<Texture2D*>(), rShadowView.m_pShadowMap->m_pAPIRenderTarget, false, false);
+      owner_ptr<GeometryRenderStep> pShadowStep = Factory::Create<GeometryRenderStep>("", std::vector<api::APITexture*>(), rShadowView.m_pShadowMap->m_pAPIRenderTarget, false, false);
 
       for (Job& rJob : m_lstShadowJobs)
       {
@@ -446,6 +517,8 @@ void Renderer::Draw()
     m_pEnvMapSpec->Bind();
 
     m_pEnvMapDiff->Bind();
+
+    m_pBrdfLutTexture->Bind();
 
     for (const ShadowView& rShadowView : m_lstShadowViews)
     {      

@@ -628,6 +628,42 @@ namespace api
 
     }
 
+    void BlitAPITexture(const APIWindow* _pWindow, APITexture* _pSrcTexture, const TextureSubResource& _rSrcSubResource, APITexture* _pDstTexture, const TextureSubResource& _rDstSubResource)
+    {
+
+      if (_rSrcSubResource.m_uMipLevels != _rDstSubResource.m_uMipLevels || _rSrcSubResource.m_uLayers != _rDstSubResource.m_uLayers)
+      {
+        THROW_GENERIC_EXCEPTION("BlitAPITexture: Subresource Mip level count and layer count must match");
+      }
+      else if ((_rSrcSubResource.m_uBaseMip + _rSrcSubResource.m_uMipLevels) > _pSrcTexture->m_uMipLevels &&
+        (_rDstSubResource.m_uBaseMip + _rDstSubResource.m_uMipLevels) > _pDstTexture->m_uMipLevels)
+      {
+        THROW_GENERIC_EXCEPTION("BlitAPITexture: Subresource Mip levels are outside of the texure mip level range");
+      }
+      else if ((_rSrcSubResource.m_uBaseLayer + _rSrcSubResource.m_uLayers) > _pSrcTexture->m_uLayers &&
+        (_rDstSubResource.m_uBaseLayer + _rDstSubResource.m_uLayers) > _pDstTexture->m_uLayers)
+      {
+        THROW_GENERIC_EXCEPTION("BlitAPITexture: Subresource array layers are outside of the texure array layers range");
+      }
+
+      for (uint32_t uMipLevel = 0; uMipLevel < _rSrcSubResource.m_uMipLevels; uMipLevel++)
+      {
+        for (uint32_t uLayer = 0u; uLayer < _rSrcSubResource.m_uLayers; uLayer++)
+        {
+          uint32_t uSrcSubRes = D3D11CalcSubresource(uMipLevel + _rSrcSubResource.m_uBaseMip, uLayer + _rSrcSubResource.m_uBaseLayer, _pSrcTexture->m_uMipLevels);
+          uint32_t uDstSubRes = D3D11CalcSubresource(uMipLevel + _rDstSubResource.m_uBaseMip, uLayer + _rDstSubResource.m_uBaseLayer, _pDstTexture->m_uMipLevels);
+
+          _pWindow->m_pContext->CopySubresourceRegion(
+            _pDstTexture->m_pTexture.Get(),
+            uDstSubRes,
+            0u, 0u, 0u,
+            _pSrcTexture->m_pTexture.Get(),
+            uSrcSubRes,
+            nullptr);
+        }
+      }
+    }
+
     void DestroyAPITexture(const APIWindow* /*_pWindow*/, APITexture* _pTexture)
     {
       s_oTexturePool.ReturnElement(_pTexture);

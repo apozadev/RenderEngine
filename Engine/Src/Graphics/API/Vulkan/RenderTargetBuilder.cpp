@@ -37,6 +37,7 @@ namespace vk
         m_pRenderTarget->m_pImageViews[uAttachmentIdx++]);
 
       m_pRenderTarget->m_aColorTextures[i] = pTexture;
+      m_pRenderTarget->m_aColorTexturesMipLevels[i] = m_lstColorMipLevels[i];
     }
 
     for (uint32_t i = 0; i < m_lstColorResolveTextures.size(); i++)
@@ -66,7 +67,8 @@ namespace vk
         m_pRenderTarget->m_pImageViews[uAttachmentIdx++]);
 
       m_pRenderTarget->m_pDepthTexture = m_pDepthStencilTexture;
-    }
+      m_pRenderTarget->m_uDepthTextureMipLevel = m_uDepthMipLevel;
+    }    
 
     VkFramebufferCreateInfo oFramebufferInfo = {};
     oFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

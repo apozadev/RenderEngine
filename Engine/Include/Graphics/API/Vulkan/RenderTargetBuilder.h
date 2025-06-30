@@ -47,6 +47,7 @@ namespace vk
     {
       m_lstColorTextures.clear();
       m_lstColorResolveTextures.clear();
+      m_lstColorMipLevels.clear();
       m_pDepthStencilTexture = nullptr;      
     }
 

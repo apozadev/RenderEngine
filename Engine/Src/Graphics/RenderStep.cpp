@@ -15,7 +15,7 @@
 #include "Graphics/API/GraphicsAPI.h"
 
 
-RenderStep::RenderStep(const std::string& _sId, std::vector<Texture2D*>&& _lstInputs, api::APIRenderTarget* _pRenderTarget)
+RenderStep::RenderStep(const std::string& _sId, std::vector<api::APITexture*>&& _lstInputs, api::APIRenderTarget* _pRenderTarget)
   : m_sId(_sId)
   , m_lstInputs(std::move(_lstInputs))
   , m_pRenderTarget(_pRenderTarget)
@@ -53,7 +53,7 @@ void RenderStep::SetupInternal()
     oBindInfo.m_eLevel = ResourceFrequency::RENDER_STEP;
     oBindInfo.m_uStageFlags = STAGE_PIXEL;
     oBindInfo.m_sName = s_aNames[i];
-    api::SubStateSetupTexture(ENGINE_API_WINDOW, m_lstInputs[i]->m_pAPITexture, oBindInfo);
+    api::SubStateSetupTexture(ENGINE_API_WINDOW, m_lstInputs[i], oBindInfo);
   }
 }
 
@@ -94,9 +94,9 @@ void RenderStep::Bind(bool _bDoBindRT, const Pass* _pPass) const
     }
   }
 
-  for (Texture2D* _pInput : m_lstInputs)
+  for (api::APITexture* pInput : m_lstInputs)
   {
-    _pInput->Bind();
+    api::BindAPITexture(ENGINE_API_WINDOW, pInput);
   }  
 
   api::BindAPIRenderSubState(ENGINE_API_WINDOW, _pPass->m_pAPIRenderState, m_pAPIRenderSubState, ResourceFrequency::RENDER_STEP);
@@ -104,19 +104,9 @@ void RenderStep::Bind(bool _bDoBindRT, const Pass* _pPass) const
 
 void RenderStep::Unbind() const
 {
-
-  for (Texture2D* _pInput : m_lstInputs)
+  for (api::APITexture* pInput : m_lstInputs)
   {
-    _pInput->Unbind();
+    api::UnbindAPITexture(ENGINE_API_WINDOW, pInput);
   }
-
- /* if (m_pRenderTarget)
-  {
-    m_pRenderTarget->Unbind();
-  }
-  else
-  {
-    Engine::GetInstance()->GetWindow()->UnbindDefaultRenderTarget();
-  }  */
 }
 

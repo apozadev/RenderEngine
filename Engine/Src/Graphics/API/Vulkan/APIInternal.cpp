@@ -146,6 +146,14 @@ VkImageUsageFlags GetVkTextureUsage(uint32_t _uUsage)
   {
     uRes |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
+  if ((_uUsage & static_cast<int>(TextureUsage::TRANSFER_SRC)) != 0)
+  {
+    uRes |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+  }
+  if ((_uUsage & static_cast<int>(TextureUsage::TRANSFER_DST)) != 0)
+  {
+    uRes |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  }
 
   return uRes;
 }
@@ -1726,7 +1734,7 @@ void TransitionTextureImageLayout(VkCommandBuffer _hCmdBuffer
   uint32_t uEndMipLevel = _uBaseMip + _uMipLevels;
 
   // Accumulate layers until the layout is different or last layer reached 
-  uint32_t uBaseMip = 0;
+  uint32_t uBaseMip = _uBaseMip;
   for (uint32_t i = _uBaseMip; i <= uEndMipLevel; i++)
   {     
     // clamp index
@@ -1745,7 +1753,7 @@ void TransitionTextureImageLayout(VkCommandBuffer _hCmdBuffer
           , _uAspectFlags
           , _pTexture->m_aCurrLayouts[uBaseMip], _eNewLayout);
 
-        for(uint32_t j = uBaseMip; j < i; j++)
+        for(uint32_t j = uBaseMip; j <= i; j++)
         {
           _pTexture->m_aCurrLayouts[j] = _eNewLayout; 
         }

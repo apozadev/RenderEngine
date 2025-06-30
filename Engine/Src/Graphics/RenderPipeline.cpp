@@ -123,7 +123,7 @@ void RenderPipeline::GenerateFromConfig()
 
   for (const RenderStepConfig& rStepConfig : m_oConfig.m_lstSteps)
   {
-    std::vector<Texture2D*> lstInputs;
+    std::vector<api::APITexture*> lstInputs;
 
     for (const RenderStepInputConfig& rInputConfig : rStepConfig.m_lstInputs)
     {
@@ -131,7 +131,7 @@ void RenderPipeline::GenerateFromConfig()
       {
         if (rInputConfig.m_sTargetId == m_oConfig.m_lstRenderTargets[i].m_sId)
         {
-          lstInputs.push_back(m_lstRenderTargets[i]->GetColorTextures()[0].get());
+          lstInputs.push_back(m_lstRenderTargets[i]->GetColorTextures()[0].get()->m_pAPITexture);
           break;
         }
       }

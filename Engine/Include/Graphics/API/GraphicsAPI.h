@@ -8,6 +8,7 @@
 #include "Graphics/RenderStateInfo.h"
 #include "Graphics/ConstantBufferTypes.h"
 #include "Graphics/SamplerConfig.h"
+#include "Graphics/TextureSubResource.h"
 
 #if defined RENDER_API_VULKAN
 #define API vk
@@ -96,6 +97,8 @@ namespace api
 	void UnbindAPITexture(const APIWindow* _pWindow, APITexture* _pTexture);
 
 	void ClearAPITexture(const APIWindow* _pWindow, APITexture* _pTexture, TextureUsage _eUsage);
+
+	void BlitAPITexture(const APIWindow* _pWindow, APITexture* _pSrcTexture, const TextureSubResource& _rSrcSubResource, APITexture* _pDstTexture, const TextureSubResource& _rDstSubResource);
 
 	void DestroyAPITexture(const APIWindow* _pWindow, APITexture* _pTexture);
 

@@ -25,6 +25,9 @@ namespace vk
     APITexture* m_aColorTextures[4];
     APITexture* m_aResolveTextures[4];
     APITexture* m_pDepthTexture;
+
+    uint32_t m_aColorTexturesMipLevels[4];
+    uint32_t m_uDepthTextureMipLevel;
   };
 
 }

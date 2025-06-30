@@ -779,6 +779,86 @@ namespace vk
       eFinalLayout);    
   }
 
+  void BlitAPITexture(const APIWindow* _pWindow, APITexture* _pSrcTexture, const TextureSubResource& _rSrcSubResource, APITexture* _pDstTexture, const TextureSubResource& _rDstSubResource)
+  {    
+
+    if (_rSrcSubResource.m_uMipLevels != _rDstSubResource.m_uMipLevels || _rSrcSubResource.m_uLayers != _rDstSubResource.m_uLayers)
+    {
+      THROW_GENERIC_EXCEPTION("BlitAPITexture: Subresource Mip level count and layer count must match");
+    }
+    else if ((_rSrcSubResource.m_uBaseMip + _rSrcSubResource.m_uMipLevels) > _pSrcTexture->m_uMipLevels &&
+      (_rDstSubResource.m_uBaseMip + _rDstSubResource.m_uMipLevels) > _pDstTexture->m_uMipLevels)
+    {
+      THROW_GENERIC_EXCEPTION("BlitAPITexture: Subresource Mip levels are outside of the texure mip level range");
+    }
+    else if ((_rSrcSubResource.m_uBaseLayer + _rSrcSubResource.m_uLayers) > _pSrcTexture->m_uLayers &&
+      (_rDstSubResource.m_uBaseLayer + _rDstSubResource.m_uLayers) > _pDstTexture->m_uLayers)
+    {
+      THROW_GENERIC_EXCEPTION("BlitAPITexture: Subresource array layers are outside of the texure array layers range");
+    }
+
+    VkCommandBuffer& hCmdBuffer = _pWindow->m_pCmdBuffers[_pWindow->m_uCurrFrameIdx];
+
+    VkImageLayout eSrcOldLayout = _pSrcTexture->m_aCurrLayouts[0];
+    VkImageLayout eDstOldLayout = _pDstTexture->m_aCurrLayouts[0];
+
+    TransitionTextureImageLayout(hCmdBuffer
+      , _pSrcTexture      
+      , _rSrcSubResource.m_uBaseMip
+      , _rSrcSubResource.m_uMipLevels
+      , _rSrcSubResource.m_uBaseLayer
+      , _rSrcSubResource.m_uLayers
+      , VK_IMAGE_ASPECT_COLOR_BIT
+      , VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+    TransitionTextureImageLayout(hCmdBuffer
+      , _pDstTexture
+      , _rSrcSubResource.m_uBaseMip
+      , _rSrcSubResource.m_uMipLevels
+      , _rSrcSubResource.m_uBaseLayer
+      , _rSrcSubResource.m_uLayers
+      , VK_IMAGE_ASPECT_COLOR_BIT
+      , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    VkImageBlit oBlit{};
+    oBlit.srcOffsets[0] = { 0, 0, 0 };
+    oBlit.srcOffsets[1] = { static_cast<int>(_pSrcTexture->m_uWidth), static_cast<int>(_pSrcTexture->m_uHeight), 1 };
+    oBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oBlit.srcSubresource.mipLevel = _rSrcSubResource.m_uBaseMip;    
+    oBlit.srcSubresource.baseArrayLayer = _rSrcSubResource.m_uBaseLayer;
+    oBlit.srcSubresource.layerCount = _rSrcSubResource.m_uLayers;
+    oBlit.dstOffsets[0] = { 0, 0, 0 };
+    oBlit.dstOffsets[1] = { static_cast<int>(_pDstTexture->m_uWidth), static_cast<int>(_pDstTexture->m_uHeight), 1 };
+    oBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    oBlit.dstSubresource.mipLevel = _rDstSubResource.m_uBaseMip;
+    oBlit.dstSubresource.baseArrayLayer = _rDstSubResource.m_uBaseLayer;
+    oBlit.dstSubresource.layerCount = _rDstSubResource.m_uLayers;
+
+    vkCmdBlitImage(hCmdBuffer,
+      _pSrcTexture->m_hImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      _pDstTexture->m_hImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1u, &oBlit,
+      VK_FILTER_LINEAR);
+
+    TransitionTextureImageLayout(hCmdBuffer
+      , _pSrcTexture
+      , _rSrcSubResource.m_uBaseMip
+      , _rSrcSubResource.m_uMipLevels
+      , _rSrcSubResource.m_uBaseLayer
+      , _rSrcSubResource.m_uLayers
+      , VK_IMAGE_ASPECT_COLOR_BIT
+      , eSrcOldLayout);
+
+    TransitionTextureImageLayout(hCmdBuffer
+      , _pDstTexture
+      , _rSrcSubResource.m_uBaseMip
+      , _rSrcSubResource.m_uMipLevels
+      , _rSrcSubResource.m_uBaseLayer
+      , _rSrcSubResource.m_uLayers
+      , VK_IMAGE_ASPECT_COLOR_BIT
+      , eDstOldLayout);
+  }
+
   void DestroyAPITexture(const APIWindow* _pWindow, APITexture* _pTexture)
   {
     const uint32_t uNumImages = _pWindow->m_uSwapchainImageCount;
@@ -839,11 +919,36 @@ namespace vk
 
   void BindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
   {
+    
+    VkCommandBuffer hCmdBuffer = _pWindow->m_pCmdBuffers[_pWindow->m_uCurrFrameIdx];
 
     /*VkClearValue aClearColors[3];
     aClearColors[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
     aClearColors[1].depthStencil = { 1.0f, 0 };
     aClearColors[2].color = { {0.0f, 0.0f, 0.0f, 1.0f} };*/
+
+    for (uint32_t i = 0u; i < 4u; i++)
+    {      
+      if (APITexture* pTexture = _pRenderTarget->m_aColorTextures[i])
+      {
+        TransitionTextureImageLayout(hCmdBuffer
+          , pTexture
+          , _pRenderTarget->m_aColorTexturesMipLevels[i], 1u
+          , 0u, pTexture->m_uLayers
+          , VK_IMAGE_ASPECT_COLOR_BIT
+          , VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+      }
+    }
+
+    if (_pRenderTarget->m_pDepthTexture)
+    {
+      TransitionTextureImageLayout(hCmdBuffer
+        , _pRenderTarget->m_pDepthTexture
+        , _pRenderTarget->m_uDepthTextureMipLevel, 1u
+        , 0u, _pRenderTarget->m_pDepthTexture->m_uLayers
+        , VK_IMAGE_ASPECT_DEPTH_BIT
+        , VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    }
 
     VkExtent2D oExtent = {};
     oExtent.width = _pRenderTarget->m_uWidth;
@@ -856,11 +961,9 @@ namespace vk
     oRenderPassBeginInfo.renderArea.extent = oExtent;
     oRenderPassBeginInfo.renderArea.offset = { 0,0 };
     oRenderPassBeginInfo.clearValueCount = 0u;//3u;
-    oRenderPassBeginInfo.pClearValues = nullptr;//aClearColors;
+    oRenderPassBeginInfo.pClearValues = nullptr;//aClearColors;    
 
-    const uint32_t uFrameIdx = _pWindow->m_uCurrFrameIdx;
-
-    vkCmdBeginRenderPass(_pWindow->m_pCmdBuffers[uFrameIdx], &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(hCmdBuffer, &oRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     VkViewport oViewport{};
     oViewport.x = 0.0f;
@@ -870,13 +973,13 @@ namespace vk
     oViewport.minDepth = 0.0f;
     oViewport.maxDepth = 1.0f;
 
-    vkCmdSetViewport(_pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oViewport);
+    vkCmdSetViewport(hCmdBuffer, 0, 1, &oViewport);
 
     VkRect2D oScissor{};
     oScissor.offset = { 0, 0 };
     oScissor.extent = oExtent;
 
-    vkCmdSetScissor(_pWindow->m_pCmdBuffers[uFrameIdx], 0, 1, &oScissor);
+    vkCmdSetScissor(hCmdBuffer, 0, 1, &oScissor);
   }
 
   void UnbindAPIRenderTarget(const APIWindow* _pWindow, APIRenderTarget* _pRenderTarget)
@@ -888,19 +991,21 @@ namespace vk
     for (uint32_t i = 0u; i < 4u; i++)
     {
       if (_pRenderTarget->m_aColorTextures[i] != nullptr)
-      {
-        _pRenderTarget->m_aColorTextures[i]->m_aCurrLayouts[0] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      {        
+        uint32_t uMipLevel = _pRenderTarget->m_aColorTexturesMipLevels[i];
+        _pRenderTarget->m_aColorTextures[i]->m_aCurrLayouts[uMipLevel] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       }
 
       if (_pRenderTarget->m_aResolveTextures[i] != nullptr)
-      {
+      {        
         _pRenderTarget->m_aResolveTextures[i]->m_aCurrLayouts[0] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       }
     }
 
     if (_pRenderTarget->m_pDepthTexture != nullptr)
     {      
-      _pRenderTarget->m_pDepthTexture->m_aCurrLayouts[0] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      uint32_t uMipLevel = _pRenderTarget->m_uDepthTextureMipLevel;
+      _pRenderTarget->m_pDepthTexture->m_aCurrLayouts[uMipLevel] = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     }
   }
 
@@ -1517,7 +1622,7 @@ namespace vk
 
   void WaitForLastImage(const APIWindow* _pWindow)
   {
-    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, _pWindow->m_uSwapchainImageCount, _pWindow->m_pInFlightFences, VK_TRUE, UINT64_MAX))
+    VK_CHECK(vkWaitForFences(_pWindow->m_hDevice, 1u, &_pWindow->m_pInFlightFences[_pWindow->m_uCurrFrameIdx], VK_TRUE, UINT64_MAX))
     s_oGlobalData.m_bRenderBegan = false;
   }
 
